@@ -40,6 +40,17 @@ function SettingGroup({ title, children }) {
 
 export default function SettingsScreen() {
   const { state, dispatch, showToast } = useApp();
+  const [permStatus, setPermStatus] = useState(() =>
+    'Notification' in window ? Notification.permission : 'unsupported'
+  );
+
+  const handleRequestPermission = async () => {
+    if (!('Notification' in window)) return;
+    const result = await Notification.requestPermission();
+    setPermStatus(result);
+    if (result === 'granted') showToast('✅ Notificaciones activadas', 'success');
+    else showToast('Notificaciones bloqueadas en el navegador', 'error');
+  };
 
   const handleExport = () => {
     try {
@@ -194,29 +205,54 @@ export default function SettingsScreen() {
 
         {/* ── Notificaciones ── */}
         <SettingGroup title="Notificaciones">
+          {/* Permission status row */}
           <SettingRow
             icon={Bell} iconBg="var(--primary-container)" iconColor="var(--primary)"
-            label="Recordatorios de tareas"
-            id="set-task-notif"
-            right={<Switch checked={notifTasks} onCheckedChange={setNotifTasks} id="sw-tasks" />}
+            label="Notificaciones del sistema"
+            id="set-notif-perm"
+            sub={
+              permStatus === 'granted'  ? 'Activadas ✅' :
+              permStatus === 'denied'   ? 'Bloqueadas en el navegador ❌' :
+              permStatus === 'unsupported' ? 'No soportado en este navegador' :
+              'Permiso no solicitado'
+            }
+            right={
+              permStatus !== 'granted' && permStatus !== 'unsupported' ? (
+                <button
+                  onClick={handleRequestPermission}
+                  style={{
+                    fontSize: '12px', padding: '5px 12px',
+                    borderRadius: '20px', cursor: 'pointer',
+                    background: 'var(--primary)', color: 'var(--on-primary)',
+                    border: 'none', fontWeight: 600,
+                  }}
+                  id="btn-enable-notif"
+                >
+                  Activar
+                </button>
+              ) : null
+            }
           />
           <SettingRow
             icon={Calendar} iconBg="var(--secondary-container)" iconColor="var(--secondary)"
-            label="Eventos próximos"
-            id="set-ev-notif"
-            right={<Switch checked={notifEvents} onCheckedChange={setNotifEvents} id="sw-events" />}
-          />
-          <SettingRow
-            icon={Brain} iconBg="var(--tertiary-container)" iconColor="var(--tertiary)"
-            label="Meditación diaria"
-            id="set-med-notif"
-            right={<Switch checked={notifMedit} onCheckedChange={setNotifMedit} id="sw-med" />}
+            label="Recordatorios de tareas"
+            sub="15 min antes y al momento"
+            id="set-task-notif"
+            right={<Switch checked={notifTasks && permStatus === 'granted'} onCheckedChange={setNotifTasks} id="sw-tasks" disabled={permStatus !== 'granted'} />}
           />
           <SettingRow
             icon={Repeat2} iconBg="rgba(74,111,165,0.12)" iconColor="#4a6fa5"
             label="Recordatorio de hábitos"
+            sub="Todos los días a las 8:00 PM"
             id="set-habit-notif"
-            right={<Switch checked={notifHabits} onCheckedChange={setNotifHabits} id="sw-habits" />}
+            right={<Switch checked={notifHabits && permStatus === 'granted'} onCheckedChange={setNotifHabits} id="sw-habits" disabled={permStatus !== 'granted'} />}
+          />
+          <SettingRow
+            icon={Bell} iconBg="var(--tertiary-container)" iconColor="var(--tertiary)"
+            label="Eventos del día"
+            sub="30 minutos antes de cada evento"
+            id="set-ev-notif"
+            right={<Switch checked={notifEvents && permStatus === 'granted'} onCheckedChange={setNotifEvents} id="sw-events" disabled={permStatus !== 'granted'} />}
           />
         </SettingGroup>
 

@@ -4,6 +4,14 @@ import { loadUserData, saveTask, deleteTask, saveHabit, saveEvent, deleteEvent,
          saveGoal, saveJournalEntry, saveGratitudeEntry,
          markNotificationRead, markAllNotificationsRead, saveUserProfile,
          saveSettings } from '../lib/firestoreService';
+import {
+  requestNotificationPermission,
+  rescheduleAllReminders,
+  scheduleTaskReminder,
+  cancelReminder,
+  scheduleHabitReminder,
+  scheduleEventReminders,
+} from '../lib/notificationService';
 
 /* ============================================
    SEED DATA — only profile is created for new users.
@@ -298,6 +306,14 @@ export function AppProvider({ children }) {
             darkMode: settings?.darkMode ?? false,
           },
         });
+
+        // ── Notifications: request permission + re-schedule reminders ──
+        requestNotificationPermission().catch(() => {});
+        const today = new Date().toISOString().split('T')[0];
+        rescheduleAllReminders(data.tasks || []);
+        scheduleHabitReminder(data.habits || []);
+        scheduleEventReminders((data.events || []).filter(e => e.date === today));
+
       } catch (err) {
         console.error('[Mavia] Error loading user data:', err);
         dispatch({ type: 'SET_AUTH_LOADING', value: false });
@@ -342,22 +358,38 @@ export function AppProvider({ children }) {
 
         case 'ADD_TASK':
           await saveTask(uid, enrichedAction.task);
+          // Schedule local reminder if the task has one
+          if (enrichedAction.task.reminder) {
+            scheduleTaskReminder(enrichedAction.task);
+          }
           break;
 
         case 'TOGGLE_TASK': {
           const existingTask = state.tasks.find(t => t.id === enrichedAction.id);
-          if (existingTask) await saveTask(uid, { ...existingTask, completed: !existingTask.completed });
+          if (existingTask) {
+            const nowCompleted = !existingTask.completed;
+            await saveTask(uid, { ...existingTask, completed: nowCompleted });
+            // Cancel reminder when task is marked complete
+            if (nowCompleted) cancelReminder(enrichedAction.id);
+          }
           break;
         }
 
         case 'UPDATE_TASK': {
           const existingTask = state.tasks.find(t => t.id === enrichedAction.task?.id);
-          if (existingTask) await saveTask(uid, { ...existingTask, ...enrichedAction.task });
+          if (existingTask) {
+            const updated = { ...existingTask, ...enrichedAction.task };
+            await saveTask(uid, updated);
+            // Re-schedule if reminder settings changed
+            cancelReminder(updated.id);
+            if (updated.reminder && !updated.completed) scheduleTaskReminder(updated);
+          }
           break;
         }
 
         case 'DELETE_TASK':
           await deleteTask(uid, enrichedAction.id);
+          cancelReminder(enrichedAction.id); // Cancel any pending notification
           break;
 
         case 'ADD_HABIT':
