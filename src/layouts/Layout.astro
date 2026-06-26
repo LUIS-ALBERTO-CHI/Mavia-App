@@ -1,0 +1,51 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { 
+  title = 'Mavia', 
+  description = 'Organiza tu día, cuida tu mente. La app de productividad y bienestar que mereces.' 
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#F8D7E8" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Mavia" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Mavia — Productividad con Alma" />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+
+    <!-- PWA -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Fonts preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <title>{title} — Organiza tu día, cuida tu mente</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  #root { height: 100%; }
+</style>

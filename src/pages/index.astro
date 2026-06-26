@@ -1,0 +1,8 @@
+---
+import Layout from '../layouts/Layout.astro';
+import App from '../App.jsx';
+---
+
+<Layout title="Mavia" description="Organiza tu día, cuida tu mente. Productividad y bienestar en un solo lugar.">
+  <App client:only="react" />
+</Layout>

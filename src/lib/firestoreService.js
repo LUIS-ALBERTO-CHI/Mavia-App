@@ -1,0 +1,220 @@
+// ============================================
+// FIRESTORE SERVICE — Mavia
+// Per-user data layer using subcollections
+// users/{uid}/tasks, habits, events, goals, ...
+// ============================================
+
+import {
+  doc, getDoc, setDoc, updateDoc, deleteDoc,
+  collection, getDocs, writeBatch, query, limit,
+} from 'firebase/firestore';
+import { db } from './firebase';
+
+// ─── helpers ───────────────────────────────────────────────────────────────
+
+/** Reference to a user's root document */
+const userRef  = (uid) => doc(db, 'users', uid);
+
+/** Reference to a subcollection under a user */
+const colRef   = (uid, col) => collection(db, 'users', uid, col);
+
+/** Reference to a document inside a user subcollection */
+const docRef   = (uid, col, id) => doc(db, 'users', uid, col, id);
+
+// ─── Load all user data ────────────────────────────────────────────────────
+
+/**
+ * Loads every user subcollection and the user profile.
+ * Meditations and phrases are system content (not per-user) — NOT fetched here.
+ */
+export async function loadUserData(uid) {
+  const SUBCOLS = ['tasks', 'habits', 'events', 'goals',
+                   'journalEntries', 'gratitudeEntries', 'notifications'];
+
+  const [profileSnap, ...snapshots] = await Promise.all([
+    getDoc(userRef(uid)),
+    ...SUBCOLS.map(col => getDocs(colRef(uid, col))),
+  ]);
+
+  const profile  = profileSnap.exists() ? profileSnap.data() : {};
+  const settings = profile.settings || {};
+  const userData = { uid, ...profile };
+
+  const result = { user: userData, settings };
+  SUBCOLS.forEach((col, i) => {
+    result[col] = snapshots[i].docs.map(d => ({ id: d.id, ...d.data() }));
+  });
+
+  return result;
+}
+
+// ─── Initial seed (new user) ───────────────────────────────────────────────
+
+/**
+ * Seeds Firestore with example data for a brand-new user.
+ * Skips if user already has data (idempotent).
+ */
+export async function seedInitialData(uid, userProfile, seedData) {
+  // Check if user already has data — if so, just update profile and stop
+  const existingTasksSnap = await getDocs(query(colRef(uid, 'tasks'), limit(1)));
+  const isNewUser = existingTasksSnap.empty;
+
+  // Always upsert the profile document
+  const profileData = {
+    name:      userProfile.name      || '',
+    firstName: userProfile.firstName || '',
+    email:     userProfile.email     || '',
+    photoURL:  userProfile.photoURL  || null,
+    joinDate:  new Date().toISOString().split('T')[0],
+    settings: { darkMode: false, language: 'es' },
+  };
+  await setDoc(userRef(uid), profileData, { merge: true });
+
+  // Only seed collections for brand-new users
+  if (!isNewUser) return;
+
+  const SUBCOLS = ['tasks', 'habits', 'events', 'goals',
+                   'journalEntries', 'gratitudeEntries',
+                   'phrases', 'notifications', 'meditations'];
+
+  const batch = writeBatch(db);
+  SUBCOLS.forEach(col => {
+    (seedData[col] || []).forEach(item => {
+      const { id, ...data } = item;
+      batch.set(docRef(uid, col, id || Date.now().toString()), data);
+    });
+  });
+  await batch.commit();
+}
+
+/**
+ * Deletes ALL user data in Firestore subcollections and re-seeds with fresh data.
+ * Use this to reset a user's demo data.
+ */
+export async function resetUserData(uid, userProfile, seedData) {
+  const SUBCOLS = ['tasks', 'habits', 'events', 'goals',
+                   'journalEntries', 'gratitudeEntries',
+                   'phrases', 'notifications', 'meditations'];
+
+  // Delete all documents in all subcollections (batched, max 500 per batch)
+  for (const col of SUBCOLS) {
+    const snap = await getDocs(colRef(uid, col));
+    if (snap.empty) continue;
+
+    // Delete in chunks of 400 to stay under Firestore batch limit
+    const chunks = [];
+    snap.docs.forEach((d, i) => {
+      const chunkIdx = Math.floor(i / 400);
+      if (!chunks[chunkIdx]) chunks[chunkIdx] = [];
+      chunks[chunkIdx].push(d.ref);
+    });
+
+    for (const chunk of chunks) {
+      const b = writeBatch(db);
+      chunk.forEach(ref => b.delete(ref));
+      await b.commit();
+    }
+  }
+
+  // Re-seed with fresh data (force — isNewUser check bypassed)
+  const profileData = {
+    name:      userProfile.name      || '',
+    firstName: userProfile.firstName || '',
+    email:     userProfile.email     || '',
+    photoURL:  userProfile.photoURL  || null,
+    joinDate:  userProfile.joinDate  || new Date().toISOString().split('T')[0],
+    settings:  userProfile.settings  || { darkMode: false, language: 'es' },
+  };
+  await setDoc(userRef(uid), profileData, { merge: true });
+
+  const batch = writeBatch(db);
+  SUBCOLS.forEach(col => {
+    (seedData[col] || []).forEach(item => {
+      const { id, ...data } = item;
+      batch.set(docRef(uid, col, id || `${col}_${Date.now()}`), data);
+    });
+  });
+  await batch.commit();
+}
+
+// ─── Profile / Settings ────────────────────────────────────────────────────
+
+export async function saveUserProfile(uid, updates) {
+  await updateDoc(userRef(uid), updates);
+}
+
+export async function saveSettings(uid, settings) {
+  await updateDoc(userRef(uid), { settings });
+}
+
+// ─── Tasks ─────────────────────────────────────────────────────────────────
+
+export async function saveTask(uid, task) {
+  const { id, ...data } = task;
+  await setDoc(docRef(uid, 'tasks', id), data);
+}
+
+export async function deleteTask(uid, taskId) {
+  await deleteDoc(docRef(uid, 'tasks', taskId));
+}
+
+// ─── Habits ────────────────────────────────────────────────────────────────
+
+export async function saveHabit(uid, habit) {
+  const { id, ...data } = habit;
+  await setDoc(docRef(uid, 'habits', id), data);
+}
+
+export async function deleteHabit(uid, habitId) {
+  await deleteDoc(docRef(uid, 'habits', habitId));
+}
+
+// ─── Events ────────────────────────────────────────────────────────────────
+
+export async function saveEvent(uid, event) {
+  const { id, ...data } = event;
+  await setDoc(docRef(uid, 'events', id), data);
+}
+
+export async function deleteEvent(uid, eventId) {
+  await deleteDoc(docRef(uid, 'events', eventId));
+}
+
+// ─── Goals ─────────────────────────────────────────────────────────────────
+
+export async function saveGoal(uid, goal) {
+  const { id, ...data } = goal;
+  await setDoc(docRef(uid, 'goals', id), data);
+}
+
+export async function deleteGoal(uid, goalId) {
+  await deleteDoc(docRef(uid, 'goals', goalId));
+}
+
+// ─── Journal ───────────────────────────────────────────────────────────────
+
+export async function saveJournalEntry(uid, entry) {
+  const { id, ...data } = entry;
+  await setDoc(docRef(uid, 'journalEntries', id || entry.date), data);
+}
+
+// ─── Gratitude ─────────────────────────────────────────────────────────────
+
+export async function saveGratitudeEntry(uid, entry) {
+  const { id, ...data } = entry;
+  await setDoc(docRef(uid, 'gratitudeEntries', id || entry.date), data);
+}
+
+// ─── Notifications ─────────────────────────────────────────────────────────
+
+export async function markNotificationRead(uid, notifId) {
+  await updateDoc(docRef(uid, 'notifications', notifId), { read: true });
+}
+
+export async function markAllNotificationsRead(uid, notifIds) {
+  const batch = writeBatch(db);
+  notifIds.forEach(id => {
+    batch.update(docRef(uid, 'notifications', id), { read: true });
+  });
+  await batch.commit();
+}

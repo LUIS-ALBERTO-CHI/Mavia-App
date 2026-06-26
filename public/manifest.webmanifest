@@ -1,0 +1,55 @@
+{
+  "name": "Mavia — Bienestar y Productividad",
+  "short_name": "Mavia",
+  "description": "Tu compañera de bienestar y productividad. Organiza tus tareas, hábitos y momentos de paz en un solo lugar.",
+  "theme_color": "#705765",
+  "background_color": "#FDF8F5",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "lang": "es",
+  "categories": ["lifestyle", "productivity", "health-fitness"],
+  "icons": [
+    {
+      "src": "pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "apple touch icon"
+    },
+    {
+      "src": "pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Mi día de hoy",
+      "url": "/?screen=dashboard",
+      "description": "Ver el resumen de tu día"
+    },
+    {
+      "name": "Mis Tareas",
+      "url": "/?screen=tasks",
+      "description": "Gestionar tareas pendientes"
+    },
+    {
+      "name": "Bienestar",
+      "url": "/?screen=wellness",
+      "description": "Sesiones de meditación y respiración"
+    }
+  ]
+}
