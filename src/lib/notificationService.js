@@ -69,6 +69,29 @@ export function getNotificationPermission() {
   return Notification.permission;
 }
 
+// ─── Time utilities ─────────────────────────────────────────────────────────
+
+/**
+ * Converts any time string to 24-hour "HH:MM" format.
+ * Handles: "05:15 PM", "05:15 AM", "17:15", "05:15"
+ */
+export function parseTimeTo24h(timeStr) {
+  if (!timeStr) return null;
+  const upper = timeStr.toUpperCase().trim();
+  const isPM  = upper.includes('PM');
+  const isAM  = upper.includes('AM');
+  const clean = upper.replace(/[AP]M/g, '').trim();
+  const [hStr, mStr] = clean.split(':');
+  let h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10) || 0;
+  if (isNaN(h)) return null;
+
+  if (isPM && h !== 12) h += 12;
+  if (isAM && h === 12) h = 0;
+
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
 // ─── Show notification ──────────────────────────────────────────────────────
 
 /**
@@ -111,10 +134,13 @@ export function showNotification(title, body, { icon = '/pwa-192x192.png', tag, 
  */
 export async function scheduleTaskReminder(task, uid, fcmToken) {
   if (!task?.reminder || !task?.date || !task?.time) return;
-  cancelReminder(task.id); // clear any previous timers for this task
+  cancelReminder(task.id);
 
-  const now   = Date.now();
-  const [h, m] = task.time.split(':').map(Number);
+  const now    = Date.now();
+  const time24 = parseTimeTo24h(task.time); // handle both "05:15 PM" and "17:15"
+  if (!time24) { console.warn('[Mavia] Invalid task time:', task.time); return; }
+
+  const [h, m] = time24.split(':').map(Number);
   const taskDt = new Date(`${task.date}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`);
   const taskMs = taskDt.getTime();
 
@@ -123,7 +149,7 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
     try {
       // 15-minute warning
       if (taskMs - 15 * 60 * 1000 > now) {
-        const warn15Dt = new Date(taskMs - 15 * 60 * 1000);
+        const warn15Dt   = new Date(taskMs - 15 * 60 * 1000);
         const warn15Date = warn15Dt.toISOString().split('T')[0];
         const warn15Time = `${String(warn15Dt.getHours()).padStart(2,'0')}:${String(warn15Dt.getMinutes()).padStart(2,'0')}`;
         await createScheduledNotification({
@@ -136,15 +162,13 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
         });
       }
 
-      // At exact task time
-      const taskDate = task.date;
-      const taskTime = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      // At exact task time — use the parsed 24h time
       const notifId = await createScheduledNotification({
         uid, fcmToken,
         title: `🌸 Es hora: ${task.title}`,
         body:  task.description || 'Tu tarea te está esperando',
-        scheduledDate: taskDate,
-        scheduledTime: taskTime,
+        scheduledDate: task.date,
+        scheduledTime: time24,  // always 24h format for cron matching
         data: { taskId: task.id, type: 'task-now' },
       });
 

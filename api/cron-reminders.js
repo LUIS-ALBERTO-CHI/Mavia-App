@@ -30,11 +30,20 @@ export default async function handler(req, res) {
     getAdminApp();
     const db = admin.firestore();
 
-    // Time window: now ± 60 seconds
-    const now        = new Date();
-    const todayStr   = now.toISOString().split('T')[0];
-    const padTime    = (d) => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    const currentMin = padTime(now);
+    // Get current time in Mexico City timezone (UTC-6)
+    // Using Intl.DateTimeFormat for accurate local time
+    const now = new Date();
+    const mexTime = new Intl.DateTimeFormat('es-MX', {
+      timeZone: 'America/Mexico_City',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    }).formatToParts(now);
+
+    const getPart = (type) => mexTime.find(p => p.type === type)?.value || '00';
+    const todayStr   = `${getPart('year')}-${getPart('month')}-${getPart('day')}`;
+    const currentMin = `${getPart('hour')}:${getPart('minute')}`;
+
+    console.log(`[Mavia Cron] Checking for notifications at ${todayStr} ${currentMin} (Mexico City)`);
 
     // Query scheduledNotifications collection for due, unsent notifications
     const snap = await db.collection('scheduledNotifications')
