@@ -1,0 +1,28 @@
+name: Send Scheduled Push Notifications
+
+on:
+  schedule:
+    # Runs every 10 minutes (GitHub Actions minimum is 5 min)
+    - cron: '*/10 * * * *'
+  # Allow manual trigger from GitHub Actions tab for testing
+  workflow_dispatch:
+
+jobs:
+  send-reminders:
+    name: Check and Send Due Notifications
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run reminder script
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/send-reminders.mjs
