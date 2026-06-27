@@ -1,13 +1,21 @@
 // ============================================
 // NOTIFICATION SERVICE — Mavia
-// Phase 1: Web Notification API (local scheduling)
-// Phase 2: FCM push (when VAPID key is added)
+// Phase 1: Web Notification API (local fallback)
+// Phase 2: FCM real push (browser open OR closed)
 // ============================================
+import { getMessagingInstance } from './firebase';
+import { getToken } from 'firebase/messaging';
+import { saveFCMToken, createScheduledNotification, deleteScheduledNotification } from './firestoreService';
 
-// Map of active timers: taskId → [timeoutId, ...]
+// VAPID key from Vercel env — set PUBLIC_FIREBASE_VAPID_KEY in your Vercel project settings
+const VAPID_KEY = import.meta.env.PUBLIC_FIREBASE_VAPID_KEY || '';
+
+// Map of active local timers: taskId → [timeoutId, ...]
 const _timers = new Map();
+// Map of taskId → scheduledNotification Firestore doc ID
+const _schedNotifIds = new Map();
 
-// ─── Permission ────────────────────────────────────────────────────────────
+// ─── Permission + FCM Token ─────────────────────────────────────────────────
 
 /**
  * Requests browser notification permission.
@@ -20,6 +28,40 @@ export async function requestNotificationPermission() {
 
   const result = await Notification.requestPermission();
   return result;
+}
+
+/**
+ * Initializes FCM: requests permission + gets push token.
+ * Returns the FCM token string, or null if unavailable.
+ * Call after login and save the token to Firestore.
+ */
+export async function initFCM(uid) {
+  try {
+    const permission = await requestNotificationPermission();
+    if (permission !== 'granted') return null;
+    if (!VAPID_KEY) {
+      console.warn('[Mavia] VAPID key not set — FCM push tokens unavailable. Set PUBLIC_FIREBASE_VAPID_KEY in Vercel.');
+      return null;
+    }
+
+    const messaging = await getMessagingInstance();
+    if (!messaging) return null;
+
+    const token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: await navigator.serviceWorker.register('/firebase-messaging-sw.js'),
+    });
+
+    if (token && uid) {
+      await saveFCMToken(uid, token);
+      console.log('[Mavia] FCM token saved:', token.slice(0, 20) + '...');
+    }
+
+    return token;
+  } catch (err) {
+    console.warn('[Mavia] FCM init error:', err.message);
+    return null;
+  }
 }
 
 export function getNotificationPermission() {
@@ -59,13 +101,15 @@ export function showNotification(title, body, { icon = '/pwa-192x192.png', tag, 
 // ─── Schedule reminders for a task ─────────────────────────────────────────
 
 /**
- * Schedules 1 or 2 notifications for a task:
- *   - 15 minutes before (if more than 15 min away)
- *   - At exact task time
+ * Schedules 1 or 2 notifications for a task.
+ * - If FCM token is available: creates Firestore documents (works even when browser is closed)
+ * - Fallback: setTimeout local notifications (only while browser is open)
  *
- * @param {Object} task — must have { id, title, date, time, reminder }
+ * @param {Object} task      — must have { id, title, date, time, reminder }
+ * @param {string} uid       — user ID (needed for Firestore scheduling)
+ * @param {string} fcmToken  — FCM push token (optional; enables background push)
  */
-export function scheduleTaskReminder(task) {
+export async function scheduleTaskReminder(task, uid, fcmToken) {
   if (!task?.reminder || !task?.date || !task?.time) return;
   cancelReminder(task.id); // clear any previous timers for this task
 
@@ -74,47 +118,85 @@ export function scheduleTaskReminder(task) {
   const taskDt = new Date(`${task.date}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`);
   const taskMs = taskDt.getTime();
 
-  const ids = [];
+  // ── FCM Firestore scheduling (background push — works even when browser closed) ──
+  if (uid && fcmToken && taskMs > now) {
+    try {
+      // 15-minute warning
+      if (taskMs - 15 * 60 * 1000 > now) {
+        const warn15Dt = new Date(taskMs - 15 * 60 * 1000);
+        const warn15Date = warn15Dt.toISOString().split('T')[0];
+        const warn15Time = `${String(warn15Dt.getHours()).padStart(2,'0')}:${String(warn15Dt.getMinutes()).padStart(2,'0')}`;
+        await createScheduledNotification({
+          uid, fcmToken,
+          title: `⏰ En 15 minutos: ${task.title}`,
+          body:  `Prepárate para tu tarea a las ${task.time}`,
+          scheduledDate: warn15Date,
+          scheduledTime: warn15Time,
+          data: { taskId: task.id, type: 'task-warn' },
+        });
+      }
 
-  // 15-minute warning
-  const warn15 = taskMs - 15 * 60 * 1000;
-  if (warn15 > now) {
-    const t = setTimeout(() => {
-      showNotification(
-        `⏰ En 15 minutos: ${task.title}`,
-        `Preparate para tu tarea a las ${task.time}`,
-        { tag: `task-warn-${task.id}`, data: { taskId: task.id } }
-      );
-    }, warn15 - now);
-    ids.push(t);
+      // At exact task time
+      const taskDate = task.date;
+      const taskTime = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      const notifId = await createScheduledNotification({
+        uid, fcmToken,
+        title: `🌸 Es hora: ${task.title}`,
+        body:  task.description || 'Tu tarea te está esperando',
+        scheduledDate: taskDate,
+        scheduledTime: taskTime,
+        data: { taskId: task.id, type: 'task-now' },
+      });
+
+      // Store the Firestore doc ID so we can delete it if the task is cancelled
+      _schedNotifIds.set(task.id, notifId);
+      console.log(`[Mavia] FCM push scheduled for "${task.title}" at ${task.time}`);
+      return; // FCM handles it — no need for local setTimeout
+    } catch (err) {
+      console.warn('[Mavia] Firestore scheduling failed, falling back to local:', err.message);
+    }
   }
 
-  // At task time
+  // ── Fallback: local setTimeout (only while browser is open) ──
+  const ids = [];
+
+  const warn15 = taskMs - 15 * 60 * 1000;
+  if (warn15 > now) {
+    ids.push(setTimeout(() => {
+      showNotification(`⏰ En 15 minutos: ${task.title}`, `Prepárate para tu tarea a las ${task.time}`,
+        { tag: `task-warn-${task.id}` });
+    }, warn15 - now));
+  }
+
   if (taskMs > now) {
-    const t = setTimeout(() => {
-      showNotification(
-        `🌸 Es hora: ${task.title}`,
-        task.description || 'Tu tarea te está esperando',
-        { tag: `task-now-${task.id}`, data: { taskId: task.id } }
-      );
-    }, taskMs - now);
-    ids.push(t);
+    ids.push(setTimeout(() => {
+      showNotification(`🌸 Es hora: ${task.title}`, task.description || 'Tu tarea te está esperando',
+        { tag: `task-now-${task.id}` });
+    }, taskMs - now));
   }
 
   if (ids.length > 0) {
     _timers.set(task.id, ids);
-    console.log(`[Mavia] Reminder scheduled for "${task.title}" at ${task.time}`);
+    console.log(`[Mavia] Local reminder scheduled for "${task.title}" at ${task.time}`);
   }
 }
 
 /**
  * Cancels all pending reminders for a task.
+ * Clears local timers AND deletes the Firestore scheduledNotification document.
  */
 export function cancelReminder(taskId) {
+  // Clear local timers
   const ids = _timers.get(taskId);
   if (ids) {
     ids.forEach(id => clearTimeout(id));
     _timers.delete(taskId);
+  }
+  // Delete Firestore scheduled notification (non-blocking)
+  const notifDocId = _schedNotifIds.get(taskId);
+  if (notifDocId) {
+    deleteScheduledNotification(notifDocId).catch(() => {});
+    _schedNotifIds.delete(taskId);
   }
 }
 

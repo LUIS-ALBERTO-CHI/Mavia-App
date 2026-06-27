@@ -6,7 +6,8 @@
 
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc,
-  collection, getDocs, writeBatch, query, limit,
+  collection, getDocs, writeBatch, addDoc, query, limit,
+  where, serverTimestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -197,6 +198,61 @@ export async function saveJournalEntry(uid, entry) {
   const { id, ...data } = entry;
   await setDoc(docRef(uid, 'journalEntries', id || entry.date), data);
 }
+
+// ─── FCM Token ─────────────────────────────────────────────────────────────
+
+/**
+ * Saves the FCM push token to the user profile.
+ * Called once after login when the browser grants notification permission.
+ */
+export async function saveFCMToken(uid, fcmToken) {
+  await updateDoc(userRef(uid), { fcmToken });
+}
+
+// ─── Scheduled Notifications ───────────────────────────────────────────────
+
+/**
+ * Creates a scheduled notification document in the root collection.
+ * The Vercel cron (/api/cron-reminders) queries this collection every minute.
+ *
+ * @param {Object} opts
+ * @param {string} opts.uid
+ * @param {string} opts.fcmToken
+ * @param {string} opts.title
+ * @param {string} opts.body
+ * @param {string} opts.scheduledDate  — 'YYYY-MM-DD'
+ * @param {string} opts.scheduledTime  — 'HH:MM'
+ * @param {Object} opts.data           — extra payload (taskId etc.)
+ * @returns {string} the created document ID
+ */
+export async function createScheduledNotification({ uid, fcmToken, title, body, scheduledDate, scheduledTime, data = {} }) {
+  const ref = await addDoc(collection(db, 'scheduledNotifications'), {
+    uid,
+    fcmToken,
+    title,
+    body,
+    scheduledDate,
+    scheduledTime,
+    data,
+    sent: false,
+    createdAt: serverTimestamp(),
+  });
+  return ref.id;
+}
+
+/**
+ * Deletes a scheduled notification by its Firestore document ID.
+ * Called when a task is deleted or marked complete before the reminder fires.
+ */
+export async function deleteScheduledNotification(notifDocId) {
+  if (!notifDocId) return;
+  try {
+    await deleteDoc(doc(db, 'scheduledNotifications', notifDocId));
+  } catch (e) {
+    console.warn('[Mavia] Could not delete scheduled notification:', e);
+  }
+}
+
 
 // ─── Gratitude ─────────────────────────────────────────────────────────────
 

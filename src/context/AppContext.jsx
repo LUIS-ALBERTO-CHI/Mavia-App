@@ -5,7 +5,7 @@ import { loadUserData, saveTask, deleteTask, saveHabit, saveEvent, deleteEvent,
          markNotificationRead, markAllNotificationsRead, saveUserProfile,
          saveSettings } from '../lib/firestoreService';
 import {
-  requestNotificationPermission,
+  initFCM,
   rescheduleAllReminders,
   scheduleTaskReminder,
   cancelReminder,
@@ -69,10 +69,11 @@ const emptyDataState = {
 
 const defaultState = {
   // Auth / session
-  authLoading:       true,    // true while Firebase checks session
+  authLoading:       true,
   isAuthenticated:   false,
   hasCompletedSetup: false,
   user:              { name: '', firstName: '', email: '', uid: null },
+  fcmToken:          null,  // FCM push token (stored after initFCM)
   // UI
   currentScreen:     'splash',
   screenParams:      null,
@@ -148,6 +149,9 @@ function reducer(state, action) {
 
     case 'SET_AUTHENTICATED':
       return { ...state, isAuthenticated: action.value, currentScreen: action.value ? 'dashboard' : 'login' };
+
+    case 'SET_FCM_TOKEN':
+      return { ...state, fcmToken: action.token };
 
     /* ── Navigation ── */
     case 'NAVIGATE':
@@ -307,8 +311,12 @@ export function AppProvider({ children }) {
           },
         });
 
-        // ── Notifications: request permission + re-schedule reminders ──
-        requestNotificationPermission().catch(() => {});
+        // ── Notifications: init FCM (permission + token) + re-schedule reminders ──
+        initFCM(firebaseUser.uid)
+          .then(token => {
+            if (token) dispatch({ type: 'SET_FCM_TOKEN', token });
+          })
+          .catch(() => {});
         const today = new Date().toISOString().split('T')[0];
         rescheduleAllReminders(data.tasks || []);
         scheduleHabitReminder(data.habits || []);
@@ -358,9 +366,9 @@ export function AppProvider({ children }) {
 
         case 'ADD_TASK':
           await saveTask(uid, enrichedAction.task);
-          // Schedule local reminder if the task has one
+          // Schedule reminder (FCM push if token available, local setTimeout as fallback)
           if (enrichedAction.task.reminder) {
-            scheduleTaskReminder(enrichedAction.task);
+            scheduleTaskReminder(enrichedAction.task, uid, state.fcmToken);
           }
           break;
 
@@ -380,9 +388,9 @@ export function AppProvider({ children }) {
           if (existingTask) {
             const updated = { ...existingTask, ...enrichedAction.task };
             await saveTask(uid, updated);
-            // Re-schedule if reminder settings changed
+            // Re-schedule reminder if settings changed
             cancelReminder(updated.id);
-            if (updated.reminder && !updated.completed) scheduleTaskReminder(updated);
+            if (updated.reminder && !updated.completed) scheduleTaskReminder(updated, uid, state.fcmToken);
           }
           break;
         }

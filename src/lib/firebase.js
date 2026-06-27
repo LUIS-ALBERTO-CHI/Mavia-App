@@ -5,6 +5,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getMessaging, isSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyDXc0fcSFElPR39MSkvBidGMuZpOrtBfIo",
@@ -29,5 +30,20 @@ export const db = getFirestore(app);
 // Google provider
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+// Firebase Cloud Messaging (only in browser, not SSR)
+export let messaging = null;
+export async function getMessagingInstance() {
+  if (messaging) return messaging;
+  try {
+    const supported = await isSupported();
+    if (supported) {
+      messaging = getMessaging(app);
+    }
+  } catch (e) {
+    console.warn('[Mavia] FCM not supported:', e);
+  }
+  return messaging;
+}
 
 export default app;
