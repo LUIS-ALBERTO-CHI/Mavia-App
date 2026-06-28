@@ -4,7 +4,11 @@
 
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from 'firebase/firestore';
 import { getMessaging, isSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
@@ -24,19 +28,18 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 auth.languageCode = 'es';
 
-// Firestore instance with offline persistence
-// This allows the app to serve cached data when the network is unavailable
-// and automatically sync when the connection is restored.
-export const db = getFirestore(app);
-enableIndexedDbPersistence(db).catch(err => {
-  if (err.code === 'failed-precondition') {
-    // Multiple tabs open — persistence only works in one tab at a time
-    console.warn('[Mavia] Firestore offline persistence: multiple tabs open');
-  } else if (err.code === 'unimplemented') {
-    // Browser doesn't support IndexedDB
-    console.warn('[Mavia] Firestore offline persistence not supported in this browser');
-  }
+// Firestore with:
+// - persistentLocalCache: IndexedDB offline cache (replaces deprecated enableIndexedDbPersistence)
+// - persistentMultipleTabManager: allows multiple tabs to share the cache
+// - experimentalAutoDetectLongPolling: auto-switches to WebSocket transport when
+//   HTTP long-polling is blocked by CORS (common in some network environments)
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
+  experimentalAutoDetectLongPolling: true,
 });
+
 
 // Google provider
 export const googleProvider = new GoogleAuthProvider();
