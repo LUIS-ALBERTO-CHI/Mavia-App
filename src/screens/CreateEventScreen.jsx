@@ -7,7 +7,9 @@ import {
 import { DatePicker } from '../components/ui/date-picker';
 import { TimePicker } from '../components/ui/time-picker';
 
-const today = new Date().toISOString().split('T')[0];
+import { localToday } from '../lib/utils';
+
+const today = localToday();
 
 const CATEGORIES = [
   { id: 'Marketing',  color: '#546347', bg: 'rgba(84,99,71,0.12)',  border: 'rgba(84,99,71,0.3)'  },

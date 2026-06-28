@@ -1,6 +1,7 @@
 import { useApp } from '../context/AppContext';
 import { Calendar, Clock, MapPin, Plus, Users, BookOpen, Briefcase, Heart } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { localToday, localDateOffset } from '../lib/utils';
 
 const TYPE_CONFIG = {
   'reunión':  { icon: Users,    bg: 'var(--secondary-container)', color: 'var(--secondary)' },
@@ -18,8 +19,8 @@ function groupByDate(events) {
 }
 
 function formatGroupDate(dateStr) {
-  const today    = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const today    = localToday();
+  const tomorrow = localDateOffset(1);
   if (dateStr === today)    return 'Hoy';
   if (dateStr === tomorrow) return 'Mañana';
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('es-MX', {
@@ -36,7 +37,7 @@ export default function EventsScreen() {
   const grouped = groupByDate(sorted);
   const dates   = Object.keys(grouped).sort();
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = localToday();
   const upcoming = sorted.filter(e => e.date >= today).length;
 
   return (

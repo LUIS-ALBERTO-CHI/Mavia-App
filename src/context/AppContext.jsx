@@ -1,4 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import { localToday } from '../lib/utils';
 import { onAuthChange } from '../lib/authService';
 import { loadUserData, saveTask, deleteTask, saveHabit, saveEvent, deleteEvent,
          saveGoal, saveJournalEntry, saveGratitudeEntry,
@@ -318,7 +319,7 @@ export function AppProvider({ children }) {
             if (token) dispatch({ type: 'SET_FCM_TOKEN', token });
           })
           .catch(() => {});
-        const today = new Date().toISOString().split('T')[0];
+        const today = localToday();
         rescheduleAllReminders(data.tasks || []);
         scheduleHabitReminder(data.habits || []);
         scheduleEventReminders((data.events || []).filter(e => e.date === today));

@@ -6,6 +6,7 @@ import { Input, Textarea } from '../components/ui/input';
 import { Switch } from '../components/ui/switch';
 import { DatePicker } from '../components/ui/date-picker';
 import { TimePicker } from '../components/ui/time-picker';
+import { localToday } from '../lib/utils';
 
 const CATEGORIES = [
   { id: 'Marketing',  dot: '#546347' },
@@ -16,7 +17,7 @@ const CATEGORIES = [
   { id: 'Salud',      dot: '#2e7d67' },
 ];
 
-const today = new Date().toISOString().split('T')[0];
+const today = localToday();
 
 export default function CreateTaskScreen() {
   const { state, dispatch, goBack, showToast } = useApp();

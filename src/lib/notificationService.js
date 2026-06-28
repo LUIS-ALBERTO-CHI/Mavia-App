@@ -6,6 +6,7 @@
 import { getMessagingInstance } from './firebase';
 import { getToken } from 'firebase/messaging';
 import { saveFCMToken, createScheduledNotification, deleteScheduledNotification } from './firestoreService';
+import { localToday, localDateStr } from './utils';
 
 // VAPID key from Vercel env — set PUBLIC_FIREBASE_VAPID_KEY in your Vercel project settings
 const VAPID_KEY = import.meta.env.PUBLIC_FIREBASE_VAPID_KEY || '';
@@ -150,7 +151,7 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
       // 15-minute warning
       if (taskMs - 15 * 60 * 1000 > now) {
         const warn15Dt   = new Date(taskMs - 15 * 60 * 1000);
-        const warn15Date = warn15Dt.toISOString().split('T')[0];
+        const warn15Date = localDateStr(warn15Dt);
         const warn15Time = `${String(warn15Dt.getHours()).padStart(2,'0')}:${String(warn15Dt.getMinutes()).padStart(2,'0')}`;
         await createScheduledNotification({
           uid, fcmToken,
@@ -233,7 +234,7 @@ export function rescheduleAllReminders(tasks = []) {
   _timers.forEach((ids) => ids.forEach(id => clearTimeout(id)));
   _timers.clear();
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = localToday();
   tasks.forEach(task => {
     // Only schedule for today and incomplete tasks with reminders
     if (task.reminder && !task.completed && task.date === today) {
@@ -284,7 +285,7 @@ export function scheduleHabitReminder(habits = []) {
  * @param {Array} events
  */
 export function scheduleEventReminders(events = []) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localToday();
   const now   = Date.now();
 
   events

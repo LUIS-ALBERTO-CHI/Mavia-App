@@ -1,6 +1,7 @@
 import { useApp } from '../context/AppContext';
 import AppIcon from '../components/AppIcon';
 import LottieIcon from '../components/LottieIcon';
+import { localToday } from '../lib/utils';
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -13,7 +14,7 @@ export default function DashboardScreen() {
   const { state, navigate, dispatch, showToast } = useApp();
   const { user, tasks, events, habits, phrases, darkMode } = state;
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = localToday();
   const todayTasks  = tasks.filter(t => t.date === today);
   const completedToday = todayTasks.filter(t => t.completed).length;
   const pendingCount   = todayTasks.filter(t => !t.completed).length;

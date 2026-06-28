@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Search, Clock, Edit2, Trash2, AlarmClock, Leaf, Bell, AlertCircle } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
+import { localToday, localDateOffset } from '../lib/utils';
 
 const FILTERS = ['Todos', 'Hoy', 'Próximos', 'Vencidos'];
 
@@ -25,8 +26,8 @@ function ReminderIcon({ category, priority }) {
 
 // Human-readable date label
 function dayLabel(dateStr) {
-  const today    = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const today    = localToday();
+  const tomorrow = localDateOffset(1);
   if (dateStr === today)    return 'Hoy';
   if (dateStr === tomorrow) return 'Mañana';
   const d = new Date(dateStr + 'T00:00:00');
@@ -39,8 +40,8 @@ export default function RemindersScreen() {
   const [activeFilter, setActiveFilter] = useState('Todos');
   const [search, setSearch] = useState('');
 
-  const todayStr    = new Date().toISOString().split('T')[0];
-  const tomorrowStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const todayStr    = localToday();
+  const tomorrowStr = localDateOffset(1);
 
   // All tasks with reminder flag
   const all = state.tasks.filter(t => t.reminder);

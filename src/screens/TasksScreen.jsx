@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import LottieIcon from '../components/LottieIcon';
 import { Search, Clock, MoreVertical, Check, Trash2, ChevronRight } from 'lucide-react';
+import { localToday, localDateOffset } from '../lib/utils';
 
 const FILTERS = ['Hoy', 'Mañana', 'Semana', 'Urgentes', 'Marketing', 'Personal', 'Espiritual'];
 
@@ -16,9 +17,9 @@ export default function TasksScreen() {
   const activeFilter = state.activeFilter || 'Hoy';
   const [search, setSearch] = useState('');
 
-  const today   = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-  const weekEnd  = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+  const today    = localToday();
+  const tomorrow = localDateOffset(1);
+  const weekEnd  = localDateOffset(7);
 
   const getFiltered = () => {
     let base;
@@ -516,7 +517,7 @@ function TaskCard({ task, onToggle, onDelete, onOpen }) {
           )}
           {task.date && (
             <span className="ts-time">
-              {task.date === new Date().toISOString().split('T')[0] ? 'Hoy' : task.date}
+              {task.date === localToday() ? 'Hoy' : task.date}
             </span>
           )}
         </div>
