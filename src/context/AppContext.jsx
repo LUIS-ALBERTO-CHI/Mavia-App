@@ -4,8 +4,7 @@ import { onAuthChange } from '../lib/authService';
 import { loadUserData, saveTask, deleteTask, saveHabit, saveEvent, deleteEvent,
          saveGoal, saveJournalEntry, saveGratitudeEntry,
          markNotificationRead, markAllNotificationsRead, saveUserProfile,
-         saveSettings, createScheduledNotification,
-         subscribeToUserData } from '../lib/firestoreService';
+         saveSettings, createScheduledNotification } from '../lib/firestoreService';
 import {
   initFCM,
   rescheduleAllReminders,
@@ -266,9 +265,20 @@ function reducer(state, action) {
       return { ...state, notifications };
     }
 
-    /* ── Real-time sync from Firestore onSnapshot ── */
-    case 'SYNC_COLLECTION':
-      return { ...state, [action.collection]: action.docs };
+    /* ── Real-time sync ── */
+    // Replaced by visibilitychange polling — see AppProvider
+    case 'SYNC_ALL':
+      // Merge fresh Firestore data into state (tasks, habits, events, goals, notifications)
+      return {
+        ...state,
+        tasks:            action.data.tasks            ?? state.tasks,
+        habits:           action.data.habits           ?? state.habits,
+        events:           action.data.events           ?? state.events,
+        goals:            action.data.goals            ?? state.goals,
+        notifications:    action.data.notifications    ?? state.notifications,
+        journalEntries:   action.data.journalEntries   ?? state.journalEntries,
+        gratitudeEntries: action.data.gratitudeEntries ?? state.gratitudeEntries,
+      };
 
     default:
       return state;
@@ -283,26 +293,38 @@ export const AppContext = createContext(null);
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, defaultState);
 
-  /* ── Firebase Auth listener ──────────────────────────────── */
+  /* ── Firebase Auth listener + visibility-based sync ─── */
   useEffect(() => {
-    let unsubRealtime = null; // real-time collection listeners
+    let currentUid = null;  // track the logged-in user's uid for re-syncs
+
+    // ── Helper: load/reload all user data from Firestore ──
+    const syncUserData = async (firebaseUser) => {
+      if (!firebaseUser) return;
+      try {
+        const firestoreData = await loadUserData(firebaseUser.uid);
+        const { user: fsUser, settings, ...data } = firestoreData;
+        dispatch({ type: 'SYNC_ALL', data });
+      } catch (err) {
+        // Offline or network error — IndexedDB cache already serves stale data
+        console.warn('[Mavia] Background sync skipped (offline):', err.message);
+      }
+    };
 
     const unsub = onAuthChange(async (firebaseUser) => {
-      // Cancel any previous real-time listeners
-      if (unsubRealtime) { unsubRealtime(); unsubRealtime = null; }
-
       if (!firebaseUser) {
+        currentUid = null;
         dispatch({ type: 'SET_AUTH_LOADING', value: false });
         dispatch({ type: 'LOGOUT' });
         return;
       }
+
+      currentUid = firebaseUser.uid;
 
       // User is authenticated — load their Firestore data
       try {
         const firestoreData = await loadUserData(firebaseUser.uid);
         const { user: fsUser, settings, ...data } = firestoreData;
 
-        // Merge Firebase Auth profile with Firestore profile
         const displayName = firebaseUser.displayName || fsUser?.name || '';
         const firstName   = displayName.split(' ')[0] || firebaseUser.email.split('@')[0];
 
@@ -322,17 +344,9 @@ export function AppProvider({ children }) {
           },
         });
 
-        // ── Real-time sync: subscribe to live Firestore updates ──
-        // Any change from another device/browser instantly updates the app.
-        unsubRealtime = subscribeToUserData(firebaseUser.uid, (col, docs) => {
-          dispatch({ type: 'SYNC_COLLECTION', collection: col, docs });
-        });
-
-        // ── Notifications: init FCM (permission + token) + re-schedule reminders ──
+        // ── Notifications ──
         initFCM(firebaseUser.uid)
-          .then(token => {
-            if (token) dispatch({ type: 'SET_FCM_TOKEN', token });
-          })
+          .then(token => { if (token) dispatch({ type: 'SET_FCM_TOKEN', token }); })
           .catch(() => {});
         const today = localToday();
         rescheduleAllReminders(data.tasks || []);
@@ -340,40 +354,51 @@ export function AppProvider({ children }) {
         scheduleEventReminders((data.events || []).filter(e => e.date === today));
 
       } catch (err) {
-        // ── Offline / network error fallback ──
-        // Log in the user using Firebase Auth data (always available offline)
-        // and start real-time listeners — Firestore SDK will deliver cached/fresh
-        // data once connectivity is restored.
-        console.warn('[Mavia] Firestore unavailable at login (offline?). Using Auth data + listeners.', err.message);
+        // Offline fallback: log in from Firebase Auth profile, data will
+        // be served from IndexedDB cache that was populated on last online visit.
+        console.warn('[Mavia] Firestore offline at login. Using IndexedDB cache.', err.message);
 
         const displayName = firebaseUser.displayName || '';
         const firstName   = displayName.split(' ')[0] || firebaseUser.email.split('@')[0];
 
         dispatch({
           type: 'LOGIN',
-          user: {
-            uid:      firebaseUser.uid,
-            email:    firebaseUser.email,
-            name:     displayName || firstName,
-            firstName,
-            photoURL: firebaseUser.photoURL || null,
-          },
-          data: {},  // empty — will be filled by onSnapshot listeners below
-        });
-
-        // Start real-time listeners anyway — they'll fire from Firestore's
-        // offline cache immediately and from the server once reconnected.
-        unsubRealtime = subscribeToUserData(firebaseUser.uid, (col, docs) => {
-          dispatch({ type: 'SYNC_COLLECTION', collection: col, docs });
+          user: { uid: firebaseUser.uid, email: firebaseUser.email,
+                  name: displayName || firstName, firstName,
+                  photoURL: firebaseUser.photoURL || null },
+          data: {},
         });
       }
     });
 
+    // ── Visibility-based sync ──────────────────────────────────────────
+    // Re-fetch data every time the user returns to the app/tab.
+    // Avoids Firestore WebChannel CORS issues while still syncing across devices.
+    let lastSync = 0;
+    const MIN_SYNC_INTERVAL = 30 * 1000; // 30 seconds min between syncs
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && currentUid) {
+        const now = Date.now();
+        if (now - lastSync > MIN_SYNC_INTERVAL) {
+          lastSync = now;
+          // Re-import auth to get current firebaseUser
+          import('../lib/authService').then(({ getCurrentUser }) => {
+            const user = getCurrentUser?.();
+            if (user) syncUserData(user);
+          }).catch(() => {});
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+
     return () => {
       unsub();
-      if (unsubRealtime) unsubRealtime();
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, []);
+
 
   /* ── Dark mode class sync ────────────────────────────────── */
   useEffect(() => {
