@@ -3,7 +3,7 @@ import { onAuthChange } from '../lib/authService';
 import { loadUserData, saveTask, deleteTask, saveHabit, saveEvent, deleteEvent,
          saveGoal, saveJournalEntry, saveGratitudeEntry,
          markNotificationRead, markAllNotificationsRead, saveUserProfile,
-         saveSettings } from '../lib/firestoreService';
+         saveSettings, createScheduledNotification } from '../lib/firestoreService';
 import {
   initFCM,
   rescheduleAllReminders,
@@ -11,6 +11,7 @@ import {
   cancelReminder,
   scheduleHabitReminder,
   scheduleEventReminders,
+  parseTimeTo24h,
 } from '../lib/notificationService';
 
 /* ============================================
@@ -432,9 +433,59 @@ export function AppProvider({ children }) {
           break;
         }
 
-        case 'ADD_EVENT':
-          await saveEvent(uid, enrichedAction.event);
+        case 'ADD_EVENT': {
+          const ev = enrichedAction.event;
+          await saveEvent(uid, ev);
+
+          // ── Schedule event reminder via FCM (works even with browser closed) ──
+          if (ev.reminderOn !== false && ev.startTime) {
+            const token = state.fcmToken;
+            const time24 = parseTimeTo24h(ev.startTime);
+
+            if (token && uid && time24) {
+              try {
+                // Parse reminder offset (default: 15 min before)
+                const reminderStr = ev.reminder || '15 minutos antes';
+                let offsetMin = 15;
+                if (reminderStr.includes('30')) offsetMin = 30;
+                else if (reminderStr.includes('1 hora')) offsetMin = 60;
+                else if (reminderStr.includes('1 día')) offsetMin = 60 * 24;
+
+                const [h, m] = time24.split(':').map(Number);
+                const eventDt = new Date(`${ev.date}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`);
+                const notifDt = new Date(eventDt.getTime() - offsetMin * 60 * 1000);
+
+                if (notifDt > new Date()) {
+                  const notifDate = notifDt.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+                  const notifTime = notifDt.toLocaleTimeString('es-MX', {
+                    timeZone: 'America/Mexico_City',
+                    hour: '2-digit', minute: '2-digit', hour12: false,
+                  });
+
+                  await createScheduledNotification({
+                    uid,
+                    fcmToken: token,
+                    title: `📅 ${offsetMin < 60 ? `En ${offsetMin} min` : offsetMin === 60 ? 'En 1 hora' : 'Mañana'}: ${ev.title}`,
+                    body: ev.location ? `📍 ${ev.location}` : `Tu evento comienza a las ${ev.startTime}`,
+                    scheduledDate: notifDate,
+                    scheduledTime: notifTime,
+                    data: { eventId: ev.id, type: 'event-reminder' },
+                  });
+                  console.log(`[Mavia] 📅 Recordatorio FCM para "${ev.title}" a las ${notifDate} ${notifTime}`);
+                }
+              } catch (err) {
+                console.warn('[Mavia] No se pudo programar recordatorio FCM del evento:', err.message);
+                // Fallback: local setTimeout
+                scheduleEventReminders([ev]);
+              }
+            } else {
+              // No FCM token — fallback to local setTimeout
+              scheduleEventReminders([ev]);
+              if (!token) console.warn('[Mavia] Sin token FCM — recordatorio de evento solo local (requiere app abierta)');
+            }
+          }
           break;
+        }
 
         case 'DELETE_EVENT':
           await deleteEvent(uid, enrichedAction.id);

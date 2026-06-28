@@ -1,6 +1,7 @@
 import { useContext, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import './styles/design-system.css';
+import TestPushButton from './components/TestPushButton';
 
 // Screens - Auth
 import SplashScreen from './screens/SplashScreen';
@@ -377,8 +378,10 @@ function AppContent() {
       {/* Mobile: bottom nav */}
       <MobileBottomNav />
 
-
       <Toast />
+
+      {/* Test push button — diagnóstico de notificaciones */}
+      <TestPushButton />
     </div>
   );
 }

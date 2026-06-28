@@ -18,7 +18,7 @@ const CATEGORIES = [
 const REMINDER_OPTIONS = ['15 minutos antes', '30 minutos antes', '1 hora antes', '1 día antes'];
 
 export default function CreateEventScreen() {
-  const { dispatch, navigate, showToast } = useApp();
+  const { dispatch, navigate, showToast, state } = useApp();
 
   const [form, setForm] = useState({
     title:     '',
@@ -44,15 +44,18 @@ export default function CreateEventScreen() {
     dispatch({
       type: 'ADD_EVENT',
       event: {
-        id:        Date.now().toString(),
-        title:     form.title,
-        date:      form.date,
-        startTime: form.startTime,
-        location:  form.location,
-        category:  form.category,
-        notes:     form.notes,
-        color:     CATEGORIES.find(c => c.id === form.category)?.color || '#705765',
-        type:      form.category.toLowerCase(),
+        id:          Date.now().toString(),
+        title:       form.title,
+        date:        form.date,
+        startTime:   form.startTime,
+        location:    form.location,
+        category:    form.category,
+        notes:       form.notes,
+        color:       CATEGORIES.find(c => c.id === form.category)?.color || '#705765',
+        type:        form.category.toLowerCase(),
+        // ── Reminder fields — needed by AppContext to schedule FCM push ──
+        reminderOn:  form.reminderOn,
+        reminder:    form.reminder,
       },
     });
 
