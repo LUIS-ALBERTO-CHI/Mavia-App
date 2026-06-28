@@ -470,13 +470,15 @@ export function AppProvider({ children }) {
                   await createScheduledNotification({
                     uid,
                     fcmToken: token,
-                    title: `📅 ${offsetMin < 60 ? `En ${offsetMin} min` : offsetMin === 60 ? 'En 1 hora' : 'Mañana'}: ${ev.title}`,
-                    body: ev.location ? `📍 ${ev.location}` : `Tu evento comienza a las ${ev.startTime}`,
+                    title: `${offsetMin < 60 ? `En ${offsetMin} minutos` : offsetMin === 60 ? 'En 1 hora' : 'Mañana'}: ${ev.title}`,
+                    body: ev.location
+                      ? `${ev.startTime} — ${ev.location}`
+                      : `Tu evento comienza a las ${ev.startTime}`,
                     scheduledDate: notifDate,
                     scheduledTime: notifTime,
                     data: { eventId: ev.id, type: 'event-reminder' },
                   });
-                  console.log(`[Mavia] 📅 Recordatorio FCM para "${ev.title}" a las ${notifDate} ${notifTime}`);
+                  console.log(`[Mavia] Recordatorio FCM para "${ev.title}" a las ${notifDate} ${notifTime}`);
                 }
               } catch (err) {
                 console.warn('[Mavia] No se pudo programar recordatorio FCM del evento:', err.message);

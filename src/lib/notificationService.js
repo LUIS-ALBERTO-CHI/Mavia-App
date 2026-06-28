@@ -155,8 +155,8 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
         const warn15Time = `${String(warn15Dt.getHours()).padStart(2,'0')}:${String(warn15Dt.getMinutes()).padStart(2,'0')}`;
         await createScheduledNotification({
           uid, fcmToken,
-          title: `⏰ En 15 minutos: ${task.title}`,
-          body:  `Prepárate para tu tarea a las ${task.time}`,
+          title: `En 15 minutos: ${task.title}`,
+          body:  `Tu tarea comienza a las ${task.time}`,
           scheduledDate: warn15Date,
           scheduledTime: warn15Time,
           data: { taskId: task.id, type: 'task-warn' },
@@ -166,10 +166,10 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
       // At exact task time — use the parsed 24h time
       const notifId = await createScheduledNotification({
         uid, fcmToken,
-        title: `🌸 Es hora: ${task.title}`,
-        body:  task.description || 'Tu tarea te está esperando',
+        title: `Es hora: ${task.title}`,
+        body:  task.description || `Tu tarea comienza ahora`,
         scheduledDate: task.date,
-        scheduledTime: time24,  // always 24h format for cron matching
+        scheduledTime: time24,
         data: { taskId: task.id, type: 'task-now' },
       });
 
@@ -189,15 +189,21 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
   const warn15 = taskMs - 15 * 60 * 1000;
   if (warn15 > now) {
     ids.push(setTimeout(() => {
-      showNotification(`⏰ En 15 minutos: ${task.title}`, `Prepárate para tu tarea a las ${task.time}`,
-        { tag: `task-warn-${task.id}` });
+      showNotification(
+        `En 15 minutos: ${task.title}`,
+        `Tu tarea comienza a las ${task.time}`,
+        { tag: `task-warn-${task.id}` }
+      );
     }, warn15 - now));
   }
 
   if (taskMs > now) {
     ids.push(setTimeout(() => {
-      showNotification(`🌸 Es hora: ${task.title}`, task.description || 'Tu tarea te está esperando',
-        { tag: `task-now-${task.id}` });
+      showNotification(
+        `Es hora: ${task.title}`,
+        task.description || `Tu tarea comienza ahora`,
+        { tag: `task-now-${task.id}` }
+      );
     }, taskMs - now));
   }
 
@@ -272,8 +278,8 @@ export function scheduleHabitReminder(habits = []) {
   _habitTimer.id = setTimeout(() => {
     const names = incomplete.slice(0, 3).map(h => h.name).join(', ');
     showNotification(
-      '🌿 Tus hábitos te esperan',
-      `Aún tienes pendiente: ${names}${incomplete.length > 3 ? ' y más...' : ''}`,
+      'Hábitos pendientes',
+      `Tienes pendiente: ${names}${incomplete.length > 3 ? ' y más' : ''}`,
       { tag: 'habit-reminder' }
     );
   }, delay);
@@ -299,7 +305,7 @@ export function scheduleEventReminders(events = []) {
       if (warn30 > now) {
         setTimeout(() => {
           showNotification(
-            `📅 En 30 min: ${ev.title}`,
+            `En 30 minutos: ${ev.title}`,
             `Tu evento comienza a las ${ev.startTime}`,
             { tag: `event-${ev.id}`, data: { eventId: ev.id } }
           );

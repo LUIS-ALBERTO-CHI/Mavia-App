@@ -630,10 +630,9 @@ export default function DashboardScreen() {
                       <span className={`task-item-text${task.completed ? ' done' : ''}`}>
                         {task.title}
                       </span>
-                      {(task.priority === 'alta' || i === 0) && (
-                        <span className="task-priority-today">Hoy</span>
-                      )}
-                      {task.priority !== 'alta' && i !== 0 && task.category && (
+                      {/* All tasks here are already filtered for today — show Hoy on all */}
+                      <span className="task-priority-today">Hoy</span>
+                      {task.category && (
                         <span className="task-category-label">{task.category}</span>
                       )}
                     </div>
