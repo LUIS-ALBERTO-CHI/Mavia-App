@@ -4,11 +4,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import {
-  initializeFirestore,
-  persistentLocalCache,
-  persistentMultipleTabManager,
-} from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 import { getMessaging, isSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
@@ -28,17 +24,10 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 auth.languageCode = 'es';
 
-// Firestore with:
-// - persistentLocalCache: IndexedDB offline cache (replaces deprecated enableIndexedDbPersistence)
-// - persistentMultipleTabManager: allows multiple tabs to share the cache
-// - experimentalAutoDetectLongPolling: auto-switches to WebSocket transport when
-//   HTTP long-polling is blocked by CORS (common in some network environments)
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
-  }),
-  experimentalAutoDetectLongPolling: true,
-});
+// Firestore — simple setup without custom cache.
+// We no longer use onSnapshot() so there are no WebChannel CORS errors.
+// Data reads/writes use standard REST calls which work correctly.
+export const db = getFirestore(app);
 
 
 // Google provider
