@@ -25,10 +25,12 @@ export default function SplashScreen() {
           z-index: 999;
         }
 
-        .splash-flower {
-          font-size: 4.5rem;
-          animation: floatSlow 3s ease-in-out infinite;
-          filter: drop-shadow(0 8px 24px rgba(212, 130, 158, 0.3));
+        .splash-icon {
+          width: 96px;
+          height: 96px;
+          border-radius: 26px;
+          animation: floatSlow 3s ease-in-out infinite, scaleIn 0.7s var(--ease-spring) both;
+          box-shadow: 0 12px 40px rgba(107,69,88,0.35), 0 4px 16px rgba(212,130,158,0.3);
         }
 
         .splash-logo {
@@ -83,13 +85,14 @@ export default function SplashScreen() {
       `}</style>
 
       <div className="splash">
-        {/* Decorative elements */}
-        <span className="splash-deco" style={{ top: '12%', left: '10%', transform: 'rotate(-20deg)' }}>🌿</span>
-        <span className="splash-deco" style={{ top: '20%', right: '8%', fontSize: '1.5rem' }}>⭐</span>
-        <span className="splash-deco" style={{ bottom: '22%', left: '8%', fontSize: '1.5rem' }}>🌙</span>
-        <span className="splash-deco" style={{ bottom: '15%', right: '12%', transform: 'rotate(10deg)' }}>🌿</span>
 
-        <div className="splash-flower">🌸</div>
+        <img
+          src="/favicon.svg"
+          className="splash-icon"
+          alt="Mavia logo"
+          width="96"
+          height="96"
+        />
         <div className="splash-logo">Mavia</div>
         <p className="splash-tagline">Organiza tu día,<br/>cuida tu mente.</p>
         <div className="splash-loader">

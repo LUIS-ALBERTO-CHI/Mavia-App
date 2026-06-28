@@ -92,6 +92,19 @@ export default function TopBar() {
           text-overflow: ellipsis;
         }
 
+        .topbar-logo-wrap {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .topbar-logo-img {
+          width: 30px;
+          height: 30px;
+          border-radius: 9px;
+          flex-shrink: 0;
+        }
+
         .topbar-logo {
           font-family: var(--font-display);
           font-size: var(--text-2xl);
@@ -176,8 +189,11 @@ export default function TopBar() {
         {isHome ? (
           <>
             <div className="topbar-title-wrap">
-              <span className="topbar-logo">Mavia 🌸</span>
+            <div className="topbar-logo-wrap">
+              <img src="/favicon.svg" className="topbar-logo-img" alt="Mavia" width="30" height="30" />
+              <span className="topbar-logo">Mavia</span>
             </div>
+          </div>
             <div className="topbar-actions">
               <button
                 className="topbar-btn notif-btn"
