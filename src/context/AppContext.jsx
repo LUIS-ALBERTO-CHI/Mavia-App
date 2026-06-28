@@ -340,8 +340,32 @@ export function AppProvider({ children }) {
         scheduleEventReminders((data.events || []).filter(e => e.date === today));
 
       } catch (err) {
-        console.error('[Mavia] Error loading user data:', err);
-        dispatch({ type: 'SET_AUTH_LOADING', value: false });
+        // ── Offline / network error fallback ──
+        // Log in the user using Firebase Auth data (always available offline)
+        // and start real-time listeners — Firestore SDK will deliver cached/fresh
+        // data once connectivity is restored.
+        console.warn('[Mavia] Firestore unavailable at login (offline?). Using Auth data + listeners.', err.message);
+
+        const displayName = firebaseUser.displayName || '';
+        const firstName   = displayName.split(' ')[0] || firebaseUser.email.split('@')[0];
+
+        dispatch({
+          type: 'LOGIN',
+          user: {
+            uid:      firebaseUser.uid,
+            email:    firebaseUser.email,
+            name:     displayName || firstName,
+            firstName,
+            photoURL: firebaseUser.photoURL || null,
+          },
+          data: {},  // empty — will be filled by onSnapshot listeners below
+        });
+
+        // Start real-time listeners anyway — they'll fire from Firestore's
+        // offline cache immediately and from the server once reconnected.
+        unsubRealtime = subscribeToUserData(firebaseUser.uid, (col, docs) => {
+          dispatch({ type: 'SYNC_COLLECTION', collection: col, docs });
+        });
       }
     });
 
