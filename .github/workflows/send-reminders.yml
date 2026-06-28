@@ -2,8 +2,9 @@ name: Send Scheduled Push Notifications
 
 on:
   schedule:
-    # Runs every 10 minutes (GitHub Actions minimum is 5 min)
-    - cron: '*/10 * * * *'
+    # Runs every minute for precise notification delivery
+    # Note: GitHub Actions may batch runs if queue is full, but typically fires every 1-2 min
+    - cron: '* * * * *'
   # Allow manual trigger from GitHub Actions tab for testing
   workflow_dispatch:
 

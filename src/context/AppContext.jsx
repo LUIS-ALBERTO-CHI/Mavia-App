@@ -368,9 +368,13 @@ export function AppProvider({ children }) {
 
         case 'ADD_TASK':
           await saveTask(uid, enrichedAction.task);
-          // Schedule reminder (FCM push if token available, local setTimeout as fallback)
+          // Schedule reminder — always do both:
+          //   1. FCM Firestore (works when browser is closed, sent by GitHub Actions cron)
+          //   2. Local setTimeout (works immediately if browser is open — backup for cron lag)
           if (enrichedAction.task.reminder) {
-            scheduleTaskReminder(enrichedAction.task, uid, state.fcmToken);
+            // Get the best available token (state may not have it yet due to async initFCM)
+            const token = state.fcmToken || state.user?.fcmToken || null;
+            scheduleTaskReminder(enrichedAction.task, uid, token);
           }
           break;
 

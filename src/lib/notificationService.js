@@ -176,13 +176,14 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
       // Store the Firestore doc ID so we can delete it if the task is cancelled
       _schedNotifIds.set(task.id, notifId);
       console.log(`[Mavia] FCM push scheduled for "${task.title}" at ${task.time}`);
-      return; // FCM handles it — no need for local setTimeout
+      // NOTE: we do NOT return here — we also set local timers below as backup
     } catch (err) {
-      console.warn('[Mavia] Firestore scheduling failed, falling back to local:', err.message);
+      console.warn('[Mavia] Firestore scheduling failed, falling back to local only:', err.message);
     }
   }
 
-  // ── Fallback: local setTimeout (only while browser is open) ──
+  // ── Local setTimeout — ALWAYS runs as backup (fires immediately when browser is open) ──
+  // This is the primary mechanism for on-device reminders and testing.
   const ids = [];
 
   const warn15 = taskMs - 15 * 60 * 1000;
