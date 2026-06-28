@@ -5,7 +5,17 @@ export default function SplashScreen() {
   const { navigate } = useApp();
 
   useEffect(() => {
-    const timer = setTimeout(() => navigate('onboarding'), 2800);
+    const timer = setTimeout(() => {
+      // Check if user has already seen onboarding
+      const hasSeenOnboarding = localStorage.getItem('mavia_onboarding_done');
+      if (hasSeenOnboarding) {
+        // Returning user: go straight to login (auth state will redirect to dashboard if already logged in)
+        navigate('login');
+      } else {
+        // First launch ever: show onboarding slides
+        navigate('onboarding');
+      }
+    }, 2200);
     return () => clearTimeout(timer);
   }, []);
 

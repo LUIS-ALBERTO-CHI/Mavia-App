@@ -42,8 +42,14 @@ export default function OnboardingScreen() {
   const slide = SLIDES[current];
   const isLast = current === SLIDES.length - 1;
 
+  // Mark onboarding as done so it never shows again
+  const markDone = () => {
+    localStorage.setItem('mavia_onboarding_done', '1');
+  };
+
   const goNext = () => {
     if (isLast) {
+      markDone();
       navigate('register');
     } else {
       setDirection('left');
@@ -56,6 +62,11 @@ export default function OnboardingScreen() {
       setDirection('right');
       setCurrent(c => c - 1);
     }
+  };
+
+  const handleSkip = () => {
+    markDone();
+    navigate('register');
   };
 
   return (
@@ -204,7 +215,7 @@ export default function OnboardingScreen() {
                 ← Anterior
               </button>
             ) : (
-              <button className="ob-skip" onClick={() => navigate('register')} id="ob-skip">
+              <button className="ob-skip" onClick={handleSkip} id="ob-skip">
                 Omitir
               </button>
             )}
