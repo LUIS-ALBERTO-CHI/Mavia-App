@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import LottieIcon from '../components/LottieIcon';
 import { Search, Clock, MoreVertical, Check, Trash2, ChevronRight } from 'lucide-react';
@@ -16,6 +16,18 @@ export default function TasksScreen() {
   const { state, dispatch, navigate, showToast } = useApp();
   const activeFilter = state.activeFilter || 'Hoy';
   const [search, setSearch] = useState('');
+  const chipsRef = useRef(null);
+
+  // Auto-scroll the selected chip into view
+  const handleFilter = (f, e) => {
+    dispatch({ type: 'SET_FILTER', filter: f });
+    // Scroll the clicked button into view within the chips container
+    e.currentTarget.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center',
+    });
+  };
 
   const today    = localToday();
   const tomorrow = localDateOffset(1);
@@ -115,37 +127,35 @@ export default function TasksScreen() {
 
         /* ---- Filter chips ---- */
         .ts-chips {
-          display: flex;
-          gap: var(--space-sm);
-          overflow-x: auto;
-          padding-bottom: var(--space-sm);
+          /* Uses global .scroll-x-row for breakout scrolling */
           margin-bottom: var(--space-xl);
-          scrollbar-width: none;
         }
 
-        .ts-chips::-webkit-scrollbar { display: none; }
-
         .ts-chip {
-          padding: 0.5rem 1.25rem;
+          padding: 8px 18px;
           border-radius: 9999px;
           font-size: var(--text-label-md);
           font-weight: 500;
           white-space: nowrap;
           cursor: pointer;
-          border: 1px solid var(--outline-variant);
+          border: none;
           background: var(--surface-container-high);
           color: var(--on-surface-variant);
-          transition: all var(--transition-fast);
+          transition: all 0.2s ease;
           flex-shrink: 0;
+          letter-spacing: 0.01em;
         }
 
-        .ts-chip:hover { background: var(--surface-container); }
+        .ts-chip:hover {
+          background: var(--surface-container-highest, #ede8ec);
+          color: var(--on-surface);
+        }
 
         .ts-chip.active {
           background: var(--primary);
           color: var(--on-primary);
-          border-color: var(--primary);
-          box-shadow: 0 2px 10px rgba(112,87,101,0.25);
+          box-shadow: 0 3px 12px rgba(112,87,101,0.28);
+          font-weight: 600;
         }
 
         /* ---- Section labels ---- */
@@ -375,12 +385,12 @@ export default function TasksScreen() {
         </div>
 
         {/* ── Filter chips ── */}
-        <div className="ts-chips">
+        <div className="ts-chips scroll-x-row" ref={chipsRef}>
           {FILTERS.map(f => (
             <button
               key={f}
               className={`ts-chip${activeFilter === f ? ' active' : ''}`}
-              onClick={() => dispatch({ type: 'SET_FILTER', filter: f })}
+              onClick={(e) => handleFilter(f, e)}
               id={`tasks-filter-${f}`}
             >
               {f}

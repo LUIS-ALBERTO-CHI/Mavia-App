@@ -548,6 +548,30 @@ a { text-decoration: none; color: inherit; }
   padding-top: var(--topbar-height);
 }
 
+/*
+  Global helper: horizontal scroll breakout
+  Use on any scrollable-pills row.
+  Negative margins break out of the screen's horizontal padding,
+  matching padding restores the leading space for the first chip.
+  This creates a full-width scroll container that the overflow-x: hidden
+  parent cannot clip (because it's at the same stacking level as content).
+*/
+.scroll-x-row {
+  display: flex;
+  gap: 8px;
+  margin-left: calc(-1 * var(--space-container));
+  margin-right: calc(-1 * var(--space-container));
+  padding-left: var(--space-container);
+  padding-right: var(--space-container);
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
+}
+.scroll-x-row::-webkit-scrollbar { display: none; }
+
 @media (min-width: 1024px) {
   .app-main {
     margin-left: var(--sidebar-width);
