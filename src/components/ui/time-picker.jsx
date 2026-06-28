@@ -4,8 +4,9 @@ import { Clock } from 'lucide-react';
 
 // 12-hour wheel: 12, 01, 02, … 11
 const HOURS_12 = ['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'];
-const MINUTES  = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
-const CELL_H   = 46;
+// All 60 minutes (not just multiples of 5)
+const MINUTES  = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+const CELL_H   = 44;
 
 /** Parse a stored value ("09:00 AM" or "09:00") into { hour12, minute, period } */
 function parseValue(v) {
@@ -14,14 +15,15 @@ function parseValue(v) {
   const period = upper.includes('PM') ? 'PM' : 'AM';
   const [hStr, mStr] = v.replace(/[APM\s]/gi, '').split(':');
   let h = parseInt(hStr, 10) || 9;
-  const m = mStr?.slice(0, 2) || '00';
+  const m = (mStr?.slice(0, 2) || '00').padStart(2, '0');
   // If value is in 24h format (no AM/PM in original), convert
   if (!upper.includes('AM') && !upper.includes('PM')) {
     if (h === 0)       { h = 12; }
     else if (h > 12)   { h -= 12; }
   }
   const hour12 = String(h).padStart(2, '0');
-  const minute  = MINUTES.includes(m) ? m : '00';
+  // Accept any minute 00-59 (not just multiples of 5)
+  const minute = MINUTES.includes(m) ? m : '00';
   return { hour12, minute, period: upper.includes('PM') ? 'PM' : (h >= 12 ? 'PM' : 'AM') };
 }
 
@@ -33,6 +35,7 @@ function ScrollColumn({ items, value, onChange, label }) {
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;
+    // Center the selected item: scroll so it lands in position 2 of 5 (0-indexed)
     el.scrollTop = Math.max(0, idx * CELL_H);
   }, []); // eslint-disable-line
 
@@ -87,7 +90,7 @@ function ScrollColumn({ items, value, onChange, label }) {
           ref={listRef}
           onScroll={handleScroll}
           style={{
-            height: CELL_H * 3,
+            height: CELL_H * 5,
             overflowY: 'scroll',
             scrollSnapType: 'y mandatory',
             scrollbarWidth: 'none',
