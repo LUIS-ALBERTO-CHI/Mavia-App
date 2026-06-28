@@ -371,31 +371,32 @@ export function AppProvider({ children }) {
       }
     });
 
-    // ── Visibility-based sync ──────────────────────────────────────────
-    // Re-fetch data every time the user returns to the app/tab.
-    // Avoids Firestore WebChannel CORS issues while still syncing across devices.
-    let lastSync = 0;
-    const MIN_SYNC_INTERVAL = 30 * 1000; // 30 seconds min between syncs
-
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && currentUid) {
-        const now = Date.now();
-        if (now - lastSync > MIN_SYNC_INTERVAL) {
-          lastSync = now;
-          // Re-import auth to get current firebaseUser
-          import('../lib/authService').then(({ getCurrentUser }) => {
-            const user = getCurrentUser?.();
-            if (user) syncUserData(user);
-          }).catch(() => {});
-        }
-      }
+    // ── Sync helper using auth.currentUser directly ──
+    const runSync = () => {
+      if (!currentUid) return;
+      import('../lib/authService').then(({ getCurrentUser }) => {
+        const user = getCurrentUser?.();
+        if (user) syncUserData(user);
+      }).catch(() => {});
     };
 
+    // ── Visibility-based sync: fires immediately when returning to app ──
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') runSync();
+    };
     document.addEventListener('visibilitychange', handleVisibility);
+
+    // ── Polling: syncs every 30s while tab is visible ──
+    // Ensures data from other devices appears without needing a reload.
+    const POLL_INTERVAL = 30 * 1000;
+    const pollTimer = setInterval(() => {
+      if (document.visibilityState === 'visible') runSync();
+    }, POLL_INTERVAL);
 
     return () => {
       unsub();
       document.removeEventListener('visibilitychange', handleVisibility);
+      clearInterval(pollTimer);
     };
   }, []);
 
