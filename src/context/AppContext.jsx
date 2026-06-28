@@ -4,7 +4,8 @@ import { onAuthChange } from '../lib/authService';
 import { loadUserData, saveTask, deleteTask, saveHabit, saveEvent, deleteEvent,
          saveGoal, saveJournalEntry, saveGratitudeEntry,
          markNotificationRead, markAllNotificationsRead, saveUserProfile,
-         saveSettings, createScheduledNotification } from '../lib/firestoreService';
+         saveSettings, createScheduledNotification,
+         subscribeToUserData } from '../lib/firestoreService';
 import {
   initFCM,
   rescheduleAllReminders,
@@ -265,6 +266,10 @@ function reducer(state, action) {
       return { ...state, notifications };
     }
 
+    /* ── Real-time sync from Firestore onSnapshot ── */
+    case 'SYNC_COLLECTION':
+      return { ...state, [action.collection]: action.docs };
+
     default:
       return state;
   }
@@ -280,9 +285,13 @@ export function AppProvider({ children }) {
 
   /* ── Firebase Auth listener ──────────────────────────────── */
   useEffect(() => {
+    let unsubRealtime = null; // real-time collection listeners
+
     const unsub = onAuthChange(async (firebaseUser) => {
+      // Cancel any previous real-time listeners
+      if (unsubRealtime) { unsubRealtime(); unsubRealtime = null; }
+
       if (!firebaseUser) {
-        // Not logged in
         dispatch({ type: 'SET_AUTH_LOADING', value: false });
         dispatch({ type: 'LOGOUT' });
         return;
@@ -313,6 +322,12 @@ export function AppProvider({ children }) {
           },
         });
 
+        // ── Real-time sync: subscribe to live Firestore updates ──
+        // Any change from another device/browser instantly updates the app.
+        unsubRealtime = subscribeToUserData(firebaseUser.uid, (col, docs) => {
+          dispatch({ type: 'SYNC_COLLECTION', collection: col, docs });
+        });
+
         // ── Notifications: init FCM (permission + token) + re-schedule reminders ──
         initFCM(firebaseUser.uid)
           .then(token => {
@@ -330,7 +345,10 @@ export function AppProvider({ children }) {
       }
     });
 
-    return unsub; // unsubscribe on unmount
+    return () => {
+      unsub();
+      if (unsubRealtime) unsubRealtime();
+    };
   }, []);
 
   /* ── Dark mode class sync ────────────────────────────────── */

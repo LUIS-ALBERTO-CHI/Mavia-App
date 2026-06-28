@@ -7,7 +7,7 @@
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc,
   collection, getDocs, writeBatch, addDoc, query, limit,
-  where, serverTimestamp,
+  where, serverTimestamp, onSnapshot,
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -22,11 +22,12 @@ const colRef   = (uid, col) => collection(db, 'users', uid, col);
 /** Reference to a document inside a user subcollection */
 const docRef   = (uid, col, id) => doc(db, 'users', uid, col, id);
 
-// ─── Load all user data ────────────────────────────────────────────────────
+// ─── Load all user data (one-time, used for profile) ──────────────────────
 
 /**
- * Loads every user subcollection and the user profile.
- * Meditations and phrases are system content (not per-user) — NOT fetched here.
+ * Loads user profile and static collections once.
+ * Real-time collections (tasks, habits, events, goals, notifications) 
+ * are synced via subscribeToUserData.
  */
 export async function loadUserData(uid) {
   const SUBCOLS = ['tasks', 'habits', 'events', 'goals',
@@ -48,6 +49,36 @@ export async function loadUserData(uid) {
 
   return result;
 }
+
+// ─── Real-time listeners ───────────────────────────────────────────────────
+
+/**
+ * Subscribes to real-time Firestore updates for all user collections.
+ * Calls onUpdate(collectionName, docs[]) whenever any collection changes.
+ * Returns an unsubscribe function — call it on logout/unmount.
+ *
+ * @param {string} uid
+ * @param {function} onUpdate  — (collectionName: string, docs: Array) => void
+ * @returns {function} unsubscribe
+ */
+export function subscribeToUserData(uid, onUpdate) {
+  const REALTIME_COLS = ['tasks', 'habits', 'events', 'goals', 'notifications'];
+
+  const unsubs = REALTIME_COLS.map(col =>
+    onSnapshot(
+      colRef(uid, col),
+      (snap) => {
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        onUpdate(col, docs);
+      },
+      (err) => console.warn(`[Mavia] onSnapshot error (${col}):`, err.message)
+    )
+  );
+
+  // Return combined unsubscribe
+  return () => unsubs.forEach(fn => fn());
+}
+
 
 // ─── Initial seed (new user) ───────────────────────────────────────────────
 
