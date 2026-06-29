@@ -28,9 +28,15 @@ export default function TaskDetailScreen() {
   const taskId = screenParams?.taskId;
   const task   = tasks.find(t => t.id === taskId);
 
-  const [checklist, setChecklist] = useState([]);
-  const [newCheck, setNewCheck] = useState('');
-  const [notes, setNotes]       = useState('');
+  const [checklist, setChecklist] = useState(task?.checklist || []);
+  const [newCheck, setNewCheck]   = useState('');
+  const [notes, setNotes]         = useState('');
+
+  // Helper: update local state + persist to Firestore immediately
+  const saveChecklist = (updated) => {
+    setChecklist(updated);
+    dispatch({ type: 'UPDATE_TASK', task: { ...task, checklist: updated } });
+  };
 
   if (!task) {
     return (
@@ -57,13 +63,20 @@ export default function TaskDetailScreen() {
   };
 
   const toggleCheck = (id) => {
-    setChecklist(l => l.map(c => c.id === id ? { ...c, done: !c.done } : c));
+    const updated = checklist.map(c => c.id === id ? { ...c, done: !c.done } : c);
+    saveChecklist(updated);
   };
 
   const addCheck = () => {
     if (!newCheck.trim()) return;
-    setChecklist(l => [...l, { id: Date.now().toString(), text: newCheck, done: false }]);
+    const updated = [...checklist, { id: Date.now().toString(), text: newCheck.trim(), done: false }];
+    saveChecklist(updated);
     setNewCheck('');
+  };
+
+  const removeCheck = (id) => {
+    const updated = checklist.filter(c => c.id !== id);
+    saveChecklist(updated);
   };
 
   const checkDone    = checklist.filter(c => c.done).length;
@@ -602,6 +615,11 @@ export default function TaskDetailScreen() {
                       onCheckedChange={() => toggleCheck(item.id)}
                     />
                     <span className={`td-check-label${item.done ? ' done' : ''}`}>{item.text}</span>
+                    <button
+                      onClick={e => { e.stopPropagation(); removeCheck(item.id); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)', opacity: 0.5, padding: '2px 4px', lineHeight: 1, fontSize: '16px', flexShrink: 0 }}
+                      aria-label="Eliminar ítem"
+                    >×</button>
                   </div>
                 ))}
 
