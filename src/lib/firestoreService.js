@@ -248,6 +248,8 @@ export async function saveFCMToken(uid, fcmToken, deviceId = 'default') {
  * Returns all unique FCM tokens for a user (one per registered device).
  * Uses REST API directly to bypass Firebase SDK's IndexedDB cache
  * (which can return stale data when the SDK is in offline mode).
+ * Returns at most 2 tokens to prevent duplicate notifications from the same physical device
+ * (e.g. iOS PWA + Safari browser both generate separate tokens).
  */
 export async function getUserFCMTokens(uid) {
   try {
@@ -271,7 +273,9 @@ export async function getUserFCMTokens(uid) {
       .map(v => v.stringValue)
       .filter(Boolean);
 
-    return tokens;
+    // Return all unique tokens (max 2 to prevent duplicate notifications
+    // from the same physical device with multiple browser contexts)
+    return [...new Set(tokens)].slice(0, 2);
   } catch {
     return [];
   }

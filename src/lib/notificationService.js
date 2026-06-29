@@ -274,7 +274,11 @@ export function rescheduleAllReminders(tasks = [], uid = null, fcmToken = null) 
   tasks.forEach(task => {
     // Only schedule for today and incomplete tasks with reminders
     if (task.reminder && !task.completed && task.date === today) {
-      scheduleTaskReminder(task, uid, fcmToken);
+      // IMPORTANT: pass null for uid so scheduleTaskReminder only creates LOCAL timers.
+      // Firestore docs are created ONCE when the task is first created/updated in AppContext.
+      // Calling scheduleTaskReminder with uid here would create DUPLICATE Firestore docs
+      // every time the app reloads or the user logs in.
+      scheduleTaskReminder(task, null, null);
     }
   });
 }
