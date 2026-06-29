@@ -99,11 +99,15 @@ async function sendPush(projectId, accessToken, { token, title, body, data = {} 
 
 // ─── Main handler ─────────────────────────────────────────────────────────
 
-export default async function handler(req, res) {
-  // Vercel Cron auth
-  const authHeader = req.headers['authorization'];
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
+module.exports = async function handler(req, res) {
+  // Vercel Cron auth — Vercel sends Authorization: Bearer <CRON_SECRET>
+  // Only enforce if CRON_SECRET is configured (skip check if not set)
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret) {
+    const authHeader = req.headers['authorization'];
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
   }
 
   try {
