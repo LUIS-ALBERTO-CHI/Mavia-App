@@ -1,22 +1,19 @@
 // ============================================
-// Vercel Cron — Send Scheduled Push Notifications
-// Uses Firestore REST API + FCM HTTP v1 REST API
-// No firebase-admin → no native modules → Vercel friendly
+// /api/cron-reminders.js  — Vercel Serverless Cron
+// Ejecutado por Vercel cada minuto (ver vercel.json)
+// ES module — compatible con "type":"module" en package.json
 // ============================================
 
-// ─── JWT + Auth helper ────────────────────────────────────────────────────
+// ─── JWT + Access Token ──────────────────────────────────────────────────────
 
-async function getAccessToken(serviceAccount) {
+async function getAccessToken(sa) {
   const now = Math.floor(Date.now() / 1000);
   const exp = now + 3600;
 
   const header  = { alg: 'RS256', typ: 'JWT' };
   const payload = {
-    iss:   serviceAccount.client_email,
-    scope: [
-      'https://www.googleapis.com/auth/firebase.messaging',
-      'https://www.googleapis.com/auth/datastore',
-    ].join(' '),
+    iss:   sa.client_email,
+    scope: 'https://www.googleapis.com/auth/firebase.messaging https://www.googleapis.com/auth/datastore',
     aud:   'https://oauth2.googleapis.com/token',
     iat:   now,
     exp,
@@ -25,166 +22,154 @@ async function getAccessToken(serviceAccount) {
   const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
   const toSign = `${b64(header)}.${b64(payload)}`;
 
-  const pemContents = serviceAccount.private_key
+  const pem = sa.private_key
     .replace('-----BEGIN PRIVATE KEY-----', '')
     .replace('-----END PRIVATE KEY-----', '')
     .replace(/\s/g, '');
 
-  const cryptoKey = await crypto.subtle.importKey(
+  const key = await globalThis.crypto.subtle.importKey(
     'pkcs8',
-    Buffer.from(pemContents, 'base64'),
+    Buffer.from(pem, 'base64'),
     { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
     false, ['sign']
   );
 
-  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', cryptoKey, new TextEncoder().encode(toSign));
+  const sig = await globalThis.crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(toSign)
+  );
   const jwt = `${toSign}.${Buffer.from(sig).toString('base64url')}`;
 
-  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+  const r = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: jwt }),
-  });
-
-  const td = await tokenRes.json();
-  if (!td.access_token) throw new Error('Token error: ' + JSON.stringify(td));
-  return td.access_token;
-}
-
-// ─── Firestore REST helpers ────────────────────────────────────────────────
-
-async function firestoreQuery(projectId, accessToken, structuredQuery) {
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`;
-  const res = await fetch(url, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-    body:    JSON.stringify({ structuredQuery }),
-  });
-  return res.json();
-}
-
-async function firestorePatch(projectId, accessToken, docPath, fields) {
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${docPath}`;
-  const res = await fetch(url, {
-    method:  'PATCH',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-    body:    JSON.stringify({ fields }),
-  });
-  return res.json();
-}
-
-// ─── FCM send ─────────────────────────────────────────────────────────────
-
-async function sendPush(projectId, accessToken, { token, title, body, data = {} }) {
-  const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({
-      message: {
-        token,
-        notification: { title, body: body || '' },
-        data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
-        webpush: {
-          notification: { title, body: body || '', icon: '/pwa-192x192.png', badge: '/favicon.ico' },
-          fcm_options: { link: '/' },
-        },
-      },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion:  jwt,
     }),
   });
-  const result = await res.json();
-  if (!res.ok) throw new Error(JSON.stringify(result?.error || result));
-  return result;
+  const d = await r.json();
+  if (!d.access_token) throw new Error('JWT token error: ' + JSON.stringify(d));
+  return d.access_token;
 }
 
-// ─── Main handler ─────────────────────────────────────────────────────────
+// ─── Firestore REST ───────────────────────────────────────────────────────────
 
-module.exports = async function handler(req, res) {
-  // Vercel Cron auth — Vercel sends Authorization: Bearer <CRON_SECRET>
-  // Only enforce if CRON_SECRET is configured (skip check if not set)
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = req.headers['authorization'];
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-  }
+async function fsQuery(tok, pid, query) {
+  const r = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${pid}/databases/(default)/documents:runQuery`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` }, body: JSON.stringify({ structuredQuery: query }) }
+  );
+  return r.json();
+}
 
-  try {
-    const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
-    if (!sa.project_id) throw new Error('FIREBASE_SERVICE_ACCOUNT not configured');
+async function fsPatch(tok, pid, path, fields) {
+  await fetch(
+    `https://firestore.googleapis.com/v1/projects/${pid}/databases/(default)/documents/${path}`,
+    { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` }, body: JSON.stringify({ fields }) }
+  );
+}
 
-    const accessToken = await getAccessToken(sa);
+// ─── FCM REST ────────────────────────────────────────────────────────────────
 
-    // Current time in Mexico City (UTC-6)
-    const now = new Date();
-    const mexTime = new Intl.DateTimeFormat('es-MX', {
-      timeZone: 'America/Mexico_City',
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', hour12: false,
-    }).formatToParts(now);
-
-    const gp = (type) => mexTime.find(p => p.type === type)?.value || '00';
-    const todayStr   = `${gp('year')}-${gp('month')}-${gp('day')}`;
-    const currentMin = `${gp('hour')}:${gp('minute')}`;
-
-    console.log(`[Mavia Cron] ${todayStr} ${currentMin} MX`);
-
-    // Query scheduledNotifications where sent=false, date=today, time=now
-    const queryResult = await firestoreQuery(sa.project_id, accessToken, {
-      from: [{ collectionId: 'scheduledNotifications' }],
-      where: {
-        compositeFilter: {
-          op: 'AND',
-          filters: [
-            { fieldFilter: { field: { fieldPath: 'sent' },          op: 'EQUAL', value: { booleanValue: false } } },
-            { fieldFilter: { field: { fieldPath: 'scheduledDate' }, op: 'EQUAL', value: { stringValue: todayStr } } },
-            { fieldFilter: { field: { fieldPath: 'scheduledTime' }, op: 'EQUAL', value: { stringValue: currentMin } } },
-          ],
+async function sendFCM(tok, pid, { token, title, body }) {
+  const r = await fetch(
+    `https://fcm.googleapis.com/v1/projects/${pid}/messages:send`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
+      body: JSON.stringify({
+        message: {
+          token,
+          notification: { title, body: body || '' },
+          webpush: {
+            notification: { title, body: body || '', icon: '/pwa-192x192.png', badge: '/favicon.ico', requireInteraction: true },
+            fcm_options: { link: 'https://mavia-app.vercel.app' },
+          },
         },
-      },
-    });
+      }),
+    }
+  );
+  const d = await r.json();
+  if (!r.ok) throw new Error(JSON.stringify(d?.error || d));
+  return d;
+}
 
-    const docs = queryResult.filter(r => r.document);
-    if (docs.length === 0) {
-      return res.status(200).json({ sent: 0, at: `${todayStr} ${currentMin}` });
+// ─── Handler ─────────────────────────────────────────────────────────────────
+
+export default async function handler(req, res) {
+  try {
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!raw) return res.status(500).json({ error: 'FIREBASE_SERVICE_ACCOUNT no configurado' });
+
+    const sa  = JSON.parse(raw);
+    const tok = await getAccessToken(sa);
+    const pid = sa.project_id;
+
+    // Hora actual en México — revisar ventana de 3 minutos
+    const windows = [];
+    const seen = new Set();
+    for (let i = 0; i <= 3; i++) {
+      const d = new Date(Date.now() - i * 60000);
+      const parts = new Intl.DateTimeFormat('es-MX', {
+        timeZone: 'America/Mexico_City',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false,
+      }).formatToParts(d);
+      const gp   = (t) => parts.find(p => p.type === t)?.value || '00';
+      const date = `${gp('year')}-${gp('month')}-${gp('day')}`;
+      const time = `${gp('hour')}:${gp('minute')}`;
+      const key  = `${date}|${time}`;
+      if (!seen.has(key)) { seen.add(key); windows.push({ date, time }); }
     }
 
     let sent = 0;
-    for (const { document } of docs) {
-      const fields   = document.fields;
-      const token    = fields?.fcmToken?.stringValue;
-      const title    = fields?.title?.stringValue || 'Mavia';
-      const body     = fields?.body?.stringValue   || '';
-      const docName  = document.name; // full resource path
-      const docPath  = docName.split('/documents/')[1]; // scheduledNotifications/docId
+    const errors = [];
 
-      if (!token) continue;
+    for (const { date, time } of windows) {
+      const rows = await fsQuery(tok, pid, {
+        from: [{ collectionId: 'scheduledNotifications' }],
+        where: {
+          compositeFilter: {
+            op: 'AND',
+            filters: [
+              { fieldFilter: { field: { fieldPath: 'sent' },          op: 'EQUAL', value: { booleanValue: false } } },
+              { fieldFilter: { field: { fieldPath: 'scheduledDate' }, op: 'EQUAL', value: { stringValue: date  } } },
+              { fieldFilter: { field: { fieldPath: 'scheduledTime' }, op: 'EQUAL', value: { stringValue: time  } } },
+            ],
+          },
+        },
+      });
 
-      try {
-        await sendPush(sa.project_id, accessToken, { token, title, body });
-        // Mark as sent
-        await firestorePatch(sa.project_id, accessToken, docPath, {
-          sent:   { booleanValue: true },
-          sentAt: { stringValue: new Date().toISOString() },
-        });
-        sent++;
-        console.log(`[Mavia Cron] ✅ Sent: ${title}`);
-      } catch (err) {
-        console.error(`[Mavia Cron] ❌ Failed: ${err.message}`);
-        // Mark invalid tokens as failed
-        if (err.message.includes('UNREGISTERED') || err.message.includes('NOT_FOUND')) {
-          await firestorePatch(sa.project_id, accessToken, docPath, {
+      const docs = Array.isArray(rows) ? rows.filter(r => r.document) : [];
+      for (const { document } of docs) {
+        const f       = document.fields;
+        const token   = f?.fcmToken?.stringValue;
+        const title   = f?.title?.stringValue   || 'Mavia';
+        const body    = f?.body?.stringValue     || '';
+        const docPath = document.name.split('/documents/')[1];
+        if (!token) continue;
+
+        try {
+          await sendFCM(tok, pid, { token, title, body });
+          await fsPatch(tok, pid, docPath, {
             sent:   { booleanValue: true },
-            failed: { booleanValue: true },
+            sentAt: { stringValue: new Date().toISOString() },
           });
+          sent++;
+          console.log(`[Cron] ✅ ${title}`);
+        } catch (err) {
+          errors.push(err.message);
+          console.error(`[Cron] ❌ ${title}:`, err.message);
+          if (err.message.includes('UNREGISTERED') || err.message.includes('NOT_FOUND')) {
+            await fsPatch(tok, pid, docPath, { sent: { booleanValue: true }, failed: { booleanValue: true } }).catch(() => {});
+          }
         }
       }
     }
 
-    return res.status(200).json({ sent, total: docs.length, at: `${todayStr} ${currentMin}` });
+    return res.status(200).json({ ok: true, sent, errors });
   } catch (err) {
-    console.error('[Mavia Cron] Error:', err.message);
+    console.error('[Cron] Fatal:', err.message);
     return res.status(500).json({ error: err.message });
   }
 }
