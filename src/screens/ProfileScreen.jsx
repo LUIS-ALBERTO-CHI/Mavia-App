@@ -433,13 +433,13 @@ export default function ProfileScreen() {
             <span className="prof-stat-num" style={{ color: 'var(--primary)' }}>
               {completedTasks}
             </span>
-            <span className="prof-stat-label">Daily Goals</span>
+            <span className="prof-stat-label">Logros diarios</span>
           </div>
           <div className="prof-stat-card">
             <span className="prof-stat-num" style={{ color: 'var(--secondary)' }}>
               {wellbeingScore}%
             </span>
-            <span className="prof-stat-label">Wellbeing Score</span>
+            <span className="prof-stat-label">Bienestar</span>
           </div>
         </div>
 
@@ -475,8 +475,8 @@ export default function ProfileScreen() {
           </div>
         )}
 
-        {/* ── Preferences section ── */}
-        <p className="prof-section-label">Preferences</p>
+        {/* ── Sección Preferencias ── */}
+        <p className="prof-section-label">Preferencias</p>
         <div className="prof-group">
           {/* Dark mode */}
           <div className="prof-row">
@@ -523,8 +523,8 @@ export default function ProfileScreen() {
           </div>
         </div>
 
-        {/* ── Account section ── */}
-        <p className="prof-section-label">Account</p>
+        {/* ── Sección Cuenta ── */}
+        <p className="prof-section-label">Cuenta</p>
         <div className="prof-group">
           {/* Privacy */}
           <div className="prof-row" onClick={() => navigate('settings')} id="prof-privacy">
