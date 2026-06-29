@@ -5,7 +5,8 @@
 // ============================================
 import { getMessagingInstance } from './firebase';
 import { getToken } from 'firebase/messaging';
-import { saveFCMToken, createScheduledNotification, deleteScheduledNotification } from './firestoreService';
+import { saveFCMToken, createScheduledNotification, deleteScheduledNotification, getUserFCMTokens } from './firestoreService';
+
 import { localToday, localDateStr } from './utils';
 
 // VAPID key from Vercel env — set PUBLIC_FIREBASE_VAPID_KEY in your Vercel project settings
@@ -153,37 +154,42 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
   const taskMs = taskDt.getTime();
 
   // ── FCM Firestore scheduling (background push — works even when browser closed) ──
-  if (uid && fcmToken && taskMs > now) {
+  if (uid && taskMs > now) {
     try {
-      // 15-minute warning
-      if (taskMs - 15 * 60 * 1000 > now) {
-        const warn15Dt   = new Date(taskMs - 15 * 60 * 1000);
-        const warn15Date = localDateStr(warn15Dt);
-        const warn15Time = `${String(warn15Dt.getHours()).padStart(2,'0')}:${String(warn15Dt.getMinutes()).padStart(2,'0')}`;
-        await createScheduledNotification({
-          uid, fcmToken,
-          title: `En 15 minutos: ${task.title}`,
-          body:  `Tu tarea comienza a las ${task.time}`,
-          scheduledDate: warn15Date,
-          scheduledTime: warn15Time,
-          data: { taskId: task.id, type: 'task-warn' },
+      // Fetch ALL device tokens for this user (phone + PC + tablet)
+      const allTokens = await getUserFCMTokens(uid);
+      // Also include the token from the current session (may not be in Firestore yet)
+      if (fcmToken && !allTokens.includes(fcmToken)) allTokens.push(fcmToken);
+
+      for (const tok of allTokens) {
+        // 15-minute warning
+        if (taskMs - 15 * 60 * 1000 > now) {
+          const warn15Dt   = new Date(taskMs - 15 * 60 * 1000);
+          const warn15Date = localDateStr(warn15Dt);
+          const warn15Time = `${String(warn15Dt.getHours()).padStart(2,'0')}:${String(warn15Dt.getMinutes()).padStart(2,'0')}`;
+          await createScheduledNotification({
+            uid, fcmToken: tok,
+            title: `En 15 minutos: ${task.title}`,
+            body:  `Tu tarea comienza a las ${task.time}`,
+            scheduledDate: warn15Date,
+            scheduledTime: warn15Time,
+            data: { taskId: task.id, type: 'task-warn' },
+          });
+        }
+
+        // At exact task time
+        const notifId = await createScheduledNotification({
+          uid, fcmToken: tok,
+          title: `Es hora: ${task.title}`,
+          body:  task.description || `Tu tarea comienza ahora`,
+          scheduledDate: task.date,
+          scheduledTime: time24,
+          data: { taskId: task.id, type: 'task-now' },
         });
+        _schedNotifIds.set(`${task.id}_${tok}`, notifId);
       }
 
-      // At exact task time — use the parsed 24h time
-      const notifId = await createScheduledNotification({
-        uid, fcmToken,
-        title: `Es hora: ${task.title}`,
-        body:  task.description || `Tu tarea comienza ahora`,
-        scheduledDate: task.date,
-        scheduledTime: time24,
-        data: { taskId: task.id, type: 'task-now' },
-      });
-
-      // Store the Firestore doc ID so we can delete it if the task is cancelled
-      _schedNotifIds.set(task.id, notifId);
-      console.log(`[Mavia] FCM push scheduled for "${task.title}" at ${task.time}`);
-      // NOTE: we do NOT return here — we also set local timers below as backup
+      console.log(`[Mavia] FCM push scheduled for "${task.title}" at ${task.time} → ${allTokens.length} dispositivo(s)`);
     } catch (err) {
       console.warn('[Mavia] Firestore scheduling failed, falling back to local only:', err.message);
     }

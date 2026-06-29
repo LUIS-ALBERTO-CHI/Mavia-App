@@ -7,8 +7,9 @@
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc,
   collection, getDocs, writeBatch, addDoc, query, limit,
-  where, serverTimestamp, onSnapshot,
+  where, serverTimestamp, onSnapshot, arrayUnion,
 } from 'firebase/firestore';
+
 import { db } from './firebase';
 
 // ─── helpers ───────────────────────────────────────────────────────────────
@@ -234,11 +235,27 @@ export async function saveJournalEntry(uid, entry) {
 
 /**
  * Saves the FCM push token to the user profile.
- * Called once after login when the browser grants notification permission.
+ * Uses arrayUnion to accumulate tokens across devices (PC + phone + tablet).
+ * Each device has its own token — all are stored so the cron can send to all.
  */
 export async function saveFCMToken(uid, fcmToken) {
-  // Use setDoc+merge so it works even if the user doc doesn't exist yet
-  await setDoc(userRef(uid), { fcmToken }, { merge: true });
+  await setDoc(userRef(uid), {
+    fcmTokens: arrayUnion(fcmToken), // accumulate, don't overwrite
+  }, { merge: true });
+}
+
+/**
+ * Returns all FCM tokens saved for a user (one per registered device).
+ */
+export async function getUserFCMTokens(uid) {
+  try {
+    const snap = await getDoc(userRef(uid));
+    const data = snap.data() || {};
+    const tokens = Array.isArray(data.fcmTokens) ? data.fcmTokens : [];
+    return tokens.filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 // ─── Scheduled Notifications ───────────────────────────────────────────────
