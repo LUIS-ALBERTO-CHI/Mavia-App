@@ -265,8 +265,9 @@ export async function getUserFCMTokens(uid) {
 // ─── Scheduled Notifications ───────────────────────────────────────────────
 
 /**
- * Creates a scheduled notification document in the root collection.
- * The Vercel cron (/api/cron-reminders) queries this collection every minute.
+ * Creates a scheduled notification document using the Firestore REST API directly.
+ * This bypasses the Firebase SDK's WebChannel (which can be blocked by CORS in some
+ * browsers/networks) and uses plain HTTPS instead.
  *
  * @param {Object} opts
  * @param {string} opts.uid
@@ -279,18 +280,46 @@ export async function getUserFCMTokens(uid) {
  * @returns {string} the created document ID
  */
 export async function createScheduledNotification({ uid, fcmToken, title, body, scheduledDate, scheduledTime, data = {} }) {
-  const ref = await addDoc(collection(db, 'scheduledNotifications'), {
-    uid,
-    fcmToken,
-    title,
-    body,
-    scheduledDate,
-    scheduledTime,
-    data,
-    sent: false,
-    createdAt: serverTimestamp(),
+  // Get Firebase Auth ID token for REST API auth
+  const { getAuth } = await import('firebase/auth');
+  const user = getAuth().currentUser;
+  if (!user) throw new Error('No authenticated user');
+  const idToken = await user.getIdToken();
+
+  const PROJECT_ID = 'mavia-779df';
+  const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/scheduledNotifications`;
+
+  // Encode data map fields
+  const dataFields = {};
+  for (const [k, v] of Object.entries(data || {})) {
+    dataFields[k] = { stringValue: String(v) };
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${idToken}`,
+    },
+    body: JSON.stringify({
+      fields: {
+        uid:           { stringValue: uid },
+        fcmToken:      { stringValue: fcmToken },
+        title:         { stringValue: title },
+        body:          { stringValue: body || '' },
+        scheduledDate: { stringValue: scheduledDate },
+        scheduledTime: { stringValue: scheduledTime },
+        sent:          { booleanValue: false },
+        data:          { mapValue: { fields: dataFields } },
+      },
+    }),
   });
-  return ref.id;
+
+  const doc = await response.json();
+  if (!response.ok) throw new Error(doc.error?.message || 'Firestore REST error');
+
+  // doc.name = 'projects/.../databases/.../documents/scheduledNotifications/{id}'
+  return doc.name.split('/').pop();
 }
 
 /**
