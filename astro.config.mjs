@@ -2,11 +2,14 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import AstroPWA from '@vite-pwa/astro';
+import vercel from '@astrojs/vercel/serverless';
 
 import tailwind from '@astrojs/tailwind';
 
 // https://astro.build/config
 export default defineConfig({
+  output: 'hybrid',      // static pages + serverless API routes
+  adapter: vercel(),
   integrations: [react(), AstroPWA({
     mode: 'development',
     base: '/',
