@@ -216,7 +216,7 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
   if (warn15 > now) {
     ids.push(setTimeout(() => {
       showNotification(
-        '⚡ URGENTE',
+        'URGENTE',
         `¡En 15 minutos: ${task.title}!\nComienza a las ${task.time}`,
         { tag: `task-warn-${task.id}` }
       );
@@ -226,7 +226,7 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
   if (taskMs > now) {
     ids.push(setTimeout(() => {
       showNotification(
-        '⚡ URGENTE',
+        'URGENTE',
         `¡Es hora: ${task.title}!\nInicia ahora | ${task.time}`,
         { tag: `task-now-${task.id}` }
       );

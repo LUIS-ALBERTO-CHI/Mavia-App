@@ -268,53 +268,57 @@ function MobileBottomNav() {
   const { state, navigate } = useApp();
   const { currentScreen } = state;
 
-  const activeTab = MAIN_NAV.find(n => n.id === currentScreen)?.id || 'dashboard';
-  const fabDest   = CALENDAR_SCREENS.has(currentScreen) ? 'createEvent' : 'createTask';
+  const BOTTOM_NAV = [
+    { id: 'dashboard', label: 'Bandeja', icon: 'inbox'                   },
+    { id: 'agenda',    label: 'Agenda',  icon: 'format_list_bulleted'    },
+    { id: 'wellness',  label: 'IA',      icon: 'auto_awesome'             },
+    { id: 'settings',  label: 'Ajustes', icon: 'settings'                },
+  ];
 
-  // LEFT: Inicio, Bienestar  |  FAB  |  RIGHT: Tareas, Perfil
-  const LEFT_ITEMS  = [MAIN_NAV[0], MAIN_NAV[3]]; // dashboard, wellness
-  const RIGHT_ITEMS = [MAIN_NAV[2], MAIN_NAV[4]]; // tasks, profile
+  // Map sub-screens to their parent tab
+  const TAB_GROUPS = {
+    dashboard: ['dashboard'],
+    agenda:    ['agenda', 'tasks', 'createTask', 'taskDetail', 'events', 'createEvent', 'calendar', 'reminders'],
+    wellness:  ['wellness', 'meditation', 'habits', 'createHabit', 'goals', 'createGoal', 'journal', 'gratitude', 'phrases'],
+    settings:  ['settings', 'profile', 'notifications', 'statistics', 'search'],
+  };
+
+  const activeTab = Object.entries(TAB_GROUPS)
+    .find(([, screens]) => screens.includes(currentScreen))?.[0] || 'dashboard';
+
+  const fabDest = CALENDAR_SCREENS.has(currentScreen) ? 'createEvent' : 'createTask';
 
   return (
-    <nav className="mobile-bottom-nav" role="navigation">
-      {LEFT_ITEMS.map(item => (
-        <button
-          key={item.id}
-          className={`bottom-nav-item${activeTab === item.id ? ' active' : ''}`}
-          onClick={() => navigate(item.id)}
-          id={`bnav-${item.id}`}
-          aria-label={item.label}
-        >
-          <span className="material-symbols-outlined nav-icon">{item.icon}</span>
-          <span className="bottom-nav-label">{item.label}</span>
-        </button>
-      ))}
+    <div className="mobile-bottom-nav-wrapper" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 'var(--z-nav)' }}>
+      <nav className="mobile-bottom-nav" role="navigation" aria-label="Navegación principal">
+        {BOTTOM_NAV.map(item => {
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              className={`bottom-nav-item${isActive ? ' active' : ''}`}
+              onClick={() => navigate(item.id)}
+              id={`bnav-${item.id}`}
+              aria-label={item.label}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <span className="material-symbols-outlined nav-icon">{item.icon}</span>
+              <span className="bottom-nav-label">{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
-      {/* FAB center raised — contextual destination */}
-      <div className="bottom-nav-fab-wrap">
-        <button
-          className="bottom-nav-fab"
-          onClick={() => navigate(fabDest)}
-          id="bnav-fab"
-          aria-label="Crear"
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>add</span>
-        </button>
-      </div>
-
-      {RIGHT_ITEMS.map(item => (
-        <button
-          key={item.id}
-          className={`bottom-nav-item${activeTab === item.id ? ' active' : ''}`}
-          onClick={() => navigate(item.id)}
-          id={`bnav-${item.id}`}
-          aria-label={item.label}
-        >
-          <span className="material-symbols-outlined nav-icon">{item.icon}</span>
-          <span className="bottom-nav-label">{item.label}</span>
-        </button>
-      ))}
-    </nav>
+      {/* Floating action button — right side */}
+      <button
+        className="mobile-fab"
+        onClick={() => navigate(fabDest)}
+        id="bnav-fab"
+        aria-label="Crear"
+      >
+        <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>add</span>
+      </button>
+    </div>
   );
 }
 
