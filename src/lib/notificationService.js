@@ -216,8 +216,8 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
   if (warn15 > now) {
     ids.push(setTimeout(() => {
       showNotification(
-        `En 15 minutos: ${task.title}`,
-        `Tu tarea comienza a las ${task.time}`,
+        '⚡ URGENTE',
+        `¡En 15 minutos: ${task.title}!\nComienza a las ${task.time}`,
         { tag: `task-warn-${task.id}` }
       );
     }, warn15 - now));
@@ -226,8 +226,8 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
   if (taskMs > now) {
     ids.push(setTimeout(() => {
       showNotification(
-        `Es hora: ${task.title}`,
-        task.description || `Tu tarea comienza ahora`,
+        '⚡ URGENTE',
+        `¡Es hora: ${task.title}!\nInicia ahora | ${task.time}`,
         { tag: `task-now-${task.id}` }
       );
     }, taskMs - now));
@@ -235,7 +235,6 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
 
   if (ids.length > 0) {
     _timers.set(task.id, ids);
-    console.log(`[Mavia] Local reminder scheduled for "${task.title}" at ${task.time}`);
   }
 }
 

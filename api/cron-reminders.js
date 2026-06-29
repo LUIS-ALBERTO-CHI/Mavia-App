@@ -69,10 +69,20 @@ async function fsPatch(tok, pid, path, fields) {
   );
 }
 
+// ─── Time helpers ────────────────────────────────────────────────────────────
+
+/** Converts "HH:MM" (24h) to "H:MM a.m./p.m." */
+function formatTo12h(time24) {
+  if (!time24) return '';
+  const [h, m] = time24.split(':').map(Number);
+  const ampm = h >= 12 ? 'p.m.' : 'a.m.';
+  const h12  = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
 // ─── FCM REST ────────────────────────────────────────────────────────────────
 
-async function sendFCM(tok, pid, { token, title, body, debugInfo = '' }) {
-  const displayBody = debugInfo ? `${body || ''} [${debugInfo}]` : (body || '');
+async function sendFCM(tok, pid, { token, title, body }) {
   const r = await fetch(
     `https://fcm.googleapis.com/v1/projects/${pid}/messages:send`,
     {
@@ -81,13 +91,8 @@ async function sendFCM(tok, pid, { token, title, body, debugInfo = '' }) {
       body: JSON.stringify({
         message: {
           token,
-          // DATA-ONLY message: no 'notification' field to prevent browser auto-display.
-          // The SW's onBackgroundMessage reads these and shows ONE notification.
-          data: {
-            title,
-            body: displayBody,
-            icon: '/pwa-192x192.png',
-          },
+          // DATA-ONLY: browser does NOT auto-display; SW's onBackgroundMessage is the sole handler.
+          data: { title, body, icon: '/pwa-192x192.png' },
           webpush: {
             headers: { Urgency: 'high' },
             fcm_options: { link: 'https://mavia-app.vercel.app' },
@@ -149,18 +154,25 @@ export default async function handler(req, res) {
 
       const docs = Array.isArray(rows) ? rows.filter(r => r.document) : [];
       for (const { document } of docs) {
-        const f         = document.fields;
-        const token     = f?.fcmToken?.stringValue;
-        const title     = f?.title?.stringValue   || 'Mavia';
-        const body      = f?.body?.stringValue     || '';
-        const docPath   = document.name.split('/documents/')[1];
-        const updateTime = document.updateTime; // used for optimistic locking
+        const f          = document.fields;
+        const token      = f?.fcmToken?.stringValue;
+        const rawTitle   = f?.title?.stringValue || '';
+        const schedTime  = f?.scheduledTime?.stringValue || '';
+        const docPath    = document.name.split('/documents/')[1];
+        const updateTime = document.updateTime;
         if (!token) continue;
 
+        // Build URGENTE-format notification
+        const taskName = rawTitle
+          .replace(/^Es hora:\s*/i, '')
+          .replace(/^En 15 minutos:\s*/i, '')
+          .replace(/^Es hora del evento:\s*/i, '')
+          .trim();
+        const notifTitle = '⚡ URGENTE';
+        const notifBody  = `¡Es hora: ${taskName}!\nInicia ahora | ${formatTo12h(schedTime)}`;
+
         try {
-          // ── Optimistic lock: atomically claim the doc before sending ──
-          // Only update if the doc hasn't been modified since we read it.
-          // If two cron instances run simultaneously, only ONE will succeed here.
+          // ── Optimistic lock: claim before sending to prevent race conditions ──
           const claimUrl = `https://firestore.googleapis.com/v1/projects/${pid}/databases/(default)/documents/${docPath}`
             + `?currentDocument.updateTime=${encodeURIComponent(updateTime)}`
             + `&updateMask.fieldPaths=sent&updateMask.fieldPaths=sentAt`;
@@ -177,21 +189,16 @@ export default async function handler(req, res) {
           });
 
           if (!claimResp.ok) {
-            // Another cron instance already claimed this doc — skip to avoid duplicate
-            const err = await claimResp.json();
-            console.log(`[Cron] ⏭️ Doc already claimed (${err?.error?.status}), skipping "${title}"`);
+            // Another cron instance already claimed this doc—skip
             continue;
           }
 
-          // Successfully claimed — now send FCM
-          const docId = docPath.split('/').pop();
-          const debugInfo = `doc:${docId.slice(-6)} tok:${token.slice(-6)}`;
-          await sendFCM(tok, pid, { token, title, body, debugInfo });
+          await sendFCM(tok, pid, { token, title: notifTitle, body: notifBody });
           sent++;
-          console.log(`[Cron] ✅ ${title} [${debugInfo}]`);
+          console.log(`[Cron] ✅ ${taskName} | ${schedTime}`);
         } catch (err) {
           errors.push(err.message);
-          console.error(`[Cron] ❌ ${title}:`, err.message);
+          console.error(`[Cron] ❌ ${taskName}:`, err.message);
           if (err.message.includes('UNREGISTERED') || err.message.includes('NOT_FOUND')) {
             await fetch(
               `https://firestore.googleapis.com/v1/projects/${pid}/databases/(default)/documents/${docPath}?updateMask.fieldPaths=sent&updateMask.fieldPaths=failed`,
