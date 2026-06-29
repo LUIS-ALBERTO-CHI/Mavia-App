@@ -71,7 +71,8 @@ async function fsPatch(tok, pid, path, fields) {
 
 // ─── FCM REST ────────────────────────────────────────────────────────────────
 
-async function sendFCM(tok, pid, { token, title, body }) {
+async function sendFCM(tok, pid, { token, title, body, debugInfo = '' }) {
+  const debugBody = debugInfo ? `${body || ''} [${debugInfo}]` : (body || '');
   const r = await fetch(
     `https://fcm.googleapis.com/v1/projects/${pid}/messages:send`,
     {
@@ -80,9 +81,9 @@ async function sendFCM(tok, pid, { token, title, body }) {
       body: JSON.stringify({
         message: {
           token,
-          notification: { title, body: body || '' },
+          notification: { title, body: debugBody },
           webpush: {
-            notification: { title, body: body || '', icon: '/pwa-192x192.png', badge: '/favicon.ico', requireInteraction: true },
+            notification: { title, body: debugBody, icon: '/pwa-192x192.png', badge: '/favicon.ico', requireInteraction: true },
             fcm_options: { link: 'https://mavia-app.vercel.app' },
           },
         },
@@ -150,7 +151,9 @@ export default async function handler(req, res) {
         if (!token) continue;
 
         try {
-          await sendFCM(tok, pid, { token, title, body });
+          const docId = docPath.split('/').pop();
+          const debugInfo = `doc:${docId.slice(-6)} tok:${token.slice(-6)} win:${windows.indexOf({date,time})}`;
+          await sendFCM(tok, pid, { token, title, body, debugInfo });
           await fsPatch(tok, pid, docPath, {
             sent:   { booleanValue: true },
             sentAt: { stringValue: new Date().toISOString() },
