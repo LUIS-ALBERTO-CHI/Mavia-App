@@ -470,7 +470,7 @@ export default function DashboardScreen() {
             <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
               <div className="dash-tasks-badge">
                 <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--on-secondary-container)' }}>task_alt</span>
-                <span className="dash-tasks-badge-text">{todayTasks.length} Tareas hoy</span>
+                <span className="dash-tasks-badge-text">{pendingCount} Tareas hoy</span>
               </div>
             </div>
           </div>
