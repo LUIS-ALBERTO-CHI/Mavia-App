@@ -1,10 +1,11 @@
 // ============================================
 // FIREBASE MESSAGING SERVICE WORKER — Mavia
 // Required by FCM for background push notifications
+// Compatible con iOS 16.4+ PWA instalada en Home Screen
 // ============================================
 
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/11.0.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/11.0.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
   apiKey:            "AIzaSyDXc0fcSFElPR39MSkvBidGMuZpOrtBfIo",
@@ -17,37 +18,60 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle background messages (when app is not in foreground)
+// ─── Background push handler ────────────────────────────────────────────────
+// Fires when the app is NOT in the foreground (closed or minimized)
 messaging.onBackgroundMessage((payload) => {
-  console.log('[Mavia SW] Background message:', payload);
+  console.log('[Mavia SW] Background message received:', payload);
 
-  const { title, body, icon } = payload.notification || {};
+  const notification = payload.notification || {};
+  const title = notification.title || 'Mavia';
+  const body  = notification.body  || 'Tienes un recordatorio';
+  const icon  = notification.icon  || '/pwa-192x192.png';
 
-  self.registration.showNotification(title || 'Mavia', {
-    body:   body   || 'Tienes una nueva notificación',
-    icon:   icon   || '/pwa-192x192.png',
-    badge:  '/favicon.ico',
-    data:   payload.data || {},
-    actions: [
-      { action: 'open',    title: 'Abrir app'  },
-      { action: 'dismiss', title: 'Descartar'  },
-    ],
+  // Keep options minimal for maximum iOS compatibility
+  // iOS does NOT support: actions, requireInteraction, vibrate
+  return self.registration.showNotification(title, {
+    body,
+    icon,
+    badge: '/pwa-192x192.png',
+    tag:   payload.data?.taskId || payload.data?.eventId || 'mavia-reminder',
+    data:  payload.data || {},
   });
 });
 
-// Handle notification click
+// ─── Also handle raw push events (fallback) ──────────────────────────────────
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  let payload;
+  try { payload = event.data.json(); } catch { return; }
+
+  // Firebase already handles this via onBackgroundMessage above,
+  // but this catches any non-Firebase pushes just in case
+  const notification = payload.notification || {};
+  if (!notification.title) return; // Let firebase handle structured payloads
+
+  event.waitUntil(
+    self.registration.showNotification(notification.title, {
+      body:  notification.body  || '',
+      icon:  notification.icon  || '/pwa-192x192.png',
+      badge: '/pwa-192x192.png',
+      data:  payload.data || {},
+    })
+  );
+});
+
+// ─── Notification click ───────────────────────────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  if (event.action === 'dismiss') return;
-
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // If app tab is already open, focus it
       for (const client of clientList) {
-        if ('focus' in client) return client.focus();
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus();
+        }
       }
-      // Otherwise open a new tab
       if (clients.openWindow) return clients.openWindow('/');
     })
   );
