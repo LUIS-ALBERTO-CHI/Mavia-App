@@ -143,28 +143,55 @@ export default async function handler(req, res) {
 
       const docs = Array.isArray(rows) ? rows.filter(r => r.document) : [];
       for (const { document } of docs) {
-        const f       = document.fields;
-        const token   = f?.fcmToken?.stringValue;
-        const title   = f?.title?.stringValue   || 'Mavia';
-        const body    = f?.body?.stringValue     || '';
-        const docPath = document.name.split('/documents/')[1];
+        const f         = document.fields;
+        const token     = f?.fcmToken?.stringValue;
+        const title     = f?.title?.stringValue   || 'Mavia';
+        const body      = f?.body?.stringValue     || '';
+        const docPath   = document.name.split('/documents/')[1];
+        const updateTime = document.updateTime; // used for optimistic locking
         if (!token) continue;
 
         try {
-          const docId = docPath.split('/').pop();
-          const debugInfo = `doc:${docId.slice(-6)} tok:${token.slice(-6)} win:${windows.indexOf({date,time})}`;
-          await sendFCM(tok, pid, { token, title, body, debugInfo });
-          await fsPatch(tok, pid, docPath, {
-            sent:   { booleanValue: true },
-            sentAt: { stringValue: new Date().toISOString() },
+          // ── Optimistic lock: atomically claim the doc before sending ──
+          // Only update if the doc hasn't been modified since we read it.
+          // If two cron instances run simultaneously, only ONE will succeed here.
+          const claimUrl = `https://firestore.googleapis.com/v1/projects/${pid}/databases/(default)/documents/${docPath}`
+            + `?currentDocument.updateTime=${encodeURIComponent(updateTime)}`
+            + `&updateMask.fieldPaths=sent&updateMask.fieldPaths=sentAt`;
+
+          const claimResp = await fetch(claimUrl, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
+            body: JSON.stringify({
+              fields: {
+                sent:   { booleanValue: true },
+                sentAt: { stringValue: new Date().toISOString() },
+              },
+            }),
           });
+
+          if (!claimResp.ok) {
+            // Another cron instance already claimed this doc — skip to avoid duplicate
+            const err = await claimResp.json();
+            console.log(`[Cron] ⏭️ Doc already claimed (${err?.error?.status}), skipping "${title}"`);
+            continue;
+          }
+
+          // Successfully claimed — now send FCM
+          const docId = docPath.split('/').pop();
+          const debugInfo = `doc:${docId.slice(-6)} tok:${token.slice(-6)}`;
+          await sendFCM(tok, pid, { token, title, body, debugInfo });
           sent++;
-          console.log(`[Cron] ✅ ${title}`);
+          console.log(`[Cron] ✅ ${title} [${debugInfo}]`);
         } catch (err) {
           errors.push(err.message);
           console.error(`[Cron] ❌ ${title}:`, err.message);
           if (err.message.includes('UNREGISTERED') || err.message.includes('NOT_FOUND')) {
-            await fsPatch(tok, pid, docPath, { sent: { booleanValue: true }, failed: { booleanValue: true } }).catch(() => {});
+            await fetch(
+              `https://firestore.googleapis.com/v1/projects/${pid}/databases/(default)/documents/${docPath}?updateMask.fieldPaths=sent&updateMask.fieldPaths=failed`,
+              { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` },
+                body: JSON.stringify({ fields: { sent: { booleanValue: true }, failed: { booleanValue: true } } }) }
+            ).catch(() => {});
           }
         }
       }
