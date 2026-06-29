@@ -552,6 +552,7 @@ export default function CreateEventScreen() {
                     <DatePicker
                       value={form.date}
                       onChange={v => set('date', v)}
+                      min={new Date().toISOString().split('T')[0]}
                       id="ce-date"
                     />
                   </div>

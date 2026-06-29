@@ -7,8 +7,18 @@ const HOURS_12 = ['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '1
 const MINUTES  = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+function currentTimeDefaults() {
+  const now = new Date();
+  let h = now.getHours();
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const period = h >= 12 ? 'PM' : 'AM';
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+  return { hour12: String(h).padStart(2, '0'), minute: m, period };
+}
+
 function parseValue(v) {
-  if (!v) return { hour12: '09', minute: '00', period: 'AM' };
+  if (!v) return currentTimeDefaults();
   const upper = v.toUpperCase();
   const [hStr, mStr] = v.replace(/[APM\s]/gi, '').split(':');
   let h = parseInt(hStr, 10) || 9;
@@ -32,6 +42,8 @@ function SpinnerColumn({ items, value, onChange, label }) {
   // Long-press support: hold button → repeat
   const intervalRef = useRef(null);
   const timeoutRef  = useRef(null);
+  // Track whether the last interaction was touch — if so, skip the synthetic click
+  const touchedRef  = useRef(false);
 
   const startRepeat = (fn) => {
     fn(); // immediate first step
@@ -64,11 +76,12 @@ function SpinnerColumn({ items, value, onChange, label }) {
       <button
         type="button"
         className="tp-arrow-btn"
-        onMouseDown={() => startRepeat(prev)}
+        onMouseDown={() => { touchedRef.current = false; startRepeat(prev); }}
         onMouseUp={stopRepeat}
         onMouseLeave={stopRepeat}
-        onTouchStart={e => { e.preventDefault(); startRepeat(prev); }}
-        onTouchEnd={stopRepeat}
+        onTouchStart={e => { e.preventDefault(); touchedRef.current = true; startRepeat(prev); }}
+        onTouchEnd={e => { e.preventDefault(); stopRepeat(); }}
+        onClick={() => { if (touchedRef.current) { touchedRef.current = false; return; } }}
         aria-label="Anterior"
       >
         <ChevronUp size={22} strokeWidth={2.5} />
@@ -85,11 +98,12 @@ function SpinnerColumn({ items, value, onChange, label }) {
       <button
         type="button"
         className="tp-arrow-btn"
-        onMouseDown={() => startRepeat(next)}
+        onMouseDown={() => { touchedRef.current = false; startRepeat(next); }}
         onMouseUp={stopRepeat}
         onMouseLeave={stopRepeat}
-        onTouchStart={e => { e.preventDefault(); startRepeat(next); }}
-        onTouchEnd={stopRepeat}
+        onTouchStart={e => { e.preventDefault(); touchedRef.current = true; startRepeat(next); }}
+        onTouchEnd={e => { e.preventDefault(); stopRepeat(); }}
+        onClick={() => { if (touchedRef.current) { touchedRef.current = false; return; } }}
         aria-label="Siguiente"
       >
         <ChevronDown size={22} strokeWidth={2.5} />

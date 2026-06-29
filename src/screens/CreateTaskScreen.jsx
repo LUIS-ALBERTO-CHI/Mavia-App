@@ -503,6 +503,7 @@ export default function CreateTaskScreen() {
                   <DatePicker
                     value={form.date}
                     onChange={v => set('date', v)}
+                    min={new Date().toISOString().split('T')[0]}
                     id="ct-date"
                   />
                 </div>
