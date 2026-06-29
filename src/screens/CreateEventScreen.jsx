@@ -632,7 +632,7 @@ export default function CreateEventScreen() {
                   <input
                     type="text"
                     className="ce-input"
-                    placeholder="Buscar por nombre o email..."
+                    placeholder="Buscar por nombre o correo..."
                     style={{ paddingLeft: '0.875rem', paddingRight: '2.5rem' }}
                     id="ce-invitees"
                   />
@@ -673,13 +673,6 @@ export default function CreateEventScreen() {
                 <Paperclip size={18} />
                 Adjuntar archivos
               </button>
-              <div className="ce-file-chip">
-                <AlignLeft size={13} />
-                brief_marketing.pdf
-                <button type="button" aria-label="Quitar archivo">
-                  <X size={12} />
-                </button>
-              </div>
             </div>
           </div>
 

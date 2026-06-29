@@ -64,8 +64,7 @@ export default function CalendarScreen() {
   const selDateStr   = dateStr(selectedDay);
   const selEvents    = state.events.filter(e => e.date === selDateStr);
   const selTasks     = state.tasks.filter(t => t.date === selDateStr);
-  const useMock      = selEvents.length === 0 && selTasks.length === 0;
-  const displayItems = useMock ? MOCK_EVENTS : [...selEvents, ...selTasks];
+  const displayItems = [...selEvents, ...selTasks];
 
   /* ── Dot colors per category ── */
   const catColor = (cat) => {
@@ -651,7 +650,7 @@ export default function CalendarScreen() {
                 id="cal-add-event"
               >
                 <Plus size={18} />
-                <span>Agregar tarea</span>
+                <span>Agregar evento</span>
               </button>
             </div>
 
