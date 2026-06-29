@@ -289,7 +289,7 @@ function MobileBottomNav() {
   const fabDest = CALENDAR_SCREENS.has(currentScreen) ? 'createEvent' : 'createTask';
 
   return (
-    <div className="mobile-bottom-nav-wrapper" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 'var(--z-nav)' }}>
+    <div className="mobile-bottom-nav-wrapper">
       <nav className="mobile-bottom-nav" role="navigation" aria-label="Navegación principal">
         {BOTTOM_NAV.map(item => {
           const isActive = activeTab === item.id;
