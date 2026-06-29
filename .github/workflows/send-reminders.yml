@@ -2,28 +2,23 @@ name: Send Scheduled Push Notifications
 
 on:
   schedule:
-    # Runs every minute for precise notification delivery
-    # Note: GitHub Actions may batch runs if queue is full, but typically fires every 1-2 min
+    # Runs every minute
     - cron: '* * * * *'
-  # Allow manual trigger from GitHub Actions tab for testing
   workflow_dispatch:
 
 jobs:
   send-reminders:
-    name: Check and Send Due Notifications
+    name: Trigger Vercel Cron Endpoint
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 1
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Run reminder script
+      - name: Call /api/cron-reminders on Vercel
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: node scripts/send-reminders.mjs
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" \
+            -X GET \
+            -H "x-firebase-sa: present" \
+            "https://mavia-app.vercel.app/api/cron-reminders" \
+            && echo " OK" || echo " FAILED"
