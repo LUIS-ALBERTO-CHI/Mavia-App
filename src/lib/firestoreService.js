@@ -237,7 +237,8 @@ export async function saveJournalEntry(uid, entry) {
  * Called once after login when the browser grants notification permission.
  */
 export async function saveFCMToken(uid, fcmToken) {
-  await updateDoc(userRef(uid), { fcmToken });
+  // Use setDoc+merge so it works even if the user doc doesn't exist yet
+  await setDoc(userRef(uid), { fcmToken }, { merge: true });
 }
 
 // ─── Scheduled Notifications ───────────────────────────────────────────────
