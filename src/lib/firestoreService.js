@@ -245,18 +245,33 @@ export async function saveFCMToken(uid, fcmToken, deviceId = 'default') {
 }
 
 /**
- * Returns all unique FCM tokens (one per registered device).
+ * Returns all unique FCM tokens for a user (one per registered device).
+ * Uses REST API directly to bypass Firebase SDK's IndexedDB cache
+ * (which can return stale data when the SDK is in offline mode).
  */
 export async function getUserFCMTokens(uid) {
   try {
-    const snap = await getDoc(userRef(uid));
-    const data = snap.data() || {};
-    // Prefer new map format (one slot per device, no stale tokens)
-    const fromMap = data.fcmTokensByDevice ? Object.values(data.fcmTokensByDevice) : [];
-    if (fromMap.length > 0) return fromMap.filter(Boolean);
-    // Fall back to legacy array only during migration (map not yet written)
-    const fromArr = Array.isArray(data.fcmTokens) ? data.fcmTokens : [];
-    return fromArr.filter(Boolean);
+    const { getAuth } = await import('firebase/auth');
+    const user = getAuth().currentUser;
+    if (!user) return [];
+    const idToken = await user.getIdToken();
+
+    const PROJECT_ID = 'mavia-779df';
+    const response = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/users/${uid}?mask.fieldPaths=fcmTokensByDevice`,
+      { headers: { 'Authorization': `Bearer ${idToken}` } }
+    );
+
+    if (!response.ok) return [];
+    const doc = await response.json();
+
+    // Parse fcmTokensByDevice map from Firestore REST format
+    const mapFields = doc.fields?.fcmTokensByDevice?.mapValue?.fields || {};
+    const tokens = Object.values(mapFields)
+      .map(v => v.stringValue)
+      .filter(Boolean);
+
+    return tokens;
   } catch {
     return [];
   }
