@@ -234,25 +234,29 @@ export async function saveJournalEntry(uid, entry) {
 // ─── FCM Token ─────────────────────────────────────────────────────────────
 
 /**
- * Saves the FCM push token to the user profile.
- * Uses arrayUnion to accumulate tokens across devices (PC + phone + tablet).
- * Each device has its own token — all are stored so the cron can send to all.
+ * Saves the FCM push token to the user profile using a device map.
+ * Each device (browser instance) has a stable deviceId in localStorage.
+ * This prevents token accumulation: one slot per device, auto-updates on token rotation.
  */
-export async function saveFCMToken(uid, fcmToken) {
+export async function saveFCMToken(uid, fcmToken, deviceId = 'default') {
   await setDoc(userRef(uid), {
-    fcmTokens: arrayUnion(fcmToken), // accumulate, don't overwrite
+    fcmTokensByDevice: { [deviceId]: fcmToken },
   }, { merge: true });
 }
 
 /**
- * Returns all FCM tokens saved for a user (one per registered device).
+ * Returns all unique FCM tokens (one per registered device).
  */
 export async function getUserFCMTokens(uid) {
   try {
     const snap = await getDoc(userRef(uid));
     const data = snap.data() || {};
-    const tokens = Array.isArray(data.fcmTokens) ? data.fcmTokens : [];
-    return tokens.filter(Boolean);
+    // Support both new map format and legacy array
+    const fromMap = data.fcmTokensByDevice ? Object.values(data.fcmTokensByDevice) : [];
+    const fromArr = Array.isArray(data.fcmTokens) ? data.fcmTokens : [];
+    // Merge and deduplicate
+    const all = [...new Set([...fromMap, ...fromArr])].filter(Boolean);
+    return all;
   } catch {
     return [];
   }

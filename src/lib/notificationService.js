@@ -55,7 +55,8 @@ export async function initFCM(uid) {
     });
 
     if (token && uid) {
-      await saveFCMToken(uid, token);
+      const deviceId = getOrCreateDeviceId();
+      await saveFCMToken(uid, token, deviceId);
       // Cache in localStorage so it's available immediately on next session
       try { localStorage.setItem('mavia_fcm_token', token); } catch {}
       console.log('[Mavia] FCM token saved:', token.slice(0, 20) + '...');
@@ -66,6 +67,18 @@ export async function initFCM(uid) {
     console.warn('[Mavia] FCM init error:', err.message);
     return null;
   }
+}
+
+/** Stable device ID — one per browser instance, survives page reloads */
+export function getOrCreateDeviceId() {
+  try {
+    let id = localStorage.getItem('mavia_device_id');
+    if (!id) {
+      id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+      localStorage.setItem('mavia_device_id', id);
+    }
+    return id;
+  } catch { return 'default'; }
 }
 
 /** Returns the best available FCM token: state → localStorage → null */
