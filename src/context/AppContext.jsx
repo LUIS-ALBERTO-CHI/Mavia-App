@@ -7,11 +7,12 @@ import { loadUserData, saveTask, deleteTask, saveHabit, saveEvent, deleteEvent,
          saveSettings, createScheduledNotification } from '../lib/firestoreService';
 import {
   initFCM,
-  rescheduleAllReminders,
   scheduleTaskReminder,
-  cancelReminder,
-  scheduleHabitReminder,
   scheduleEventReminders,
+  scheduleHabitReminder,
+  rescheduleAllReminders,
+  cancelReminder,
+  getCachedFCMToken,
   parseTimeTo24h,
 } from '../lib/notificationService';
 
@@ -444,12 +445,9 @@ export function AppProvider({ children }) {
 
         case 'ADD_TASK':
           await saveTask(uid, enrichedAction.task);
-          // Schedule reminder — always do both:
-          //   1. FCM Firestore (works when browser is closed, sent by GitHub Actions cron)
-          //   2. Local setTimeout (works immediately if browser is open — backup for cron lag)
           if (enrichedAction.task.reminder) {
-            // Get the best available token (state may not have it yet due to async initFCM)
-            const token = state.fcmToken || state.user?.fcmToken || null;
+            // state.fcmToken may not be set yet (initFCM is async) — fall back to localStorage cache
+            const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
             scheduleTaskReminder(enrichedAction.task, uid, token);
           }
           break;
@@ -472,7 +470,10 @@ export function AppProvider({ children }) {
             await saveTask(uid, updated);
             // Re-schedule reminder if settings changed
             cancelReminder(updated.id);
-            if (updated.reminder && !updated.completed) scheduleTaskReminder(updated, uid, state.fcmToken);
+            if (updated.reminder && !updated.completed) {
+              const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
+              scheduleTaskReminder(updated, uid, token);
+            }
           }
           break;
         }
@@ -520,7 +521,7 @@ export function AppProvider({ children }) {
 
           // ── Schedule event reminder via FCM (works even with browser closed) ──
           if (ev.reminderOn !== false && ev.startTime) {
-            const token = state.fcmToken;
+            const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
             const time24 = parseTimeTo24h(ev.startTime);
 
             if (token && uid && time24) {

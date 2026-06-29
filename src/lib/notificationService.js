@@ -55,6 +55,8 @@ export async function initFCM(uid) {
 
     if (token && uid) {
       await saveFCMToken(uid, token);
+      // Cache in localStorage so it's available immediately on next session
+      try { localStorage.setItem('mavia_fcm_token', token); } catch {}
       console.log('[Mavia] FCM token saved:', token.slice(0, 20) + '...');
     }
 
@@ -63,6 +65,11 @@ export async function initFCM(uid) {
     console.warn('[Mavia] FCM init error:', err.message);
     return null;
   }
+}
+
+/** Returns the best available FCM token: state → localStorage → null */
+export function getCachedFCMToken() {
+  try { return localStorage.getItem('mavia_fcm_token') || null; } catch { return null; }
 }
 
 export function getNotificationPermission() {
