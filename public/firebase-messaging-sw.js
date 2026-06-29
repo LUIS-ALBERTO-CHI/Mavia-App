@@ -39,28 +39,6 @@ messaging.onBackgroundMessage((payload) => {
   });
 });
 
-// ─── Also handle raw push events (fallback) ──────────────────────────────────
-self.addEventListener('push', (event) => {
-  if (!event.data) return;
-
-  let payload;
-  try { payload = event.data.json(); } catch { return; }
-
-  // Firebase already handles this via onBackgroundMessage above,
-  // but this catches any non-Firebase pushes just in case
-  const notification = payload.notification || {};
-  if (!notification.title) return; // Let firebase handle structured payloads
-
-  event.waitUntil(
-    self.registration.showNotification(notification.title, {
-      body:  notification.body  || '',
-      icon:  notification.icon  || '/pwa-192x192.png',
-      badge: '/pwa-192x192.png',
-      data:  payload.data || {},
-    })
-  );
-});
-
 // ─── Notification click ───────────────────────────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
