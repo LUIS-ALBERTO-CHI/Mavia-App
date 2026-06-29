@@ -251,12 +251,12 @@ export async function getUserFCMTokens(uid) {
   try {
     const snap = await getDoc(userRef(uid));
     const data = snap.data() || {};
-    // Support both new map format and legacy array
+    // Prefer new map format (one slot per device, no stale tokens)
     const fromMap = data.fcmTokensByDevice ? Object.values(data.fcmTokensByDevice) : [];
+    if (fromMap.length > 0) return fromMap.filter(Boolean);
+    // Fall back to legacy array only during migration (map not yet written)
     const fromArr = Array.isArray(data.fcmTokens) ? data.fcmTokens : [];
-    // Merge and deduplicate
-    const all = [...new Set([...fromMap, ...fromArr])].filter(Boolean);
-    return all;
+    return fromArr.filter(Boolean);
   } catch {
     return [];
   }
