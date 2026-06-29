@@ -51,20 +51,10 @@ export default function CreateTaskScreen() {
     }
   );
 
-  const [checklist, setChecklist] = useState([{ id: '1', text: '' }, { id: '2', text: '' }]);
-  const [saving,    setSaving]    = useState(false);
-  const [files,     setFiles]     = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [files,  setFiles]  = useState([]);
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
-
-  const addCheckItem = () =>
-    setChecklist(l => [...l, { id: Date.now().toString(), text: '' }]);
-
-  const removeCheckItem = (id) =>
-    setChecklist(l => l.filter(c => c.id !== id));
-
-  const updateCheckItem = (id, text) =>
-    setChecklist(l => l.map(c => c.id === id ? { ...c, text } : c));
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -447,45 +437,6 @@ export default function CreateTaskScreen() {
                   </div>
                 </div>
 
-              </div>
-            </section>
-
-            {/* Checklist card */}
-            <section className="ct-card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-md)' }}>
-                <h3 style={{ fontWeight: 600, fontSize: 'var(--text-headline-md)', color: 'var(--on-surface)' }}>
-                  Lista de verificación
-                </h3>
-                <button type="button" className="ct-add-step" onClick={addCheckItem} id="ct-add-step">
-                  <Plus size={16} strokeWidth={2.5} /> Añadir paso
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {checklist.map(item => (
-                  <div key={item.id} className="ct-check-row">
-                    <span className="ct-check-icon">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-                        <rect x="3" y="3" width="18" height="18" rx="4"/>
-                      </svg>
-                    </span>
-                    <input
-                      className="ct-check-input"
-                      placeholder="Ej. Revisar métricas finales"
-                      value={item.text}
-                      onChange={e => updateCheckItem(item.id, e.target.value)}
-                      id={`ct-check-${item.id}`}
-                    />
-                    <button
-                      type="button"
-                      className="ct-check-remove"
-                      onClick={() => removeCheckItem(item.id)}
-                      aria-label="Eliminar"
-                    >
-                      <X size={15} />
-                    </button>
-                  </div>
-                ))}
               </div>
             </section>
 
