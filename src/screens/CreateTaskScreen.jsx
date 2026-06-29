@@ -20,7 +20,7 @@ const CATEGORIES = [
 const today = localToday();
 
 export default function CreateTaskScreen() {
-  const { state, dispatch, goBack, showToast } = useApp();
+  const { state, dispatch, goBack, navigate, showToast } = useApp();
 
   // Edit mode: if navigated with a taskId param, pre-load that task
   const taskId   = state.screenParams?.taskId || null;
@@ -74,11 +74,13 @@ export default function CreateTaskScreen() {
       if (isEdit) {
         dispatch({ type: 'UPDATE_TASK', task: { ...editTask, ...form } });
         showToast('Tarea actualizada', 'success');
+        // Use navigate (not goBack) so screenParams stays set for TaskDetailScreen
+        navigate('taskDetail', { taskId: editTask.id });
       } else {
         dispatch({ type: 'ADD_TASK', task: { ...form, completed: false } });
         showToast('¡Tarea creada!', 'success');
+        goBack();
       }
-      goBack();
     }, 600);
   };
 

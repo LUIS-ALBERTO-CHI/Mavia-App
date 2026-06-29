@@ -23,7 +23,7 @@ const STATUS_STYLE = {
 };
 
 export default function TaskDetailScreen() {
-  const { state, dispatch, goBack, showToast } = useApp();
+  const { state, dispatch, goBack, navigate, showToast } = useApp();
   const { screenParams, tasks } = state;
   const taskId = screenParams?.taskId;
   const task   = tasks.find(t => t.id === taskId);
