@@ -269,18 +269,18 @@ function MobileBottomNav() {
   const { currentScreen } = state;
 
   const BOTTOM_NAV = [
-    { id: 'dashboard', label: 'Bandeja', icon: 'inbox'                   },
-    { id: 'agenda',    label: 'Agenda',  icon: 'format_list_bulleted'    },
-    { id: 'wellness',  label: 'IA',      icon: 'auto_awesome'             },
-    { id: 'settings',  label: 'Ajustes', icon: 'settings'                },
+    { id: 'dashboard', label: 'Inicio',    icon: 'dashboard'          },
+    { id: 'wellness',  label: 'Bienestar', icon: 'energy_savings_leaf' },
+    { id: 'tasks',     label: 'Tareas',    icon: 'check_circle'        },
+    { id: 'profile',   label: 'Perfil',    icon: 'person'              },
   ];
 
   // Map sub-screens to their parent tab
   const TAB_GROUPS = {
-    dashboard: ['dashboard'],
-    agenda:    ['agenda', 'tasks', 'createTask', 'taskDetail', 'events', 'createEvent', 'calendar', 'reminders'],
+    dashboard: ['dashboard', 'agenda', 'calendar'],
     wellness:  ['wellness', 'meditation', 'habits', 'createHabit', 'goals', 'createGoal', 'journal', 'gratitude', 'phrases'],
-    settings:  ['settings', 'profile', 'notifications', 'statistics', 'search'],
+    tasks:     ['tasks', 'createTask', 'taskDetail', 'events', 'createEvent', 'reminders'],
+    profile:   ['profile', 'settings', 'notifications', 'statistics', 'search'],
   };
 
   const activeTab = Object.entries(TAB_GROUPS)
