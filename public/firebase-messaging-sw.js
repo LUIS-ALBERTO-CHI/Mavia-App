@@ -19,22 +19,24 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 // ─── Background push handler ────────────────────────────────────────────────
-// Fires when the app is NOT in the foreground (closed or minimized)
+// The cron sends DATA-ONLY FCM messages (no 'notification' field) so the
+// browser does NOT auto-display a notification. This is the ONLY handler
+// that shows the notification, preventing the duplicate-notification bug.
 messaging.onBackgroundMessage((payload) => {
   console.log('[Mavia SW] Background message received:', payload);
 
-  const notification = payload.notification || {};
-  const title = notification.title || 'Mavia';
-  const body  = notification.body  || 'Tienes un recordatorio';
-  const icon  = notification.icon  || '/pwa-192x192.png';
+  // Read from data field (data-only FCM message).
+  // Fall back to notification field for compatibility.
+  const title = payload.data?.title || payload.notification?.title || 'Mavia';
+  const body  = payload.data?.body  || payload.notification?.body  || 'Tienes un recordatorio';
+  const icon  = payload.data?.icon  || '/pwa-192x192.png';
 
-  // Keep options minimal for maximum iOS compatibility
-  // iOS does NOT support: actions, requireInteraction, vibrate
+  // Use fixed tag so iOS replaces a pending notification instead of stacking
   return self.registration.showNotification(title, {
     body,
     icon,
     badge: '/pwa-192x192.png',
-    tag:   payload.data?.taskId || payload.data?.eventId || 'mavia-reminder',
+    tag:   'mavia-reminder',
     data:  payload.data || {},
   });
 });

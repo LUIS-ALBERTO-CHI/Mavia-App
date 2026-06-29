@@ -72,7 +72,7 @@ async function fsPatch(tok, pid, path, fields) {
 // ─── FCM REST ────────────────────────────────────────────────────────────────
 
 async function sendFCM(tok, pid, { token, title, body, debugInfo = '' }) {
-  const debugBody = debugInfo ? `${body || ''} [${debugInfo}]` : (body || '');
+  const displayBody = debugInfo ? `${body || ''} [${debugInfo}]` : (body || '');
   const r = await fetch(
     `https://fcm.googleapis.com/v1/projects/${pid}/messages:send`,
     {
@@ -81,9 +81,15 @@ async function sendFCM(tok, pid, { token, title, body, debugInfo = '' }) {
       body: JSON.stringify({
         message: {
           token,
-          notification: { title, body: debugBody },
+          // DATA-ONLY message: no 'notification' field to prevent browser auto-display.
+          // The SW's onBackgroundMessage reads these and shows ONE notification.
+          data: {
+            title,
+            body: displayBody,
+            icon: '/pwa-192x192.png',
+          },
           webpush: {
-            notification: { title, body: debugBody, icon: '/pwa-192x192.png', badge: '/favicon.ico', requireInteraction: true },
+            headers: { Urgency: 'high' },
             fcm_options: { link: 'https://mavia-app.vercel.app' },
           },
         },
