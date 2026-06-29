@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import {
-  ArrowLeft, Edit2, Trash2, CheckSquare, Paperclip,
+  ArrowLeft, Edit2, Trash2, CheckSquare,
   StickyNote, Bell, Clock, Calendar, RotateCcw, Plus,
-  Check, Sparkles, FileText, Image
+  Check, Sparkles, FileText
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Checkbox } from '../components/ui/checkbox';
@@ -28,11 +28,7 @@ export default function TaskDetailScreen() {
   const taskId = screenParams?.taskId;
   const task   = tasks.find(t => t.id === taskId);
 
-  const [checklist, setChecklist] = useState([
-    { id: '1', text: 'Revisar KPIs', done: true },
-    { id: '2', text: 'Validar creatividades', done: false },
-    { id: '3', text: 'Aprobar presupuesto', done: false },
-  ]);
+  const [checklist, setChecklist] = useState([]);
   const [newCheck, setNewCheck] = useState('');
   const [notes, setNotes]       = useState('');
 
@@ -571,10 +567,9 @@ export default function TaskDetailScreen() {
 
           {/* Title & description */}
           <h1 className="td-task-title">{task.title}</h1>
-          <p className="td-task-desc">
-            {task.description ||
-              'Analizar los canales de adquisición y ajustar el presupuesto para el lanzamiento. Asegurarse de que el mensaje de marca resuene con el pilar de bienestar.'}
-          </p>
+          {task.description && (
+            <p className="td-task-desc">{task.description}</p>
+          )}
 
           {/* Bento grid */}
           <div className="td-bento">
@@ -622,34 +617,6 @@ export default function TaskDetailScreen() {
                 <button className="td-add-check-btn" onClick={addCheck} id="check-add-btn">
                   <Plus size={16} /> Añadir ítem
                 </button>
-              </section>
-
-              {/* Attachments */}
-              <section>
-                <div className="td-section-title">
-                  <Paperclip size={18} color="var(--secondary)" strokeWidth={1.75} />
-                  Adjuntos
-                </div>
-                <div className="td-attach-grid">
-                  <div className="td-attach-item">
-                    <div className="td-attach-icon" style={{ background: 'rgba(186,26,26,0.1)' }}>
-                      <FileText size={20} color="var(--error)" strokeWidth={1.5} />
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div className="td-attach-name">estrategia_v1.pdf</div>
-                      <div className="td-attach-size">2.4 MB</div>
-                    </div>
-                  </div>
-                  <div className="td-attach-item">
-                    <div className="td-attach-icon" style={{ background: 'rgba(84,99,71,0.12)' }}>
-                      <Image size={20} color="var(--secondary)" strokeWidth={1.5} />
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div className="td-attach-name">moodboard_q3.jpg</div>
-                      <div className="td-attach-size">4.1 MB</div>
-                    </div>
-                  </div>
-                </div>
               </section>
 
             </div>
