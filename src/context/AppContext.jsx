@@ -344,14 +344,22 @@ export function AppProvider({ children }) {
           },
         });
 
-        // ── Notifications ──
-        initFCM(firebaseUser.uid)
-          .then(token => { if (token) dispatch({ type: 'SET_FCM_TOKEN', token }); })
-          .catch(() => {});
-        const today = localToday();
-        rescheduleAllReminders(data.tasks || []);
+        // ── Notifications ── wait for FCM token then reschedule all
+        const _uid   = firebaseUser.uid;
+        const _tasks = data.tasks || [];
+        const _today = localToday();
+        initFCM(_uid)
+          .then(token => {
+            if (token) dispatch({ type: 'SET_FCM_TOKEN', token });
+            // Reschedule NOW that we have the FCM token
+            rescheduleAllReminders(_tasks, _uid, token || null);
+          })
+          .catch(() => {
+            // No FCM — still schedule local timers
+            rescheduleAllReminders(_tasks, null, null);
+          });
         scheduleHabitReminder(data.habits || []);
-        scheduleEventReminders((data.events || []).filter(e => e.date === today));
+        scheduleEventReminders((data.events || []).filter(e => e.date === localToday()));
 
       } catch (err) {
         // Offline fallback: log in from Firebase Auth profile, data will

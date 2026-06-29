@@ -234,10 +234,13 @@ export function cancelReminder(taskId) {
 
 /**
  * Re-schedules all pending reminders for a list of tasks.
- * Call this on app load / login.
+ * Pass uid + fcmToken to also register them in Firestore (enables background push).
+ * @param {Array}  tasks
+ * @param {string} uid       — Firebase user ID (optional, enables FCM Firestore scheduling)
+ * @param {string} fcmToken  — FCM push token  (optional, enables FCM Firestore scheduling)
  */
-export function rescheduleAllReminders(tasks = []) {
-  // Clear everything first
+export function rescheduleAllReminders(tasks = [], uid = null, fcmToken = null) {
+  // Clear existing local timers
   _timers.forEach((ids) => ids.forEach(id => clearTimeout(id)));
   _timers.clear();
 
@@ -245,7 +248,7 @@ export function rescheduleAllReminders(tasks = []) {
   tasks.forEach(task => {
     // Only schedule for today and incomplete tasks with reminders
     if (task.reminder && !task.completed && task.date === today) {
-      scheduleTaskReminder(task);
+      scheduleTaskReminder(task, uid, fcmToken);
     }
   });
 }
