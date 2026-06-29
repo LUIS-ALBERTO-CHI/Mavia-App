@@ -162,14 +162,30 @@ export default async function handler(req, res) {
         const updateTime = document.updateTime;
         if (!token) continue;
 
-        // Build URGENTE-format notification
-        const taskName = rawTitle
-          .replace(/^Es hora:\s*/i, '')
-          .replace(/^En 15 minutos:\s*/i, '')
+        // Build URGENTE-format notification — distinguish between types
+        const isWarn15  = /^En 15 minutos:/i.test(rawTitle);
+        const isEvent   = /^Es hora del evento:/i.test(rawTitle);
+        const taskName  = rawTitle
           .replace(/^Es hora del evento:\s*/i, '')
+          .replace(/^En 15 minutos:\s*/i, '')
+          .replace(/^Es hora:\s*/i, '')
           .trim();
-        const notifTitle = '⚡ URGENTE';
-        const notifBody  = `¡Es hora: ${taskName}!\nInicia ahora | ${formatTo12h(schedTime)}`;
+
+        const taskTime12 = formatTo12h(schedTime);
+        let notifTitle, notifBody;
+
+        if (isWarn15) {
+          // 15-minute warning — different message so user isn't confused
+          notifTitle = 'URGENTE';
+          notifBody  = `En 15 min: ${taskName}\nComienza a las ${taskTime12}`;
+        } else if (isEvent) {
+          notifTitle = 'URGENTE';
+          notifBody  = `Evento ahora: ${taskName}\nInicia a las ${taskTime12}`;
+        } else {
+          // Exact task time
+          notifTitle = 'URGENTE';
+          notifBody  = `\u00a1Es hora: ${taskName}!\nInicia ahora | ${taskTime12}`;
+        }
 
         try {
           // ── Optimistic lock: claim before sending to prevent race conditions ──
