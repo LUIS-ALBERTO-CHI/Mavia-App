@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import {
   ArrowLeft, Edit2, Trash2, CheckSquare,
-  StickyNote, Bell, Clock, Calendar, RotateCcw, Plus,
+  StickyNote, Bell, Clock, Calendar, RotateCcw,
   Check, Sparkles, FileText
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Checkbox } from '../components/ui/checkbox';
 import { Progress } from '../components/ui/progress';
 import { Badge } from '../components/ui/badge';
-import { Input } from '../components/ui/input';
 
 const CAT_STYLE = {
   Marketing:  { bg: 'rgba(84,99,71,0.15)',   color: '#3d4b31', dot: '#546347'  },
@@ -29,7 +28,6 @@ export default function TaskDetailScreen() {
   const task   = tasks.find(t => t.id === taskId);
 
   const [checklist, setChecklist]         = useState(task?.checklist || []);
-  const [newCheck, setNewCheck]           = useState('');
   const [notes, setNotes]                 = useState(task?.notes || '');
   const [reminderChanging, setReminderChanging] = useState(false);
 
@@ -65,18 +63,6 @@ export default function TaskDetailScreen() {
 
   const toggleCheck = (id) => {
     const updated = checklist.map(c => c.id === id ? { ...c, done: !c.done } : c);
-    saveChecklist(updated);
-  };
-
-  const addCheck = () => {
-    if (!newCheck.trim()) return;
-    const updated = [...checklist, { id: Date.now().toString(), text: newCheck.trim(), done: false }];
-    saveChecklist(updated);
-    setNewCheck('');
-  };
-
-  const removeCheck = (id) => {
-    const updated = checklist.filter(c => c.id !== id);
     saveChecklist(updated);
   };
 
@@ -615,7 +601,11 @@ export default function TaskDetailScreen() {
                   <span style={{ fontSize: 'var(--text-label-sm)', color: 'var(--on-surface-variant)', fontWeight: 600 }}>{checkDone}/{checklist.length}</span>
                 </div>
 
-                {checklist.map(item => (
+                {checklist.length === 0 ? (
+                  <p style={{ fontSize: 'var(--text-body-md)', color: 'var(--outline)', fontStyle: 'italic' }}>
+                    Sin ítems — pulsa Editar para agregar pasos.
+                  </p>
+                ) : checklist.map(item => (
                   <div
                     key={item.id}
                     className="td-check-item"
@@ -627,26 +617,8 @@ export default function TaskDetailScreen() {
                       onCheckedChange={() => toggleCheck(item.id)}
                     />
                     <span className={`td-check-label${item.done ? ' done' : ''}`}>{item.text}</span>
-                    <button
-                      onClick={e => { e.stopPropagation(); removeCheck(item.id); }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)', opacity: 0.5, padding: '2px 4px', lineHeight: 1, fontSize: '16px', flexShrink: 0 }}
-                      aria-label="Eliminar ítem"
-                    >×</button>
                   </div>
                 ))}
-
-                {/* Add item */}
-                <Input
-                  className="mt-2"
-                  placeholder="Escribe un nuevo ítem y presiona Enter..."
-                  value={newCheck}
-                  onChange={e => setNewCheck(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && addCheck()}
-                  id="check-add-input"
-                />
-                <button className="td-add-check-btn" onClick={addCheck} id="check-add-btn">
-                  <Plus size={16} /> Añadir ítem
-                </button>
               </section>
 
             </div>
