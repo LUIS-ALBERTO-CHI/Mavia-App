@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { ArrowLeft, Calendar, Clock, MapPin, Trash2, Edit2, Users, BookOpen, Briefcase, Heart, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, MapPin, Trash2, Edit2, Users, BookOpen, Briefcase, Heart, AlertTriangle, Video, ExternalLink } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { formatTime12h } from '../lib/utils';
 
@@ -279,6 +279,43 @@ export default function EventDetailScreen() {
               <div>
                 <div className="evd-info-label">Ubicación</div>
                 <div className="evd-info-value">{event.location}</div>
+              </div>
+            </div>
+          )}
+
+          {event.videoLink && (
+            <div className="evd-info-row">
+              <div className="evd-info-icon">
+                <Video size={16} color="var(--secondary)" strokeWidth={1.75} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div className="evd-info-label">Videollamada</div>
+                <a
+                  href={event.videoLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  id="evd-video-link"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    marginTop: 4,
+                    padding: '7px 16px',
+                    background: 'var(--secondary-container)',
+                    color: 'var(--on-secondary-container)',
+                    borderRadius: 99,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    fontFamily: 'var(--font-body)',
+                    textDecoration: 'none',
+                    transition: 'opacity 0.15s ease',
+                  }}
+                  onMouseOver={e => e.currentTarget.style.opacity = '0.82'}
+                  onMouseOut={e => e.currentTarget.style.opacity = '1'}
+                >
+                  <ExternalLink size={13} strokeWidth={2.5} />
+                  Unirse a la llamada
+                </a>
               </div>
             </div>
           )}

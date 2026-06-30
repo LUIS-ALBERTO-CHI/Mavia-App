@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import {
-  CalendarPlus, Clock, Tag, MapPin, Users, AlignLeft,
-  Link2, Search, Paperclip, Bell, ChevronDown, X, Check, Leaf
+  CalendarPlus, Clock, Tag, MapPin, Video,
+  Link2, AlignLeft, Bell, ChevronDown, X, Check, Leaf
 } from 'lucide-react';
 import { DatePicker } from '../components/ui/date-picker';
 import { TimePicker } from '../components/ui/time-picker';
@@ -32,6 +32,7 @@ export default function CreateEventScreen() {
     date:       editEvent.date      || today,
     startTime:  editEvent.startTime || '',
     location:   editEvent.location  || '',
+    videoLink:  editEvent.videoLink  || '',
     category:   editEvent.category  || 'Personal',
     notes:      editEvent.notes     || '',
     reminder:   editEvent.reminder  || '15 minutos antes',
@@ -41,6 +42,7 @@ export default function CreateEventScreen() {
     date:      today,
     startTime: '',
     location:  '',
+    videoLink: '',
     category:  'Personal',
     notes:     '',
     reminder:  '15 minutos antes',
@@ -63,6 +65,7 @@ export default function CreateEventScreen() {
       date:       form.date,
       startTime:  form.startTime,
       location:   form.location,
+      videoLink:  form.videoLink,
       category:   form.category,
       notes:      form.notes,
       color:      CATEGORIES.find(c => c.id === form.category)?.color || '#705765',
@@ -619,14 +622,14 @@ export default function CreateEventScreen() {
               <div className="ce-card">
                 <div className="ce-card-title">
                   <MapPin size={16} />
-                  Ubicación
+                  Ubicación física
                 </div>
                 <div className="ce-input-wrap">
-                  <Link2 size={16} className="ce-input-icon" />
+                  <MapPin size={16} className="ce-input-icon" />
                   <input
                     type="text"
                     className="ce-input"
-                    placeholder="Link de videollamada o dirección física"
+                    placeholder="Dirección o lugar del evento"
                     value={form.location}
                     onChange={e => set('location', e.target.value)}
                     id="ce-location"
@@ -634,32 +637,28 @@ export default function CreateEventScreen() {
                 </div>
               </div>
 
-              {/* Invitees */}
+              {/* Video link */}
               <div className="ce-card">
                 <div className="ce-card-title">
-                  <Users size={16} />
-                  Invitados
+                  <Video size={16} />
+                  Link de videollamada
                 </div>
                 <div className="ce-input-wrap">
+                  <Link2 size={16} className="ce-input-icon" />
                   <input
-                    type="text"
+                    type="url"
                     className="ce-input"
-                    placeholder="Buscar por nombre o correo..."
-                    style={{ paddingLeft: '0.875rem', paddingRight: '2.5rem' }}
-                    id="ce-invitees"
+                    placeholder="https://meet.google.com/..."
+                    value={form.videoLink}
+                    onChange={e => set('videoLink', e.target.value)}
+                    id="ce-video-link"
                   />
-                  <Search size={16} className="ce-input-right" />
                 </div>
-                {/* Avatar stack */}
-                <div className="ce-avatars" style={{ marginTop: 'var(--space-md)' }}>
-                  {[
-                    'https://i.pravatar.cc/40?img=47',
-                    'https://i.pravatar.cc/40?img=15',
-                  ].map((src, i) => (
-                    <img key={i} src={src} className="ce-avatar" alt="Invitado" />
-                  ))}
-                  <div className="ce-avatar-more">+3</div>
-                </div>
+                {form.videoLink && (
+                  <p style={{ fontSize: 11, color: 'var(--on-surface-variant)', marginTop: 6, paddingLeft: 4 }}>
+                    El link aparecerá en el detalle del evento para abrirlo directo.
+                  </p>
+                )}
               </div>
 
             </div>
@@ -679,13 +678,6 @@ export default function CreateEventScreen() {
               onChange={e => set('notes', e.target.value)}
               id="ce-notes"
             />
-            {/* Attachment row */}
-            <div className="ce-attach-row">
-              <button type="button" className="ce-attach-btn" id="ce-attach">
-                <Paperclip size={18} />
-                Adjuntar archivos
-              </button>
-            </div>
           </div>
 
           {/* ── Reminder card ── */}
