@@ -4,6 +4,7 @@ import LottieIcon from '../components/LottieIcon';
 import { Search, Clock, MoreVertical, Check, AlertCircle, Minus, ChevronsDown } from 'lucide-react';
 import { localToday, localDateOffset } from '../lib/utils';
 import PriorityBadge from '../components/PriorityBadge';
+import ChecklistConfirmModal from '../components/ChecklistConfirmModal';
 
 const FILTERS = ['Hoy', 'Mañana', 'Semana', 'Urgentes', 'Marketing', 'Personal', 'Espiritual'];
 
@@ -15,8 +16,9 @@ const CAT_STYLE = {
 
 export default function TasksScreen() {
   const { state, dispatch, navigate, showToast } = useApp();
-  const activeFilter = state.activeFilter || 'Hoy';
-  const [search, setSearch] = useState('');
+  const [search, setSearch]       = useState('');
+  const [confirmData, setConfirmData] = useState(null);
+
   const chipsRef = useRef(null);
 
   // Auto-scroll the selected chip into view
@@ -67,17 +69,24 @@ export default function TasksScreen() {
     const task = state.tasks.find(t => t.id === id);
     if (!task) return;
 
-    // Guard: task with pending checklist items
     if (!task.completed) {
       const pending = (task.checklist || []).filter(item => !item.done);
       if (pending.length > 0) {
-        const ok = window.confirm(
-          `Esta tarea tiene ${pending.length} ítem${pending.length > 1 ? 's' : ''} pendiente${pending.length > 1 ? 's' : ''} en el checklist.\n\n¿Completarla de todas formas?`
-        );
-        if (!ok) {
-          navigate('taskDetail', { taskId: task.id });
-          return;
-        }
+        setConfirmData({
+          taskTitle:    task.title,
+          pendingCount: pending.length,
+          onConfirm: () => {
+            dispatch({ type: 'TOGGLE_TASK', id });
+            showToast('¡Tarea completada! 🎉', 'success');
+            setConfirmData(null);
+          },
+          onReview: () => {
+            setConfirmData(null);
+            navigate('taskDetail', { taskId: task.id });
+          },
+          onClose: () => setConfirmData(null),
+        });
+        return;
       }
     }
 
@@ -92,6 +101,8 @@ export default function TasksScreen() {
 
   return (
     <>
+      {/* Checklist confirm modal */}
+      {confirmData && <ChecklistConfirmModal {...confirmData} />}
       <style>{`
         /* ========= TASKS SCREEN ========= */
         .ts-screen {

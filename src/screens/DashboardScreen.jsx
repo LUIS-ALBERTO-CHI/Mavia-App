@@ -4,6 +4,8 @@ import LottieIcon from '../components/LottieIcon';
 import { localToday } from '../lib/utils';
 import { Clock } from 'lucide-react';
 import PriorityBadge from '../components/PriorityBadge';
+import ChecklistConfirmModal from '../components/ChecklistConfirmModal';
+import { useState } from 'react';
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -24,6 +26,8 @@ const CAT_DOTS = {
 export default function DashboardScreen() {
   const { state, navigate, dispatch, showToast } = useApp();
   const { user, tasks, events, habits, phrases, darkMode } = state;
+
+  const [confirmData, setConfirmData] = useState(null);
 
   const today = localToday();
   // Sort: Alta first, then Media, then Baja — within same priority, sort by time
@@ -56,17 +60,24 @@ export default function DashboardScreen() {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
-    // Guard: if completing a task with pending checklist items
     if (!task.completed) {
       const pending = (task.checklist || []).filter(item => !item.done);
       if (pending.length > 0) {
-        const ok = window.confirm(
-          `Esta tarea tiene ${pending.length} ítem${pending.length > 1 ? 's' : ''} pendiente${pending.length > 1 ? 's' : ''} en el checklist.\n\n¿Completarla de todas formas?`
-        );
-        if (!ok) {
-          navigate('taskDetail', { taskId: task.id });
-          return;
-        }
+        setConfirmData({
+          taskTitle:    task.title,
+          pendingCount: pending.length,
+          onConfirm: () => {
+            dispatch({ type: 'TOGGLE_TASK', id: taskId });
+            showToast('¡Tarea completada! 🎉', 'success');
+            setConfirmData(null);
+          },
+          onReview: () => {
+            setConfirmData(null);
+            navigate('taskDetail', { taskId: task.id });
+          },
+          onClose: () => setConfirmData(null),
+        });
+        return;
       }
     }
 
@@ -76,6 +87,8 @@ export default function DashboardScreen() {
 
   return (
     <>
+      {/* Checklist confirm modal */}
+      {confirmData && <ChecklistConfirmModal {...confirmData} />}
       <style>{`
         /* === DASHBOARD STYLES === */
         .dash-content {
