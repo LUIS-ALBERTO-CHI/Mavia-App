@@ -193,12 +193,18 @@ export default async function handler(req, res) {
         let notifTitle, notifBody;
 
         if (isWarn) {
-          // e.g. "En 15 min" or "En 30 min" — reminder BEFORE the task
-          notifTitle = `En ${warnMinStr} min`;
+          // Human-readable offset: "5 min", "15 min", "1 hora", "2 horas"
+          const mins   = parseInt(warnMinStr, 10);
+          const warnLabel = mins >= 60
+            ? (mins === 60 ? '1 hora' : `${Math.round(mins / 60)} horas`)
+            : `${mins} min`;
+
+          notifTitle = `En ${warnLabel}`;
           // storedBody already says "Tu tarea comienza a las HH:MM" with the real task time
           notifBody  = storedBody
             ? `${taskName}\n${storedBody}`
-            : `${taskName}\nEn ${warnMinStr} minutos`;
+            : `${taskName}\nEn ${warnLabel}`;
+
         } else if (isEvent) {
           notifTitle = 'Evento ahora';
           notifBody  = `${taskName}\nComienza a las ${taskTime12}`;
