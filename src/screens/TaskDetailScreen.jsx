@@ -611,12 +611,14 @@ export default function TaskDetailScreen() {
                     key={item.id}
                     className="td-check-item"
                     onClick={() => toggleCheck(item.id)}
+                    role="checkbox"
+                    aria-checked={item.done}
+                    tabIndex={0}
+                    onKeyDown={e => (e.key === ' ' || e.key === 'Enter') && toggleCheck(item.id)}
                   >
-                    <Checkbox
-                      id={`check-${item.id}`}
-                      checked={item.done}
-                      onCheckedChange={() => toggleCheck(item.id)}
-                    />
+                    <div className={`td-check-box${item.done ? ' checked' : ''}`}>
+                      {item.done && <Check size={13} color="white" strokeWidth={3} />}
+                    </div>
                     <span className={`td-check-label${item.done ? ' done' : ''}`}>{item.text}</span>
                   </div>
                 ))}
