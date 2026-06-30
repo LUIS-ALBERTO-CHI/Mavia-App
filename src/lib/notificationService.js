@@ -403,57 +403,120 @@ const _habitTimer = { id: null };
 
 /**
  * Schedules a daily habit reminder at 8pm if habits are not completed.
+ * Uses FCM push (background) when uid+fcmToken provided, local fallback otherwise.
  */
-export function scheduleHabitReminder(habits = []) {
+export async function scheduleHabitReminder(habits = [], uid = null, fcmToken = null) {
   if (_habitTimer.id) {
     clearTimeout(_habitTimer.id);
     _habitTimer.id = null;
   }
 
-  const incomplete = habits.filter(h => !h.completedToday);
+  const incomplete = habits.filter(h => !h.completedToday && h.reminder);
   if (incomplete.length === 0) return;
 
   const now    = new Date();
   const target = new Date();
-  target.setHours(20, 0, 0, 0); // 8:00 PM
+  target.setHours(20, 0, 0, 0); // 8:00 PM local
 
   if (target <= now) return;
 
+  const names    = incomplete.slice(0, 3).map(h => h.name).join(', ');
+  const suffix   = incomplete.length > 3 ? ` y ${incomplete.length - 3} más` : '';
+  const notifTitle = 'Hábitos pendientes';
+  const notifBody  = `Tienes pendiente: ${names}${suffix}`;
+
+  // ── FCM push via Firestore upsert ──
+  if (uid && fcmToken) {
+    try {
+      const targetDate = target.toLocaleDateString('en-CA');
+      const targetTime = `${String(target.getHours()).padStart(2,'0')}:${String(target.getMinutes()).padStart(2,'0')}`;
+      await upsertScheduledNotification({
+        uid,
+        fcmToken,
+        title:         notifTitle,
+        body:          notifBody,
+        scheduledDate: targetDate,
+        scheduledTime: targetTime,
+        taskId:        `habit-daily-${uid}-${targetDate}`, // deterministic per user per day
+        type:          'habit-daily',
+        data:          { type: 'habit-daily' },
+      });
+      console.log(`[Mavia] FCM habit reminder scheduled for ${targetDate} 20:00`);
+      return; // FCM handles it — no local timer needed
+    } catch (err) {
+      console.warn('[Mavia] FCM habit reminder failed, falling back to local:', err.message);
+    }
+  }
+
+  // ── Local fallback ──
   const delay = target.getTime() - now.getTime();
   _habitTimer.id = setTimeout(() => {
-    const names = incomplete.slice(0, 3).map(h => h.name).join(', ');
-    showNotification(
-      'Hábitos pendientes',
-      `Tienes pendiente: ${names}${incomplete.length > 3 ? ' y más' : ''}`,
-      { tag: 'habit-reminder' }
-    );
+    showNotification(notifTitle, notifBody, { tag: 'habit-reminder' });
   }, delay);
 }
 
 // ─── Event reminders ────────────────────────────────────────────────────────
 
 /**
- * Schedules a 30-minute warning for today's events.
+ * Schedules reminders for today's events.
+ * Respects ev.reminder offset. Uses FCM push when uid+fcmToken available.
+ * Local setTimeout kept as fallback.
  */
-export function scheduleEventReminders(events = []) {
+export async function scheduleEventReminders(events = [], uid = null, fcmToken = null) {
   const today = localToday();
   const now   = Date.now();
 
-  events
-    .filter(ev => ev.date === today && ev.startTime)
-    .forEach(ev => {
-      const [h, m] = ev.startTime.split(':').map(Number);
-      const evDt   = new Date(`${today}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`);
-      const warn30 = evDt.getTime() - 30 * 60 * 1000;
+  for (const ev of events.filter(ev => ev.date === today && ev.startTime)) {
+    const time24 = parseTimeTo24h(ev.startTime);
+    if (!time24) continue;
 
-      if (warn30 > now) {
-        setTimeout(() => {
-          showNotification(
-            `En 30 minutos: ${ev.title}`,
-            `Tu evento comienza a las ${ev.startTime}`,
-            { tag: `event-${ev.id}`, data: { eventId: ev.id } }
-          );
-        }, warn30 - now);
+    const [h, m] = time24.split(':').map(Number);
+    const evDt   = new Date(`${today}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`);
+
+    // Respect the event's reminder offset (default 15 min)
+    const reminderStr = ev.reminder || '15 minutos antes';
+    let offsetMin = 15;
+    if (reminderStr.includes('30'))       offsetMin = 30;
+    else if (reminderStr.includes('1 hora')) offsetMin = 60;
+    else if (reminderStr.includes('1 día')) offsetMin = 60 * 24;
+
+    const warnMs = evDt.getTime() - offsetMin * 60 * 1000;
+
+    if (warnMs <= now) continue; // already past
+
+    const warnDt   = new Date(warnMs);
+    const warnDate = warnDt.toLocaleDateString('en-CA');
+    const warnTime = `${String(warnDt.getHours()).padStart(2,'0')}:${String(warnDt.getMinutes()).padStart(2,'0')}`;
+    const notifTitle = `${offsetMin < 60 ? `En ${offsetMin} minutos` : 'En 1 hora'}: ${ev.title}`;
+    const notifBody  = ev.location
+      ? `${ev.startTime} — ${ev.location}`
+      : `Tu evento comienza a las ${ev.startTime}`;
+
+    // ── FCM push via Firestore upsert ──
+    if (uid && fcmToken) {
+      try {
+        await upsertScheduledNotification({
+          uid,
+          fcmToken,
+          title:         notifTitle,
+          body:          notifBody,
+          scheduledDate: warnDate,
+          scheduledTime: warnTime,
+          taskId:        ev.id,
+          type:          'event-reminder',
+          data:          { eventId: ev.id, type: 'event-reminder' },
+        });
+        console.log(`[Mavia] FCM event reminder scheduled for "${ev.title}" at ${warnDate} ${warnTime}`);
+        continue; // FCM handles it — skip local timer
+      } catch (err) {
+        console.warn('[Mavia] FCM event reminder failed, falling back to local:', err.message);
       }
-    });
+    }
+
+    // ── Local fallback ──
+    setTimeout(() => {
+      showNotification(notifTitle, notifBody, { tag: `event-${ev.id}`, data: { eventId: ev.id } });
+    }, warnMs - now);
+  }
 }
+

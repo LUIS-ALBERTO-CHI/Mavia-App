@@ -432,6 +432,12 @@ export function AppProvider({ children }) {
           .then(token => {
             if (token) dispatch({ type: 'SET_FCM_TOKEN', token });
             rescheduleAllReminders(_tasks, _uid, token || null);
+            scheduleHabitReminder(data.habits || [], _uid, token || null);
+            scheduleEventReminders(
+              (data.events || []).filter(e => e.date === localToday()),
+              _uid,
+              token || null
+            );
 
             // ── Foreground push → add to in-app notifications list ──
             import('firebase/messaging').then(({ onMessage }) => {
@@ -458,9 +464,12 @@ export function AppProvider({ children }) {
           })
           .catch(() => {
             rescheduleAllReminders(_tasks, null, null);
+            scheduleHabitReminder(data.habits || [], null, null);
+            scheduleEventReminders(
+              (data.events || []).filter(e => e.date === localToday()),
+              null, null
+            );
           });
-        scheduleHabitReminder(data.habits || []);
-        scheduleEventReminders((data.events || []).filter(e => e.date === localToday()));
         // Reset completedToday for habits that weren't completed today
         dispatch({ type: 'DAILY_RESET_HABITS' });
 
@@ -607,7 +616,7 @@ export function AppProvider({ children }) {
 
         case 'DELETE_TASK':
           await deleteTask(uid, enrichedAction.id);
-          cancelReminder(enrichedAction.id); // Cancel any pending notification
+          cancelReminder(enrichedAction.id, uid); // Cancel local + delete Firestore docs
           break;
 
         case 'ADD_HABIT':
@@ -741,9 +750,12 @@ export function AppProvider({ children }) {
           break;
         }
 
-        case 'DELETE_EVENT':
+        case 'DELETE_EVENT': {
           await deleteEvent(uid, enrichedAction.id);
+          // Also delete any pending FCM scheduled notification for this event
+          cancelReminder(enrichedAction.id, uid);
           break;
+        }
 
         case 'UPDATE_EVENT': {
           // Persist updated event data
