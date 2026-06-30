@@ -5,7 +5,7 @@
 // ============================================
 import { getMessagingInstance } from './firebase';
 import { getToken } from 'firebase/messaging';
-import { saveFCMToken, createScheduledNotification, deleteScheduledNotification, getUserFCMTokens } from './firestoreService';
+import { saveFCMToken, getUserFCMTokens } from './firestoreService';
 
 import { localToday, localDateStr } from './utils';
 
@@ -14,8 +14,6 @@ const VAPID_KEY = import.meta.env.PUBLIC_FIREBASE_VAPID_KEY || '';
 
 // Map of active local timers: taskId → [timeoutId, ...]
 const _timers = new Map();
-// Map of taskId → scheduledNotification Firestore doc ID
-const _schedNotifIds = new Map();
 
 // ─── Permission + FCM Token ─────────────────────────────────────────────────
 
@@ -143,12 +141,124 @@ export function showNotification(title, body, { icon = '/pwa-192x192.png', tag, 
   return n;
 }
 
+// ─── Firestore scheduled notifications (idempotent using taskId as doc key) ─
+
+/**
+ * Upserts a scheduled notification in Firestore using a deterministic doc ID.
+ * Using setDoc (not addDoc) ensures no duplicates even if called multiple times.
+ *
+ * Doc ID pattern: `{taskId}_{type}_{fcmToken_hash}` — stable per task+type+device.
+ */
+async function upsertScheduledNotification({ uid, fcmToken, title, body, scheduledDate, scheduledTime, taskId, type, data = {} }) {
+  const { getAuth } = await import('firebase/auth');
+  const user = getAuth().currentUser;
+  if (!user) return null;
+  const idToken = await user.getIdToken();
+
+  const PROJECT_ID = 'mavia-779df';
+
+  // Stable doc ID — same task+type+device → same doc (prevents duplicates on reschedule)
+  const tokenHash = fcmToken ? fcmToken.slice(-12) : 'local';
+  const docId = `${taskId}_${type}_${tokenHash}`;
+
+  const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/scheduledNotifications/${docId}`;
+
+  const dataFields = {};
+  for (const [k, v] of Object.entries(data || {})) {
+    dataFields[k] = { stringValue: String(v) };
+  }
+
+  const response = await fetch(url, {
+    method: 'PATCH',   // PUT/PATCH with full doc path = upsert (idempotent)
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${idToken}`,
+    },
+    body: JSON.stringify({
+      fields: {
+        uid:           { stringValue: uid },
+        fcmToken:      { stringValue: fcmToken || '' },
+        title:         { stringValue: title },
+        body:          { stringValue: body || '' },
+        scheduledDate: { stringValue: scheduledDate },
+        scheduledTime: { stringValue: scheduledTime },
+        sent:          { booleanValue: false },
+        taskId:        { stringValue: taskId || '' },
+        notifType:     { stringValue: type || '' },
+        data:          { mapValue: { fields: dataFields } },
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const d = await response.json().catch(() => ({}));
+    throw new Error(d.error?.message || 'Firestore scheduled notif error');
+  }
+
+  return docId;
+}
+
+/**
+ * Deletes all scheduled notification docs for a given taskId across all devices.
+ * Uses deterministic doc IDs so we can delete by pattern without a query.
+ */
+async function deleteScheduledNotificationsForTask(taskId, uid, fcmToken) {
+  try {
+    const { getAuth } = await import('firebase/auth');
+    const user = getAuth().currentUser;
+    if (!user) return;
+    const idToken = await user.getIdToken();
+    const PROJECT_ID = 'mavia-779df';
+
+    // We don't know all device suffixes, so query by taskId field
+    const queryUrl = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents:runQuery`;
+    const queryBody = {
+      structuredQuery: {
+        from: [{ collectionId: 'scheduledNotifications' }],
+        where: {
+          compositeFilter: {
+            op: 'AND',
+            filters: [
+              { fieldFilter: { field: { fieldPath: 'taskId' }, op: 'EQUAL', value: { stringValue: taskId } } },
+              { fieldFilter: { field: { fieldPath: 'uid'    }, op: 'EQUAL', value: { stringValue: uid    } } },
+              { fieldFilter: { field: { fieldPath: 'sent'   }, op: 'EQUAL', value: { booleanValue: false } } },
+            ],
+          },
+        },
+      },
+    };
+
+    const r = await fetch(queryUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify(queryBody),
+    });
+
+    const rows = await r.json().catch(() => []);
+    const docs = Array.isArray(rows) ? rows.filter(r => r.document) : [];
+
+    await Promise.all(docs.map(({ document }) => {
+      const docPath = document.name.split('/documents/')[1];
+      return fetch(
+        `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/${docPath}`,
+        { method: 'DELETE', headers: { Authorization: `Bearer ${idToken}` } }
+      ).catch(() => {});
+    }));
+
+    if (docs.length > 0) {
+      console.log(`[Mavia] Deleted ${docs.length} scheduled notification(s) for task ${taskId}`);
+    }
+  } catch (err) {
+    console.warn('[Mavia] Could not delete scheduled notifications:', err.message);
+  }
+}
+
 // ─── Schedule reminders for a task ─────────────────────────────────────────
 
 /**
  * Schedules 1 or 2 notifications for a task.
- * - If FCM token is available: creates Firestore documents (works even when browser is closed)
- * - Fallback: setTimeout local notifications (only while browser is open)
+ * Uses UPSERT (setDoc with deterministic ID) to prevent Firestore duplicates.
+ * Falls back to local setTimeout when browser is open.
  *
  * @param {Object} task      — must have { id, title, date, time, reminder }
  * @param {string} uid       — user ID (needed for Firestore scheduling)
@@ -156,71 +266,78 @@ export function showNotification(title, body, { icon = '/pwa-192x192.png', tag, 
  */
 export async function scheduleTaskReminder(task, uid, fcmToken) {
   if (!task?.reminder || !task?.date || !task?.time) return;
-  cancelReminder(task.id);
+
+  // Cancel existing local timers first
+  const existingTimers = _timers.get(task.id);
+  if (existingTimers) {
+    existingTimers.forEach(id => clearTimeout(id));
+    _timers.delete(task.id);
+  }
 
   const now    = Date.now();
-  const time24 = parseTimeTo24h(task.time); // handle both "05:15 PM" and "17:15"
+  const time24 = parseTimeTo24h(task.time);
   if (!time24) { console.warn('[Mavia] Invalid task time:', task.time); return; }
 
   const [h, m] = time24.split(':').map(Number);
   const taskDt = new Date(`${task.date}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`);
   const taskMs = taskDt.getTime();
 
-  // ── FCM Firestore scheduling (background push — works even when browser closed) ──
+  // ── FCM Firestore scheduling (background push — IDEMPOTENT via upsert) ──
   if (uid && taskMs > now) {
     try {
-      // Fetch ALL device tokens for this user (phone + PC + tablet)
       const allTokens = await getUserFCMTokens(uid);
-      // Also include the token from the current session (may not be in Firestore yet)
       if (fcmToken && !allTokens.includes(fcmToken)) allTokens.push(fcmToken);
 
       for (const tok of allTokens) {
-        // Advance warning (user-configured offset)
         const offsetMin = task.reminderOffset || 15;
+
+        // Warning notification (before task time)
         if (taskMs - offsetMin * 60 * 1000 > now) {
           const warnDt   = new Date(taskMs - offsetMin * 60 * 1000);
           const warnDate = localDateStr(warnDt);
           const warnTime = `${String(warnDt.getHours()).padStart(2,'0')}:${String(warnDt.getMinutes()).padStart(2,'0')}`;
-          await createScheduledNotification({
+          await upsertScheduledNotification({
             uid, fcmToken: tok,
             title: `En ${offsetMin} minutos: ${task.title}`,
             body:  `Tu tarea comienza a las ${task.time}`,
             scheduledDate: warnDate,
             scheduledTime: warnTime,
+            taskId: task.id,
+            type: 'warn',
             data: { taskId: task.id, type: 'task-warn' },
           });
         }
 
-        // At exact task time
-        const notifId = await createScheduledNotification({
+        // Exact-time notification
+        await upsertScheduledNotification({
           uid, fcmToken: tok,
           title: `Es hora: ${task.title}`,
           body:  task.description || `Tu tarea comienza ahora`,
           scheduledDate: task.date,
           scheduledTime: time24,
+          taskId: task.id,
+          type: 'now',
           data: { taskId: task.id, type: 'task-now' },
         });
-        _schedNotifIds.set(`${task.id}_${tok}`, notifId);
       }
 
-      console.log(`[Mavia] FCM push scheduled for "${task.title}" at ${task.time} → ${allTokens.length} dispositivo(s)`);
+      console.log(`[Mavia] FCM push scheduled (upsert) for "${task.title}" at ${task.time} → ${allTokens.length} device(s)`);
     } catch (err) {
       console.warn('[Mavia] Firestore scheduling failed, falling back to local only:', err.message);
     }
   }
 
-  // ── Local setTimeout — ALWAYS runs as backup (fires immediately when browser is open) ──
-  // This is the primary mechanism for on-device reminders and testing.
+  // ── Local setTimeout — fires while browser is open ──
   const ids = [];
-
   const offsetMin = task.reminderOffset || 15;
   const warnMs    = taskMs - offsetMin * 60 * 1000;
+
   if (warnMs > now) {
     ids.push(setTimeout(() => {
       showNotification(
-        'URGENTE',
+        'Recordatorio',
         `En ${offsetMin} min: ${task.title}\nComienza a las ${task.time}`,
-        { tag: `task-warn-${task.id}` }
+        { tag: `task-warn-${task.id}` }   // tag deduplicates browser notifs
       );
     }, warnMs - now));
   }
@@ -228,9 +345,9 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
   if (taskMs > now) {
     ids.push(setTimeout(() => {
       showNotification(
-        'URGENTE',
-        `¡Es hora: ${task.title}!\nInicia ahora | ${task.time}`,
-        { tag: `task-now-${task.id}` }
+        '¡Es hora!',
+        `${task.title}\nInicia ahora | ${task.time}`,
+        { tag: `task-now-${task.id}` }   // tag deduplicates browser notifs
       );
     }, taskMs - now));
   }
@@ -242,29 +359,24 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
 
 /**
  * Cancels all pending reminders for a task.
- * Clears local timers AND deletes the Firestore scheduledNotification document.
+ * Clears local timers AND deletes Firestore scheduled notification documents.
  */
-export function cancelReminder(taskId) {
+export function cancelReminder(taskId, uid) {
   // Clear local timers
   const ids = _timers.get(taskId);
   if (ids) {
     ids.forEach(id => clearTimeout(id));
     _timers.delete(taskId);
   }
-  // Delete Firestore scheduled notification (non-blocking)
-  const notifDocId = _schedNotifIds.get(taskId);
-  if (notifDocId) {
-    deleteScheduledNotification(notifDocId).catch(() => {});
-    _schedNotifIds.delete(taskId);
+  // Delete Firestore scheduled notifications by taskId (non-blocking)
+  if (uid && taskId) {
+    deleteScheduledNotificationsForTask(taskId, uid, null).catch(() => {});
   }
 }
 
 /**
- * Re-schedules all pending reminders for a list of tasks.
- * Pass uid + fcmToken to also register them in Firestore (enables background push).
- * @param {Array}  tasks
- * @param {string} uid       — Firebase user ID (optional, enables FCM Firestore scheduling)
- * @param {string} fcmToken  — FCM push token  (optional, enables FCM Firestore scheduling)
+ * Re-schedules all pending LOCAL reminders for a list of tasks.
+ * Does NOT create new Firestore docs (those are managed by scheduleTaskReminder).
  */
 export function rescheduleAllReminders(tasks = [], uid = null, fcmToken = null) {
   // Clear existing local timers
@@ -273,12 +385,8 @@ export function rescheduleAllReminders(tasks = [], uid = null, fcmToken = null) 
 
   const today = localToday();
   tasks.forEach(task => {
-    // Only schedule for today and incomplete tasks with reminders
     if (task.reminder && !task.completed && task.date === today) {
-      // IMPORTANT: pass null for uid so scheduleTaskReminder only creates LOCAL timers.
-      // Firestore docs are created ONCE when the task is first created/updated in AppContext.
-      // Calling scheduleTaskReminder with uid here would create DUPLICATE Firestore docs
-      // every time the app reloads or the user logs in.
+      // Only local timers on reschedule — Firestore docs already exist from task creation
       scheduleTaskReminder(task, null, null);
     }
   });
@@ -290,7 +398,6 @@ const _habitTimer = { id: null };
 
 /**
  * Schedules a daily habit reminder at 8pm if habits are not completed.
- * @param {Array} habits
  */
 export function scheduleHabitReminder(habits = []) {
   if (_habitTimer.id) {
@@ -299,13 +406,12 @@ export function scheduleHabitReminder(habits = []) {
   }
 
   const incomplete = habits.filter(h => !h.completedToday);
-  if (incomplete.length === 0) return; // All done!
+  if (incomplete.length === 0) return;
 
-  const now   = new Date();
+  const now    = new Date();
   const target = new Date();
   target.setHours(20, 0, 0, 0); // 8:00 PM
 
-  // If already past 8pm, skip for today
   if (target <= now) return;
 
   const delay = target.getTime() - now.getTime();
@@ -323,7 +429,6 @@ export function scheduleHabitReminder(habits = []) {
 
 /**
  * Schedules a 30-minute warning for today's events.
- * @param {Array} events
  */
 export function scheduleEventReminders(events = []) {
   const today = localToday();
