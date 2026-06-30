@@ -15,7 +15,14 @@ export default function DashboardScreen() {
   const { user, tasks, events, habits, phrases, darkMode } = state;
 
   const today = localToday();
-  const todayTasks  = tasks.filter(t => t.date === today);
+  const sortByTime = (arr) => [...arr].sort((a, b) => {
+    if (!a.time && !b.time) return 0;
+    if (!a.time) return 1;
+    if (!b.time) return -1;
+    return a.time.localeCompare(b.time);
+  });
+
+  const todayTasks     = sortByTime(tasks.filter(t => t.date === today));
   const completedToday = todayTasks.filter(t => t.completed).length;
   const pendingCount   = todayTasks.filter(t => !t.completed).length;
   const todayEvents    = events.filter(e => e.date === today).sort((a, b) => a.startTime.localeCompare(b.startTime));

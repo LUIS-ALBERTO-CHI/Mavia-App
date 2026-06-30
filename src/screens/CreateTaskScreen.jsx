@@ -439,6 +439,39 @@ export default function CreateTaskScreen() {
                   </div>
                 </div>
 
+                {/* Priority */}
+                <div>
+                  <div className="ct-field-label">Prioridad</div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {[
+                      { id: 'alta',  label: 'Alta',  color: 'var(--error)',     bg: 'rgba(186,26,26,0.08)'   },
+                      { id: 'media', label: 'Media', color: 'var(--tertiary)',  bg: 'rgba(242,226,177,0.25)' },
+                      { id: 'baja',  label: 'Baja',  color: 'var(--secondary)', bg: 'rgba(84,99,71,0.1)'     },
+                    ].map(p => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => set('priority', p.id)}
+                        style={{
+                          padding: '6px 18px',
+                          borderRadius: '99px',
+                          border: `1.5px solid ${form.priority === p.id ? p.color : 'var(--outline-variant)'}`,
+                          background: form.priority === p.id ? p.bg : 'none',
+                          color: form.priority === p.id ? p.color : 'var(--on-surface-variant)',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          fontFamily: 'var(--font-body)',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                        id={`ct-priority-${p.id}`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
               </div>
             </section>
 

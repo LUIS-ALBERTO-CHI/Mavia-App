@@ -33,19 +33,27 @@ export default function TasksScreen() {
   const tomorrow = localDateOffset(1);
   const weekEnd  = localDateOffset(7);
 
+  // Sort by time: tasks with time first (ascending), then tasks without time
+  const sortByTime = (arr) => [...arr].sort((a, b) => {
+    if (!a.time && !b.time) return 0;
+    if (!a.time) return 1;
+    if (!b.time) return -1;
+    return a.time.localeCompare(b.time);
+  });
+
   const getFiltered = () => {
     let base;
     switch (activeFilter) {
       case 'Hoy':      base = state.tasks.filter(t => t.date === today); break;
       case 'Mañana':   base = state.tasks.filter(t => t.date === tomorrow); break;
       case 'Semana':   base = state.tasks.filter(t => t.date >= today && t.date <= weekEnd); break;
-      case 'Urgentes': base = state.tasks.filter(t => t.priority === 'alta' && !t.completed); break;
+      case 'Urgentes': base = state.tasks.filter(t => (t.priority === 'alta' || t.category === 'Urgente') && !t.completed); break;
       default:         base = state.tasks.filter(t => t.category === activeFilter);
     }
     if (search.trim()) {
       base = base.filter(t => t.title.toLowerCase().includes(search.toLowerCase()));
     }
-    return base;
+    return sortByTime(base);
   };
 
   const filtered  = getFiltered();

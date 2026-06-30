@@ -30,7 +30,7 @@ export default function TaskDetailScreen() {
 
   const [checklist, setChecklist]         = useState(task?.checklist || []);
   const [newCheck, setNewCheck]           = useState('');
-  const [notes, setNotes]                 = useState('');
+  const [notes, setNotes]                 = useState(task?.notes || '');
   const [reminderChanging, setReminderChanging] = useState(false);
 
   // Helper: update local state + persist to Firestore immediately
@@ -650,22 +650,39 @@ export default function TaskDetailScreen() {
                   Notas
                 </div>
                 <div className="td-notes-box">
-                  {task.description && (
-                    <>
-                      <p className="td-notes-existing">
-                        "{task.description}"
-                      </p>
-                      <div className="td-notes-divider" />
-                    </>
-                  )}
                   <textarea
                     className="td-notes-textarea"
-                    placeholder="Escribe una nota nueva..."
-                    rows={4}
+                    placeholder="Escribe una nota..."
+                    rows={5}
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
+                    onBlur={() => {
+                      // Save on blur (when user leaves the textarea)
+                      if (notes !== (task.notes || '')) {
+                        dispatch({ type: 'UPDATE_TASK', task: { ...task, notes } });
+                      }
+                    }}
                     id="td-notes"
                   />
+                  {notes !== (task.notes || '') && (
+                    <button
+                      onClick={() => dispatch({ type: 'UPDATE_TASK', task: { ...task, notes } })}
+                      style={{
+                        alignSelf: 'flex-end',
+                        marginTop: '8px',
+                        padding: '4px 14px',
+                        borderRadius: '99px',
+                        border: 'none',
+                        background: 'var(--secondary)',
+                        color: 'var(--on-secondary)',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        fontFamily: 'var(--font-body)',
+                        cursor: 'pointer',
+                      }}
+                      id="td-save-note"
+                    >Guardar</button>
+                  )}
                 </div>
               </section>
 
