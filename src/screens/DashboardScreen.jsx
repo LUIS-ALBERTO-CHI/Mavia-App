@@ -1,7 +1,7 @@
 import { useApp } from '../context/AppContext';
 import AppIcon from '../components/AppIcon';
 import LottieIcon from '../components/LottieIcon';
-import { localToday } from '../lib/utils';
+import { localToday, formatTime12h } from '../lib/utils';
 import { Clock } from 'lucide-react';
 import PriorityBadge from '../components/PriorityBadge';
 import ChecklistConfirmModal from '../components/ChecklistConfirmModal';
@@ -599,11 +599,11 @@ export default function DashboardScreen() {
               {todayEvents.length > 0 && (
                 todayEvents.slice(0, 3).map((ev, i) => {
                   const isPrimary = i % 2 === 0;
-                  const timeParts = ev.startTime?.split(':') || ['10', '30'];
-                  const hour = parseInt(timeParts[0], 10);
-                  const ampm = hour < 12 ? 'AM' : 'PM';
-                  const displayHour = hour > 12 ? hour - 12 : hour;
-                  const timeStr = `${String(displayHour).padStart(2,'0')}:${timeParts[1] || '00'}`;
+                  const fullTime  = formatTime12h(ev.startTime, 'Todo el día');
+                  // Split into "8:30" and "AM" for the two-line display box
+                  const timeParts = fullTime.split(' ');
+                  const timeNum   = timeParts[0] || '—';
+                  const ampm      = timeParts[1] || '';
 
                   return (
                     <div
@@ -618,7 +618,7 @@ export default function DashboardScreen() {
                         style={{ background: isPrimary ? 'var(--primary-container)' : 'var(--secondary-container)' }}
                       >
                         <span className="event-time-h" style={{ color: isPrimary ? 'var(--on-primary-container)' : 'var(--on-secondary-container)' }}>
-                          {timeStr}
+                          {timeNum}
                         </span>
                         <span className="event-time-ampm" style={{ color: isPrimary ? 'var(--on-primary-container)' : 'var(--on-secondary-container)' }}>
                           {ampm}

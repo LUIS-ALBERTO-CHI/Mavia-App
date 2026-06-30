@@ -32,3 +32,23 @@ export function localDateOffset(offsetDays) {
 export function localDateStr(date) {
   return new Date(date).toLocaleDateString('en-CA');
 }
+
+// ─── Time formatting ───────────────────────────────────────────────────────────
+
+/**
+ * Converts a "HH:MM" (24h) string to "8:30 AM" / "10:00 PM" format.
+ * Returns `fallback` if the input is null, undefined, empty, or malformed.
+ *
+ * @param {string|null|undefined} time24  — e.g. "14:30"
+ * @param {string} fallback               — returned when time is invalid (default "—")
+ */
+export function formatTime12h(time24, fallback = '—') {
+  if (!time24 || typeof time24 !== 'string') return fallback;
+  const parts = time24.trim().split(':');
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if (isNaN(h) || isNaN(m)) return fallback;
+  const ap  = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${ap}`;
+}

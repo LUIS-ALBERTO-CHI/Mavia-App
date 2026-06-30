@@ -1,5 +1,6 @@
 import { useApp } from '../context/AppContext';
 import PriorityBadge from '../components/PriorityBadge';
+import { formatTime12h } from '../lib/utils';
 
 const EVENT_COLORS = {
   reunión:   { bg: '#EDE7F6', text: '#6B3FA0' },
@@ -195,7 +196,7 @@ export default function AgendaScreen() {
               return (
                 <div key={item.id + item._type} className="timeline-item">
                   <div className="timeline-time-col">
-                    <div className="timeline-time">{item.startTime || '–'}</div>
+                    <div className="timeline-time">{formatTime12h(item.startTime, '–')}</div>
                   </div>
                   <div
                     className="timeline-dot"
@@ -213,7 +214,7 @@ export default function AgendaScreen() {
                       {isEvent ? (
                         <>
                           {item.endTime && (
-                            <span className="timeline-duration">{item.startTime} – {item.endTime}</span>
+                            <span className="timeline-duration">{formatTime12h(item.startTime)} – {formatTime12h(item.endTime)}</span>
                           )}
                           {item.location && <span>📍 {item.location}</span>}
                           <span

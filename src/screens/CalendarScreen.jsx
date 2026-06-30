@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import LottieIcon from '../components/LottieIcon';
 import { ChevronLeft, ChevronRight, Plus, Video, MapPin, Check, Calendar, AlignJustify,
          Sun, Moon, Star, Clock } from 'lucide-react';
+import { formatTime12h } from '../lib/utils';
 
 const DAYS_ES   = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const DAYS_FULL = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -47,14 +48,8 @@ function useTouchSwipe(onLeft, onRight, threshold = 50) {
   return { onTouchStart, onTouchEnd };
 }
 
-/* ── 12h formatter ── */
-function fmt12(time24) {
-  if (!time24) return '';
-  const [h, m] = time24.split(':').map(Number);
-  const ap = h >= 12 ? 'PM' : 'AM';
-  const h12 = h % 12 || 12;
-  return `${h12}:${pad(m)} ${ap}`;
-}
+/* ── 12h formatter — delegates to shared util ── */
+function fmt12(t) { return formatTime12h(t, 'Todo el día'); }
 
 /* ─────────────────────────────────────────────── */
 export default function CalendarScreen() {
@@ -711,7 +706,7 @@ export default function CalendarScreen() {
                         const isTask  = item._type === 'task';
                         const isDone  = item.completed;
                         const time24  = item.startTime || item.time || null;
-                        const timeStr = time24 ? fmt12(time24) : 'Todo el día';
+                        const timeStr = fmt12(time24);
                         const color   = isTask
                           ? (PRIORITY_COLOR[item.priority] || '#705765')
                           : catColor(item.category);
@@ -837,7 +832,7 @@ export default function CalendarScreen() {
                       <div key={ev.id||i} className="cal-event-row" onClick={() => navigate('events')}
                         id={`cal-ev-${ev.id||i}`}>
                         <span className="cal-event-time" style={{ color: catColor(ev.category) }}>
-                          {ev.startTime || '—'}
+                          {formatTime12h(ev.startTime, 'Todo el día')}
                         </span>
                         <div className="cal-event-body">
                           <div className="cal-event-title">{ev.title}</div>
@@ -862,7 +857,7 @@ export default function CalendarScreen() {
                       <div key={t.id||i} className="cal-event-row"
                         onClick={() => navigate('taskDetail', { taskId: t.id })} id={`cal-task-${t.id||i}`}>
                         <span className="cal-event-time" style={{ color: PRIORITY_COLOR[t.priority]||'#705765' }}>
-                          {t.time || '—'}
+                          {formatTime12h(t.time, '—')}
                         </span>
                         <div className="cal-event-body">
                           <div className="cal-event-title">{t.title}</div>
