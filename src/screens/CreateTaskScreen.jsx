@@ -371,7 +371,7 @@ export default function CreateTaskScreen() {
       <form className="ct-screen" onSubmit={handleSave}>
 
         {/* ── Header ── */}
-        <button type="button" className="ct-back" onClick={goBack}>
+        <button type="button" className="ct-back" onClick={() => isEdit ? navigate('taskDetail', { taskId: editTask.id }) : goBack()}>
           <ArrowLeft size={16} strokeWidth={2} />
           {isEdit ? 'Volver al detalle' : 'Volver a mis tareas'}
         </button>
@@ -532,7 +532,7 @@ export default function CreateTaskScreen() {
                 type="button"
                 variant="outline"
                 size="lg"
-                onClick={goBack}
+                onClick={() => isEdit ? navigate('taskDetail', { taskId: editTask.id }) : goBack()}
                 id="ct-cancel"
                 className="w-full"
               >
