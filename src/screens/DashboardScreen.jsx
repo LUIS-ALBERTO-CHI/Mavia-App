@@ -15,6 +15,18 @@ export default function DashboardScreen() {
   const { user, tasks, events, habits, phrases, darkMode } = state;
 
   const today = localToday();
+  // Sort: Alta first, then Media, then Baja — within same priority, sort by time
+  const PRIORITY_ORDER = { alta: 0, media: 1, baja: 2 };
+  const sortPending = (arr) => [...arr].sort((a, b) => {
+    const pa = PRIORITY_ORDER[a.priority] ?? 1;
+    const pb = PRIORITY_ORDER[b.priority] ?? 1;
+    if (pa !== pb) return pa - pb;
+    if (!a.time && !b.time) return 0;
+    if (!a.time) return 1;
+    if (!b.time) return -1;
+    return a.time.localeCompare(b.time);
+  });
+
   const sortByTime = (arr) => [...arr].sort((a, b) => {
     if (!a.time && !b.time) return 0;
     if (!a.time) return 1;
@@ -312,9 +324,14 @@ export default function DashboardScreen() {
           align-items: center;
           gap: var(--space-md);
           padding: var(--space-md);
+          padding-left: calc(var(--space-md) + 3px);
           border-bottom: 1px solid rgba(208, 195, 200, 0.10);
-          transition: opacity var(--transition-fast);
+          border-left: 3px solid transparent;
+          transition: opacity var(--transition-fast), border-color var(--transition-fast);
         }
+        .task-list-item.priority-alta  { border-left-color: var(--error); }
+        .task-list-item.priority-media { border-left-color: transparent; }
+        .task-list-item.priority-baja  { border-left-color: var(--secondary); }
 
         .task-list-item:last-child { border-bottom: none; }
 
@@ -624,8 +641,13 @@ export default function DashboardScreen() {
                 </div>
               ) : (
                 <div>
-                  {todayTasks.filter(t => !t.completed).slice(0, 5).map((task, i) => (
-                    <div key={task.id} className="task-list-item">
+                  {sortPending(todayTasks.filter(t => !t.completed)).slice(0, 5).map((task) => (
+                    <div
+                      key={task.id}
+                      className={`task-list-item priority-${task.priority || 'media'}`}
+                      onClick={() => navigate('taskDetail', { taskId: task.id })}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <button
                         className={`task-check-btn${task.completed ? ' checked' : ''}`}
                         onClick={() => handleToggle(task.id)}
@@ -637,15 +659,10 @@ export default function DashboardScreen() {
                       <span className={`task-item-text${task.completed ? ' done' : ''}`}>
                         {task.title}
                       </span>
-                      {/* Priority badge */}
-                      {task.priority === 'alta' && (
-                        <span style={{ padding: '1px 7px', borderRadius: '99px', fontSize: '10px', fontWeight: 700, background: 'rgba(186,26,26,0.1)', color: 'var(--error)', whiteSpace: 'nowrap' }}>Alta</span>
+                      {/* Time instead of static 'Hoy' */}
+                      {task.time && (
+                        <span style={{ fontSize: '11px', color: 'var(--on-surface-variant)', flexShrink: 0, opacity: 0.75 }}>{task.time}</span>
                       )}
-                      {task.priority === 'baja' && (
-                        <span style={{ padding: '1px 7px', borderRadius: '99px', fontSize: '10px', fontWeight: 700, background: 'rgba(84,99,71,0.12)', color: 'var(--secondary)', whiteSpace: 'nowrap' }}>Baja</span>
-                      )}
-                      {/* All tasks here are already filtered for today — show Hoy on all */}
-                      <span className="task-priority-today">Hoy</span>
                       {task.category && (
                         <span className="task-category-label">{task.category}</span>
                       )}
