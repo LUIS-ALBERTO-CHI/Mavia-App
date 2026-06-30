@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Clock } from 'lucide-react';
+import { Clock, SlidersHorizontal } from 'lucide-react';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ITEM_H    = 44;   // px per row in the drum
@@ -601,26 +601,26 @@ const TP_STYLES = `
     to   { transform: translateY(0);    opacity: 1; }
   }
 
-  /* ── Panel header ── */
-  .tp-panel-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 20px 8px;
+  /* ── ··· button → Exacto pill ── */
+  .tp-panel-exact-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    border: 1.5px solid var(--outline-variant);
+    background: var(--surface-container);
+    color: var(--on-surface-variant);
+    font-family: var(--font-body);
+    font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    letter-spacing: 0.01em;
   }
-  .tp-panel-title {
-    font-family: var(--font-display); font-size: 16px;
-    font-weight: 700; color: var(--on-surface);
+  .tp-panel-exact-btn:hover {
+    background: var(--primary-container);
+    color: var(--primary);
+    border-color: var(--primary);
   }
-  .tp-panel-dots {
-    width: 30px; height: 30px; border-radius: 50%;
-    background: var(--surface-container-high);
-    border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    gap: 2px; flex-direction: row;
-  }
-  .tp-panel-dot {
-    width: 3px; height: 3px; border-radius: 50%;
-    background: var(--on-surface-variant);
-  }
+  .tp-panel-exact-btn:active { transform: scale(0.96); }
 
   /* ── Drum wrapper ── */
   .tp-drum-wrap {
@@ -711,13 +711,13 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
             <div className="tp-panel-header">
               <span className="tp-panel-title">Tiempo</span>
               <button
-                className="tp-panel-dots" type="button"
+                className="tp-panel-exact-btn"
+                type="button"
                 aria-label="Hora exacta"
                 onClick={() => setShowCustom(true)}
               >
-                <span className="tp-panel-dot" />
-                <span className="tp-panel-dot" />
-                <span className="tp-panel-dot" />
+                <SlidersHorizontal size={13} strokeWidth={2} />
+                Exacto
               </button>
             </div>
 
