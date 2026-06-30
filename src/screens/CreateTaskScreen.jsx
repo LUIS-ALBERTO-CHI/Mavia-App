@@ -55,23 +55,36 @@ export default function CreateTaskScreen() {
     }
   );
 
-  const [saving, setSaving] = useState(false);
-  const [files,  setFiles]  = useState([]);
+  const [saving,    setSaving]    = useState(false);
+  const [files,     setFiles]     = useState([]);
+  const [checklist, setChecklist] = useState(
+    isEdit ? (editTask.checklist || []) : []
+  );
+  const [newCheck,  setNewCheck]  = useState('');
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
+
+  const addCheckItem = () => {
+    if (!newCheck.trim()) return;
+    setChecklist(l => [...l, { id: Date.now().toString(), text: newCheck.trim(), done: false }]);
+    setNewCheck('');
+  };
+  const removeCheckItem = (id) => setChecklist(l => l.filter(c => c.id !== id));
+  const updateCheckItem = (id, text) => setChecklist(l => l.map(c => c.id === id ? { ...c, text } : c));
 
   const handleSave = (e) => {
     e.preventDefault();
     if (!form.title.trim()) return;
     setSaving(true);
+    // Include checklist in the saved task
+    const taskData = { ...form, checklist };
     setTimeout(() => {
       if (isEdit) {
-        dispatch({ type: 'UPDATE_TASK', task: { ...editTask, ...form } });
+        dispatch({ type: 'UPDATE_TASK', task: { ...editTask, ...taskData } });
         showToast('Tarea actualizada', 'success');
-        // Use navigate (not goBack) so screenParams stays set for TaskDetailScreen
         navigate('taskDetail', { taskId: editTask.id });
       } else {
-        dispatch({ type: 'ADD_TASK', task: { ...form, completed: false } });
+        dispatch({ type: 'ADD_TASK', task: { ...taskData, completed: false } });
         showToast('¡Tarea creada!', 'success');
         goBack();
       }
@@ -487,6 +500,56 @@ export default function CreateTaskScreen() {
                   </div>
                 </div>
 
+              </div>
+            </section>
+
+            {/* Checklist */}
+            <section className="ct-card">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-md)' }}>
+                <h3 style={{ fontWeight: 600, fontSize: 'var(--text-headline-md)', color: 'var(--on-surface)' }}>
+                  Checklist
+                </h3>
+                <span style={{ fontSize: 'var(--text-label-sm)', color: 'var(--on-surface-variant)' }}>
+                  {checklist.length} ítem{checklist.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '10px' }}>
+                {checklist.map(item => (
+                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: 'var(--outline)', flexShrink: 0, fontSize: '16px', lineHeight: 1 }}>☐</span>
+                    <input
+                      style={{ flex: 1, background: 'var(--surface-container-low)', border: '1px solid var(--outline-variant)', borderRadius: '8px', padding: '6px 10px', fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-md)', color: 'var(--on-surface)', outline: 'none' }}
+                      value={item.text}
+                      onChange={e => updateCheckItem(item.id, e.target.value)}
+                      placeholder="Descripción del paso..."
+                      id={`ct-check-edit-${item.id}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeCheckItem(item.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--outline)', padding: '4px', borderRadius: '6px', flexShrink: 0, fontSize: '16px', lineHeight: 1 }}
+                      aria-label="Eliminar ítem"
+                    >×</button>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  style={{ flex: 1, background: 'var(--surface-container-low)', border: '1.5px dashed var(--outline-variant)', borderRadius: '8px', padding: '7px 12px', fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-md)', color: 'var(--on-surface)', outline: 'none' }}
+                  placeholder="Añadir ítem y presiona Enter..."
+                  value={newCheck}
+                  onChange={e => setNewCheck(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCheckItem())}
+                  id="ct-new-check"
+                />
+                <button
+                  type="button"
+                  onClick={addCheckItem}
+                  style={{ padding: '7px 14px', borderRadius: '8px', border: 'none', background: 'var(--secondary-container)', color: 'var(--on-secondary-container)', fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                  id="ct-add-check"
+                >+ Añadir</button>
               </div>
             </section>
 
