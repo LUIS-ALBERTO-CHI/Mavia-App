@@ -565,6 +565,14 @@ export default function TaskDetailScreen() {
               <span style={{ padding: '3px 10px', borderRadius: '99px', fontSize: 'var(--text-label-sm)', fontWeight: 700, background: 'rgba(84,99,71,0.12)', color: 'var(--secondary)' }}>Baja</span>
             )}
 
+            {/* Repeat badge */}
+            {task.repeat && task.repeat !== 'No repetir' && (
+              <div className="td-time-badge" style={{ gap: '4px' }}>
+                <RotateCcw size={14} strokeWidth={2} />
+                <span>{task.repeat}</span>
+              </div>
+            )}
+
             {(task.time || formattedDate) && (
               <div className="td-time-badge">
                 <Clock size={16} strokeWidth={1.75} />
@@ -655,9 +663,11 @@ export default function TaskDetailScreen() {
                   <div className="td-reminder-left">
                     <Bell size={20} color="var(--tertiary)" strokeWidth={1.5} />
                     <span className="td-reminder-label">
-                      {task.reminder
+                      {task.reminder && task.time
                         ? `${task.reminderOffset || 15} minutos antes`
-                        : 'Sin recordatorio'}
+                        : task.reminder && !task.time
+                          ? 'Activo — asigna una hora en Editar'
+                          : 'Sin recordatorio'}
                     </span>
                   </div>
                 </div>

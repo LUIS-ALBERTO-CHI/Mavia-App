@@ -582,6 +582,36 @@ export default function CreateTaskScreen() {
                     id="ct-time"
                   />
                 </div>
+
+                {/* Repeat */}
+                <div>
+                  <span className="ct-dt-label">Repetir</span>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                    {['No repetir', 'Diario', 'Semanal', 'Mensual'].map(opt => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => set('repeat', opt)}
+                        style={{
+                          padding: '4px 12px',
+                          borderRadius: '99px',
+                          border: `1.5px solid ${form.repeat === opt ? 'var(--secondary)' : 'var(--outline-variant)'}`,
+                          background: form.repeat === opt ? 'var(--secondary-container)' : 'none',
+                          color: form.repeat === opt ? 'var(--on-secondary-container)' : 'var(--on-surface-variant)',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          fontFamily: 'var(--font-body)',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                        id={`ct-repeat-${opt.replace(' ', '-')}`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
               </div>
             </section>
 

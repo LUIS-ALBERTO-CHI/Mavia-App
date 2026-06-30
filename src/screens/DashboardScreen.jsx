@@ -637,6 +637,13 @@ export default function DashboardScreen() {
                       <span className={`task-item-text${task.completed ? ' done' : ''}`}>
                         {task.title}
                       </span>
+                      {/* Priority badge */}
+                      {task.priority === 'alta' && (
+                        <span style={{ padding: '1px 7px', borderRadius: '99px', fontSize: '10px', fontWeight: 700, background: 'rgba(186,26,26,0.1)', color: 'var(--error)', whiteSpace: 'nowrap' }}>Alta</span>
+                      )}
+                      {task.priority === 'baja' && (
+                        <span style={{ padding: '1px 7px', borderRadius: '99px', fontSize: '10px', fontWeight: 700, background: 'rgba(84,99,71,0.12)', color: 'var(--secondary)', whiteSpace: 'nowrap' }}>Baja</span>
+                      )}
                       {/* All tasks here are already filtered for today — show Hoy on all */}
                       <span className="task-priority-today">Hoy</span>
                       {task.category && (

@@ -459,6 +459,31 @@ export function AppProvider({ children }) {
             await saveTask(uid, { ...existingTask, completed: nowCompleted });
             // Cancel reminder when task is marked complete
             if (nowCompleted) cancelReminder(enrichedAction.id);
+
+            // ── Repeat logic: auto-create next occurrence ──
+            if (nowCompleted && existingTask.repeat && existingTask.repeat !== 'No repetir' && existingTask.date) {
+              const nextDate = (() => {
+                const d = new Date(existingTask.date + 'T00:00:00');
+                if (existingTask.repeat === 'Diario')   d.setDate(d.getDate() + 1);
+                if (existingTask.repeat === 'Semanal')  d.setDate(d.getDate() + 7);
+                if (existingTask.repeat === 'Mensual')  d.setMonth(d.getMonth() + 1);
+                return d.toLocaleDateString('en-CA'); // YYYY-MM-DD
+              })();
+              const nextId = `t_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+              const nextTask = {
+                ...existingTask,
+                id: nextId,
+                date: nextDate,
+                completed: false,
+                createdAt: new Date().toISOString(),
+              };
+              dispatch({ type: 'ADD_TASK', task: nextTask });
+              await saveTask(uid, nextTask);
+              if (nextTask.reminder) {
+                const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
+                scheduleTaskReminder(nextTask, uid, token);
+              }
+            }
           }
           break;
         }
