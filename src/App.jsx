@@ -332,9 +332,39 @@ function Toast() {
   const { state } = useApp();
   const { toast } = state;
   if (!toast) return null;
+
+  // Icon per type
+  const icons = {
+    success: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="9 12 11 14 15 10"/>
+      </svg>
+    ),
+    error: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    ),
+    default: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    ),
+  };
+
+  const type = toast.type || 'default';
+
   return (
     <div className="toast-container">
-      <div className={`toast ${toast.type || ''}`}>{toast.message}</div>
+      <div className={`toast toast-v2 ${type}`}>
+        <span className="toast-icon">{icons[type] || icons.default}</span>
+        <span className="toast-msg">{toast.message}</span>
+      </div>
     </div>
   );
 }

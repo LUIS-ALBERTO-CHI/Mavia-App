@@ -1067,11 +1067,11 @@ a { text-decoration: none; color: inherit; }
 .progress-fill.gold    { background: var(--tertiary); }
 
 /* ============================================
-   TOAST — top-positioned, lavender bg, 16px radius per spec
+   TOAST v2 — bottom-center, premium floating card
    ============================================ */
 .toast-container {
   position: fixed;
-  top: max(var(--space-md), env(safe-area-inset-top, 16px));
+  bottom: max(90px, calc(env(safe-area-inset-bottom, 0px) + 90px));
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--z-toast);
@@ -1080,14 +1080,17 @@ a { text-decoration: none; color: inherit; }
   gap: var(--space-sm);
   align-items: center;
   pointer-events: none;
+  width: max-content;
+  max-width: calc(100vw - 40px);
 }
 
+/* Legacy .toast — keep for compatibility, but .toast-v2 overrides */
 .toast {
-  background: var(--surface-container-low); /* light lavender-ish */
+  background: var(--surface-container-low);
   color: var(--on-surface);
   border: 1px solid var(--outline-variant);
   padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);   /* 16px per spec */
+  border-radius: var(--radius-md);
   font-size: var(--text-label-md);
   font-weight: 500;
   box-shadow: var(--shadow-md);
@@ -1098,16 +1101,77 @@ a { text-decoration: none; color: inherit; }
   pointer-events: auto;
 }
 
-.toast.success {
-  background: var(--secondary-container);
-  color: var(--on-secondary-container);
-  border-color: var(--secondary-fixed-dim);
+/* ── New premium toast ── */
+.toast.toast-v2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 99px;          /* full pill */
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  white-space: nowrap;
+  pointer-events: auto;
+  min-width: 220px;
+  justify-content: center;
+  animation: toastSlideUp 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+
+  /* Default style */
+  background: rgba(30, 22, 26, 0.88);
+  color: rgba(255,255,255,0.95);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow:
+    0 8px 32px rgba(112,87,101,0.35),
+    0 2px 8px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.06);
 }
-.toast.error   {
-  background: var(--error-container);
-  color: var(--on-error-container);
-  border-color: rgba(186,26,26,0.2);
+
+.toast.toast-v2.success {
+  background: rgba(53, 79, 46, 0.92);
+  color: rgba(220, 240, 213, 0.97);
+  border-color: rgba(143, 194, 130, 0.25);
+  box-shadow:
+    0 8px 32px rgba(53,79,46,0.4),
+    0 2px 8px rgba(0,0,0,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.08);
 }
+
+.toast.toast-v2.error {
+  background: rgba(100, 30, 30, 0.92);
+  color: rgba(255, 210, 210, 0.97);
+  border-color: rgba(220, 80, 80, 0.25);
+  box-shadow:
+    0 8px 32px rgba(100,30,30,0.4),
+    0 2px 8px rgba(0,0,0,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.toast-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.toast-msg {
+  flex: 1;
+}
+
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 
 /* ============================================
    BOTTOM SHEET / OVERLAY
