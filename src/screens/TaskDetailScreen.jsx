@@ -568,6 +568,17 @@ export default function TaskDetailScreen() {
               <Badge variant="outline">{task.category}</Badge>
             )}
 
+            {/* Priority badge */}
+            {task.priority === 'alta' && (
+              <span style={{ padding: '3px 10px', borderRadius: '99px', fontSize: 'var(--text-label-sm)', fontWeight: 700, background: 'rgba(186,26,26,0.1)', color: 'var(--error)' }}>Alta</span>
+            )}
+            {task.priority === 'media' && (
+              <span style={{ padding: '3px 10px', borderRadius: '99px', fontSize: 'var(--text-label-sm)', fontWeight: 700, background: 'rgba(242,226,177,0.3)', color: 'var(--on-tertiary-container)' }}>Media</span>
+            )}
+            {task.priority === 'baja' && (
+              <span style={{ padding: '3px 10px', borderRadius: '99px', fontSize: 'var(--text-label-sm)', fontWeight: 700, background: 'rgba(84,99,71,0.12)', color: 'var(--secondary)' }}>Baja</span>
+            )}
+
             {(task.time || formattedDate) && (
               <div className="td-time-badge">
                 <Clock size={16} strokeWidth={1.75} />
@@ -643,50 +654,26 @@ export default function TaskDetailScreen() {
             {/* Right column */}
             <div className="td-col">
 
-              {/* Notes */}
+              {/* Notes — read-only */}
               <section>
                 <div className="td-section-title">
                   <StickyNote size={18} color="var(--secondary)" strokeWidth={1.75} />
                   Notas
                 </div>
                 <div className="td-notes-box">
-                  <textarea
-                    className="td-notes-textarea"
-                    placeholder="Escribe una nota..."
-                    rows={5}
-                    value={notes}
-                    onChange={e => setNotes(e.target.value)}
-                    onBlur={() => {
-                      // Save on blur (when user leaves the textarea)
-                      if (notes !== (task.notes || '')) {
-                        dispatch({ type: 'UPDATE_TASK', task: { ...task, notes } });
-                      }
-                    }}
-                    id="td-notes"
-                  />
-                  {notes !== (task.notes || '') && (
-                    <button
-                      onClick={() => dispatch({ type: 'UPDATE_TASK', task: { ...task, notes } })}
-                      style={{
-                        alignSelf: 'flex-end',
-                        marginTop: '8px',
-                        padding: '4px 14px',
-                        borderRadius: '99px',
-                        border: 'none',
-                        background: 'var(--secondary)',
-                        color: 'var(--on-secondary)',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        fontFamily: 'var(--font-body)',
-                        cursor: 'pointer',
-                      }}
-                      id="td-save-note"
-                    >Guardar</button>
+                  {task.notes ? (
+                    <p style={{ fontSize: 'var(--text-body-md)', color: 'var(--on-surface)', lineHeight: 1.65, margin: 0, whiteSpace: 'pre-wrap' }}>
+                      {task.notes}
+                    </p>
+                  ) : (
+                    <p style={{ fontSize: 'var(--text-body-md)', color: 'var(--outline)', fontStyle: 'italic', margin: 0 }}>
+                      Sin notas — pulsa Editar para agregar una.
+                    </p>
                   )}
                 </div>
               </section>
 
-              {/* Reminder */}
+              {/* Reminder — read-only */}
               <section>
                 <div className="td-section-title">
                   <Bell size={18} color="var(--secondary)" strokeWidth={1.75} />
@@ -701,45 +688,7 @@ export default function TaskDetailScreen() {
                         : 'Sin recordatorio'}
                     </span>
                   </div>
-                  {task.reminder && (
-                    <button
-                      className="td-reminder-change"
-                      onClick={() => setReminderChanging(v => !v)}
-                    >Cambiar</button>
-                  )}
                 </div>
-
-                {/* Inline offset picker */}
-                {task.reminder && reminderChanging && (
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
-                    {[5, 10, 15, 30, 60].map(min => {
-                      const selected = (task.reminderOffset || 15) === min;
-                      return (
-                        <button
-                          key={min}
-                          onClick={() => {
-                            dispatch({ type: 'UPDATE_TASK', task: { ...task, reminderOffset: min } });
-                            setReminderChanging(false);
-                          }}
-                          style={{
-                            padding: '5px 14px',
-                            borderRadius: '99px',
-                            border: `1.5px solid ${selected ? 'var(--tertiary)' : 'var(--outline-variant)'}`,
-                            background: selected ? 'rgba(242,226,177,0.35)' : 'none',
-                            color: selected ? 'var(--on-tertiary-container)' : 'var(--on-surface-variant)',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            fontFamily: 'var(--font-body)',
-                            cursor: 'pointer',
-                          }}
-                          id={`td-offset-${min}`}
-                        >
-                          {min < 60 ? `${min} min` : '1 hora'}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
               </section>
 
             </div>

@@ -521,6 +521,17 @@ function TaskCard({ task, onToggle, onDelete, onOpen }) {
       <div className="ts-card-body">
         <div className="ts-card-title">{task.title}</div>
         <div className="ts-card-meta">
+          {/* Priority badge */}
+          {task.priority === 'alta' && (
+            <span style={{ padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 700, background: 'rgba(186,26,26,0.1)', color: 'var(--error)', letterSpacing: '0.03em' }}>
+              Alta
+            </span>
+          )}
+          {task.priority === 'baja' && (
+            <span style={{ padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 700, background: 'rgba(84,99,71,0.12)', color: 'var(--secondary)' }}>
+              Baja
+            </span>
+          )}
           {task.category && (
             <span className="ts-cat-pill" style={{ background: catStyle.bg, color: catStyle.color }}>
               <span className="ts-cat-dot" style={{ background: catStyle.dot }} />

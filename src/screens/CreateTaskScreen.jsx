@@ -31,6 +31,7 @@ export default function CreateTaskScreen() {
     editTask ? {
       title:          editTask.title || '',
       description:    editTask.description || '',
+      notes:          editTask.notes || '',
       priority:       editTask.priority || 'media',
       category:       editTask.category || 'Personal',
       date:           editTask.date || today,
@@ -42,6 +43,7 @@ export default function CreateTaskScreen() {
     } : {
       title:          '',
       description:    '',
+      notes:          '',
       priority:       'media',
       category:       'Personal',
       date:           today,
@@ -410,9 +412,22 @@ export default function CreateTaskScreen() {
                   <Textarea
                     id="ct-desc"
                     placeholder="¿Qué necesitas lograr hoy?..."
-                    rows={4}
+                    rows={3}
                     value={form.description}
                     onChange={e => set('description', e.target.value)}
+                    className="rounded-2xl bg-surface-container-low border-0 focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="ct-field-label" htmlFor="ct-notes">Notas</label>
+                  <Textarea
+                    id="ct-notes"
+                    placeholder="Apuntes, contexto, ideas relacionadas..."
+                    rows={3}
+                    value={form.notes}
+                    onChange={e => set('notes', e.target.value)}
                     className="rounded-2xl bg-surface-container-low border-0 focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
