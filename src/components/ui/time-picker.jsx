@@ -328,7 +328,7 @@ const DUR_ANIM = `
   }
 `;
 
-function DurationModal({ onClose }) {
+function DurationModal({ onClose, onConfirm }) {
   const [hours,   setHours]   = useState(0);
   const [minutes, setMinutes] = useState(1);
   const modalRef = useRef(null);
@@ -342,6 +342,11 @@ function DurationModal({ onClose }) {
 
   const applyPreset = (preset) => { setHours(preset.h); setMinutes(preset.m); };
   const reset       = ()       => { setHours(0); setMinutes(1); };
+
+  const handleConfirm = () => {
+    if (onConfirm) onConfirm(hours, minutes);
+    else onClose();
+  };
 
   return createPortal(
     <div
@@ -472,7 +477,7 @@ function DurationModal({ onClose }) {
         {/* Confirm */}
         <div style={{ padding: '20px 20px 0' }}>
           <button
-            type="button" onClick={onClose}
+            type="button" onClick={handleConfirm}
             style={{
               width: '100%', padding: '14px', borderRadius: 99,
               background: 'var(--gradient-primary)', color: 'white',
@@ -626,10 +631,11 @@ const TP_STYLES = `
  * value:    "HH:MM" (24h) stored; displays as "h:mm AM/PM"
  * onChange: ("HH:MM") => void
  */
-export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', id }) {
+export function TimePicker({ value, onChange, onDuration, placeholder = 'Seleccionar hora', id }) {
   const [open, setOpen]               = useState(false);
   const [slot, setSlot]               = useState(() => valueToSlot(value));
   const [showDuration, setShowDuration] = useState(false);
+  const [duration, setDuration]       = useState(null); // { hours, minutes }
   const triggerRef                    = useRef(null);
 
   // Sync slot when external value changes
@@ -637,14 +643,26 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
     setSlot(valueToSlot(value));
   }, [value]);
 
+  // Close the whole picker and persist the time
   const handleConfirm = () => {
     onChange(slotTo24h(slot));
     setOpen(false);
+    setShowDuration(false);
   };
 
-  // Display label
+  // Called when Duration modal's Continuar is clicked
+  const handleDurationConfirm = (h, m) => {
+    setDuration({ hours: h, minutes: m });
+    if (onDuration) onDuration({ hours: h, minutes: m });
+    handleConfirm(); // also saves the time and closes everything
+  };
+
+  // Display label on trigger
   const displayLabel = value ? valueToSlot(value) : placeholder;
   const period       = value ? valueToSlot(value).split(' ')[1] : null;
+  const durLabel     = duration
+    ? `${duration.hours > 0 ? duration.hours + 'h ' : ''}${duration.minutes > 0 ? duration.minutes + 'min' : duration.hours === 0 ? '0min' : ''}`
+    : null;
 
   return (
     <>
@@ -661,6 +679,11 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
         <Clock size={17} className="tp-icon" strokeWidth={1.75} />
         <span className={`tp-label${value ? ' has-value' : ''}`}>{displayLabel}</span>
         {period && <span className="tp-period-badge">{period}</span>}
+        {durLabel && (
+          <span className="tp-period-badge" style={{ background: 'var(--secondary-container)', color: 'var(--secondary)' }}>
+            {durLabel}
+          </span>
+        )}
       </button>
 
       {/* Popover */}
@@ -700,7 +723,10 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
 
             {/* Duration modal — rendered in document.body via portal */}
             {showDuration && (
-              <DurationModal onClose={() => setShowDuration(false)} />
+              <DurationModal
+                onClose={() => setShowDuration(false)}
+                onConfirm={handleDurationConfirm}
+              />
             )}
 
           </div>
