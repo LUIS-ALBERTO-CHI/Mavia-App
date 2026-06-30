@@ -7,7 +7,7 @@ import { getMessagingInstance } from './firebase';
 import { getToken } from 'firebase/messaging';
 import { saveFCMToken, getUserFCMTokens } from './firestoreService';
 
-import { localToday, localDateStr } from './utils';
+import { localToday, localDateStr, formatTime12h } from './utils';
 
 // VAPID key from Vercel env — set PUBLIC_FIREBASE_VAPID_KEY in your Vercel project settings
 const VAPID_KEY = import.meta.env.PUBLIC_FIREBASE_VAPID_KEY || '';
@@ -299,7 +299,7 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
           await upsertScheduledNotification({
             uid, fcmToken: tok,
             title: `En ${offsetMin} minutos: ${task.title}`,
-            body:  `Tu tarea comienza a las ${task.time}`,
+            body:  `Tu tarea comienza a las ${formatTime12h(time24)}`,
             scheduledDate: warnDate,
             scheduledTime: warnTime,
             taskId: task.id,

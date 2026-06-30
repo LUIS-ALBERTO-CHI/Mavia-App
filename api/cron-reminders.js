@@ -170,29 +170,42 @@ export default async function handler(req, res) {
         const updateTime = document.updateTime;
         if (!token) continue;
 
-        // Build URGENTE-format notification — distinguish between types
-        const isWarn15  = /^En 15 minutos:/i.test(rawTitle);
-        const isEvent   = /^Es hora del evento:/i.test(rawTitle);
+        // Build notification — distinguish between warning reminders vs exact-time vs events
+        // isWarnN matches any "En N minutos:" prefix (15, 30, 60, etc.)
+        const warnMatch  = /^En (\d+) minutos:\s*/i.exec(rawTitle);
+        const isEvent    = /^Es hora del evento:/i.test(rawTitle);
+        const isWarn     = !!warnMatch;
+        const warnMinStr = warnMatch ? warnMatch[1] : '15';
+
+        // Strip known prefixes to get the clean task name
         const taskName  = rawTitle
           .replace(/^Es hora del evento:\s*/i, '')
-          .replace(/^En 15 minutos:\s*/i, '')
+          .replace(/^En \d+ minutos:\s*/i, '')
           .replace(/^Es hora:\s*/i, '')
           .trim();
 
-        const taskTime12 = formatTo12h(schedTime);
+        // For exact-time notifications: schedTime IS the task time → show it
+        // For warnings: schedTime is the REMINDER fire time (e.g. 1:00 PM),
+        //   the actual task time is in the stored body ("Tu tarea comienza a las 1:30 p.m.")
+        const taskTime12  = formatTo12h(schedTime);
+        const storedBody  = f?.body?.stringValue || '';
+
         let notifTitle, notifBody;
 
-        if (isWarn15) {
-          // 15-minute warning — different message so user isn't confused
-          notifTitle = 'URGENTE';
-          notifBody  = `En 15 min: ${taskName}\nComienza a las ${taskTime12}`;
+        if (isWarn) {
+          // e.g. "En 15 min" or "En 30 min" — reminder BEFORE the task
+          notifTitle = `En ${warnMinStr} min`;
+          // storedBody already says "Tu tarea comienza a las HH:MM" with the real task time
+          notifBody  = storedBody
+            ? `${taskName}\n${storedBody}`
+            : `${taskName}\nEn ${warnMinStr} minutos`;
         } else if (isEvent) {
-          notifTitle = 'URGENTE';
-          notifBody  = `Evento ahora: ${taskName}\nInicia a las ${taskTime12}`;
+          notifTitle = 'Evento ahora';
+          notifBody  = `${taskName}\nComienza a las ${taskTime12}`;
         } else {
           // Exact task time
-          notifTitle = 'URGENTE';
-          notifBody  = `\u00a1Es hora: ${taskName}!\nInicia ahora | ${taskTime12}`;
+          notifTitle = '\u00a1Es hora!';
+          notifBody  = `${taskName}\nInicia ahora | ${taskTime12}`;
         }
 
         try {
