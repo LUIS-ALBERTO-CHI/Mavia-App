@@ -595,11 +595,7 @@ export default function DashboardScreen() {
               <button className="btn-ghost btn btn-sm" onClick={() => navigate('events')} id="dash-events-all">Ver todo</button>
             </div>
             <div>
-              {todayEvents.length === 0 ? (
-                <div style={{ padding: 'var(--space-xl)', textAlign: 'center', color: 'var(--on-surface-variant)', fontFamily: 'var(--font-display)', fontStyle: 'italic', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-                  <AppIcon name="leaf" size={16} color="var(--secondary)" /> Sin eventos hoy
-                </div>
-              ) : (
+              {todayEvents.length > 0 && (
                 todayEvents.slice(0, 3).map((ev, i) => {
                   const isPrimary = i % 2 === 0;
                   const timeParts = ev.startTime?.split(':') || ['10', '30'];
