@@ -151,17 +151,46 @@ const MedIcon = ({ name, color }) => {
   return <span style={{ color, display: 'flex', alignItems: 'center' }}><Comp /></span>;
 };
 
-/* ─── YouTube embed modal ─── */
+/* ─────────────────────────────────────────────────────────────
+   YouTube Facade Modal — Facade Pattern
+   ─ Phase 1 (default): show thumbnail + custom play button → 0 KB of YouTube scripts
+   ─ Phase 2 (on click): swap to iframe (youtube-nocookie.com = lighter, fewer trackers)
+   This eliminates the ~300 KB YouTube player SDK from initial load.
+───────────────────────────────────────────────────────────── */
 function YoutubeModal({ video, onClose }) {
-  // Prevent body scroll while modal is open
+  const [activated, setActivated] = useState(false);
+
+  // Inject preconnect hints only once (they speed up the iframe load when activated)
   useEffect(() => {
+    const hints = [
+      'https://www.youtube-nocookie.com',
+      'https://www.google.com',
+      'https://googleads.g.doubleclick.net',
+      'https://static.doubleclick.net',
+    ];
+    const added = hints.map(href => {
+      const link = document.createElement('link');
+      link.rel = 'preconnect';
+      link.href = href;
+      document.head.appendChild(link);
+      return link;
+    });
+
+    // Lock body scroll
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
+
+    return () => {
+      document.body.style.overflow = '';
+      added.forEach(l => l.remove());
+    };
   }, []);
+
+  const thumbnailUrl = `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`;
 
   return (
     <div className="yt-overlay" onClick={onClose} id="yt-modal-backdrop">
       <div className="yt-modal" onClick={e => e.stopPropagation()} id="yt-modal">
+
         {/* Header */}
         <div className="yt-modal-header">
           <div>
@@ -173,15 +202,40 @@ function YoutubeModal({ video, onClose }) {
           </button>
         </div>
 
-        {/* YouTube embed */}
+        {/* Video area — facade first, iframe only after click */}
         <div className="yt-frame-wrap">
-          <iframe
-            id="yt-iframe"
-            src={`https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
-            title={video.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+          {activated ? (
+            /* ── Real player (only loads after user clicks) ── */
+            <iframe
+              id="yt-iframe"
+              src={`https://www.youtube-nocookie.com/embed/${video.youtubeId}?autoplay=1&rel=0&modestbranding=1&color=white`}
+              title={video.title}
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            /* ── Facade: thumbnail + play button (0 YouTube scripts) ── */
+            <div className="yt-facade" onClick={() => setActivated(true)} id="yt-facade">
+              <img
+                src={thumbnailUrl}
+                alt={video.title}
+                className="yt-thumb"
+                loading="lazy"
+                decoding="async"
+              />
+              {/* Gradient overlay for contrast */}
+              <div className="yt-thumb-overlay" />
+              {/* Play button */}
+              <button className="yt-facade-play" aria-label="Reproducir">
+                <svg viewBox="0 0 68 48" width="68" height="48">
+                  <path className="yt-btn-shape" d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z"/>
+                  <path className="yt-btn-arrow" d="M 45,24 27,14 27,34"/>
+                </svg>
+                <span className="yt-facade-play-label">Reproducir</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Description */}
@@ -468,6 +522,7 @@ export default function MeditationScreen() {
           position: relative;
           padding-top: 56.25%; /* 16:9 */
           background: #000;
+          overflow: hidden;
         }
         .yt-frame-wrap iframe {
           position: absolute;
@@ -475,6 +530,54 @@ export default function MeditationScreen() {
           width: 100%;
           height: 100%;
           border: none;
+        }
+
+        /* ── Facade (thumbnail phase) ── */
+        .yt-facade {
+          position: absolute;
+          inset: 0;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .yt-thumb {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .yt-thumb-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0.25);
+        }
+        /* YouTube-style red play button */
+        .yt-facade-play {
+          position: relative;
+          z-index: 2;
+          background: none;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          transition: transform 0.18s ease;
+        }
+        .yt-facade-play:hover { transform: scale(1.08); }
+        .yt-facade-play:active { transform: scale(0.94); }
+        .yt-btn-shape { fill: #ff0000; transition: fill 0.1s; }
+        .yt-facade-play:hover .yt-btn-shape { fill: #cc0000; }
+        .yt-btn-arrow { fill: #fff; }
+        .yt-facade-play-label {
+          color: #fff;
+          font-size: 14px;
+          font-weight: 600;
+          letter-spacing: 0.04em;
+          text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+          font-family: var(--font-body);
         }
 
         .yt-modal-desc {
