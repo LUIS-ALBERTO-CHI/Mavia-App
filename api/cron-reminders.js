@@ -170,18 +170,21 @@ export default async function handler(req, res) {
         const updateTime = document.updateTime;
         if (!token) continue;
 
-        // Build notification — distinguish between warning reminders vs exact-time vs events
+        // Build notification — distinguish between warning reminders vs exact-time vs events vs habits
         // isWarnN matches any "En N minutos:" prefix (15, 30, 60, etc.)
-        const warnMatch  = /^En (\d+) minutos:\s*/i.exec(rawTitle);
-        const isEvent    = /^Es hora del evento:/i.test(rawTitle);
-        const isWarn     = !!warnMatch;
-        const warnMinStr = warnMatch ? warnMatch[1] : '15';
+        const warnMatch   = /^En (\d+) minutos:\s*/i.exec(rawTitle);
+        const isEvent     = /^Es hora del evento:/i.test(rawTitle);
+        const isHabitOne  = /^Hábito:\s*/i.test(rawTitle);
+        const isHabitAll  = /^Hábitos pendientes/i.test(rawTitle);
+        const isWarn      = !!warnMatch;
+        const warnMinStr  = warnMatch ? warnMatch[1] : '15';
 
         // Strip known prefixes to get the clean task name
         const taskName  = rawTitle
           .replace(/^Es hora del evento:\s*/i, '')
           .replace(/^En \d+ minutos:\s*/i, '')
           .replace(/^Es hora:\s*/i, '')
+          .replace(/^Hábito:\s*/i, '')
           .trim();
 
         // For exact-time notifications: schedTime IS the task time → show it
@@ -192,7 +195,17 @@ export default async function handler(req, res) {
 
         let notifTitle, notifBody;
 
-        if (isWarn) {
+        if (isHabitOne) {
+          // Per-habit reminder at its custom time
+          notifTitle = `Hábito pendiente`;
+          notifBody  = `${taskName}\n${storedBody || 'No olvides completar tu hábito de hoy'}`;
+
+        } else if (isHabitAll) {
+          // Global daily 8PM reminder
+          notifTitle = 'Hábitos pendientes';
+          notifBody  = storedBody || rawTitle;
+
+        } else if (isWarn) {
           // Human-readable offset: "5 min", "15 min", "1 hora", "2 horas"
           const mins   = parseInt(warnMinStr, 10);
           const warnLabel = mins >= 60

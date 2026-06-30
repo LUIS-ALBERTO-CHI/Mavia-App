@@ -402,8 +402,9 @@ export function rescheduleAllReminders(tasks = [], uid = null, fcmToken = null) 
 const _habitTimer = { id: null };
 
 /**
- * Schedules a daily habit reminder at 8pm if habits are not completed.
- * Uses FCM push (background) when uid+fcmToken provided, local fallback otherwise.
+ * Schedules habit reminders:
+ * 1. A global daily reminder at 8PM (if ANY habit is incomplete) — FCM or local.
+ * 2. Per-habit reminders at each habit's custom reminderTime (if reminder=true).
  */
 export async function scheduleHabitReminder(habits = [], uid = null, fcmToken = null) {
   if (_habitTimer.id) {
@@ -411,45 +412,85 @@ export async function scheduleHabitReminder(habits = [], uid = null, fcmToken = 
     _habitTimer.id = null;
   }
 
-  const incomplete = habits.filter(h => !h.completedToday && h.reminder);
+  const today      = localToday();
+  const now        = new Date();
+  const nowMs      = now.getTime();
+
+  // ── 1. Per-habit reminders at their custom reminderTime ──
+  for (const h of habits) {
+    if (!h.reminder || !h.reminderTime || h.completedToday) continue;
+
+    const [hh, mm]  = h.reminderTime.split(':').map(Number);
+    const habitDt   = new Date();
+    habitDt.setHours(hh, mm, 0, 0);
+    if (habitDt.getTime() <= nowMs) continue; // already past
+
+    const notifTitle = `Hábito: ${h.name}`;
+    const notifBody  = `Es hora de completar tu hábito de hoy`;
+
+    if (uid && fcmToken) {
+      try {
+        const rDate = habitDt.toLocaleDateString('en-CA');
+        const rTime = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+        await upsertScheduledNotification({
+          uid, fcmToken,
+          title:         notifTitle,
+          body:          notifBody,
+          scheduledDate: rDate,
+          scheduledTime: rTime,
+          taskId:        `habit-${h.id}-${today}`,
+          type:          'habit-reminder',
+          data:          { habitId: h.id, type: 'habit-reminder' },
+        });
+        console.log(`[Mavia] FCM habit reminder for "${h.name}" at ${rTime}`);
+        continue;
+      } catch (err) {
+        console.warn('[Mavia] FCM habit reminder failed:', err.message);
+      }
+    }
+
+    // local fallback
+    setTimeout(() => {
+      showNotification(notifTitle, notifBody, { tag: `habit-${h.id}` });
+    }, habitDt.getTime() - nowMs);
+  }
+
+  // ── 2. Global daily reminder at 8PM (if any habit incomplete) ──
+  const incomplete = habits.filter(h => !h.completedToday);
   if (incomplete.length === 0) return;
 
-  const now    = new Date();
   const target = new Date();
   target.setHours(20, 0, 0, 0); // 8:00 PM local
+  if (target.getTime() <= nowMs) return;
 
-  if (target <= now) return;
-
-  const names    = incomplete.slice(0, 3).map(h => h.name).join(', ');
-  const suffix   = incomplete.length > 3 ? ` y ${incomplete.length - 3} más` : '';
+  const names      = incomplete.slice(0, 3).map(h => h.name).join(', ');
+  const suffix     = incomplete.length > 3 ? ` y ${incomplete.length - 3} más` : '';
   const notifTitle = 'Hábitos pendientes';
   const notifBody  = `Tienes pendiente: ${names}${suffix}`;
 
-  // ── FCM push via Firestore upsert ──
   if (uid && fcmToken) {
     try {
       const targetDate = target.toLocaleDateString('en-CA');
       const targetTime = `${String(target.getHours()).padStart(2,'0')}:${String(target.getMinutes()).padStart(2,'0')}`;
       await upsertScheduledNotification({
-        uid,
-        fcmToken,
+        uid, fcmToken,
         title:         notifTitle,
         body:          notifBody,
         scheduledDate: targetDate,
         scheduledTime: targetTime,
-        taskId:        `habit-daily-${uid}-${targetDate}`, // deterministic per user per day
+        taskId:        `habit-daily-${uid}-${targetDate}`,
         type:          'habit-daily',
         data:          { type: 'habit-daily' },
       });
-      console.log(`[Mavia] FCM habit reminder scheduled for ${targetDate} 20:00`);
-      return; // FCM handles it — no local timer needed
+      console.log(`[Mavia] FCM global habit reminder at 20:00`);
+      return;
     } catch (err) {
-      console.warn('[Mavia] FCM habit reminder failed, falling back to local:', err.message);
+      console.warn('[Mavia] FCM habit reminder failed, falling back:', err.message);
     }
   }
 
-  // ── Local fallback ──
-  const delay = target.getTime() - now.getTime();
+  // local fallback
+  const delay = target.getTime() - nowMs;
   _habitTimer.id = setTimeout(() => {
     showNotification(notifTitle, notifBody, { tag: 'habit-reminder' });
   }, delay);
