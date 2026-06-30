@@ -412,7 +412,7 @@ export function AppProvider({ children }) {
 
             // ── Foreground push → add to in-app notifications list ──
             import('firebase/messaging').then(({ onMessage }) => {
-              import('./firebase').then(({ getMessagingInstance }) => {
+              import('../lib/firebase').then(({ getMessagingInstance }) => {
                 getMessagingInstance().then(msg => {
                   if (!msg) return;
                   onMessage(msg, (payload) => {

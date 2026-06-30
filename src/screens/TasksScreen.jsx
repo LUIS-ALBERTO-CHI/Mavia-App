@@ -16,6 +16,7 @@ const CAT_STYLE = {
 
 export default function TasksScreen() {
   const { state, dispatch, navigate, showToast } = useApp();
+  const activeFilter = state.activeFilter || 'Hoy';
   const [search, setSearch]       = useState('');
   const [confirmData, setConfirmData] = useState(null);
 
