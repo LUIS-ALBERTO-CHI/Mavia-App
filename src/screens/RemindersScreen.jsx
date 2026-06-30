@@ -39,6 +39,7 @@ export default function RemindersScreen() {
   const { state, dispatch, navigate, showToast } = useApp();
   const [activeFilter, setActiveFilter] = useState('Todos');
   const [search, setSearch] = useState('');
+  const [confirmId, setConfirmId] = useState(null);  // id of task pending delete confirm
 
   const todayStr    = localToday();
   const tomorrowStr = localDateOffset(1);
@@ -68,7 +69,11 @@ export default function RemindersScreen() {
   const handleDelete = (id) => {
     dispatch({ type: 'DELETE_TASK', id });
     showToast('Recordatorio eliminado');
+    setConfirmId(null);
   };
+
+  const requestDelete = (id) => setConfirmId(id);
+  const cancelDelete  = ()  => setConfirmId(null);
 
   return (
     <>
@@ -475,22 +480,33 @@ export default function RemindersScreen() {
 
                         {/* Actions */}
                         <div className="rem-card-actions">
-                          <button
-                            className="rem-action-btn rem-action-edit"
-                            aria-label="Editar"
-                            onClick={() => navigate('taskDetail', { taskId: task.id })}
-                            id={`rem-edit-${task.id}`}
-                          >
-                            <Edit2 size={18} strokeWidth={1.75} />
-                          </button>
-                          <button
-                            className="rem-action-btn rem-action-del"
-                            aria-label="Eliminar"
-                            onClick={() => handleDelete(task.id)}
-                            id={`rem-del-${task.id}`}
-                          >
-                            <Trash2 size={18} strokeWidth={1.75} />
-                          </button>
+                          {confirmId === task.id ? (
+                            // ── Inline confirm row ──
+                            <>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--error)', marginRight: 4 }}>¿Eliminar?</span>
+                              <button className="rem-action-btn" style={{ color: 'var(--on-surface-variant)', background: 'var(--surface-container)', borderRadius: 99, padding: '5px 12px', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }} onClick={cancelDelete}>No</button>
+                              <button className="rem-action-btn" style={{ color: 'white', background: 'var(--error)', borderRadius: 99, padding: '5px 12px', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }} onClick={() => handleDelete(task.id)}>Sí</button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                className="rem-action-btn rem-action-edit"
+                                aria-label="Editar"
+                                onClick={() => navigate('taskDetail', { taskId: task.id })}
+                                id={`rem-edit-${task.id}`}
+                              >
+                                <Edit2 size={18} strokeWidth={1.75} />
+                              </button>
+                              <button
+                                className="rem-action-btn rem-action-del"
+                                aria-label="Eliminar"
+                                onClick={() => requestDelete(task.id)}
+                                id={`rem-del-${task.id}`}
+                              >
+                                <Trash2 size={18} strokeWidth={1.75} />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                     );
@@ -534,22 +550,32 @@ export default function RemindersScreen() {
 
                         {/* Actions */}
                         <div className="rem-upcoming-actions">
-                          <button
-                            className="rem-action-btn rem-action-edit"
-                            aria-label="Editar"
-                            onClick={() => navigate('taskDetail', { taskId: task.id })}
-                            id={`rem-up-edit-${task.id}`}
-                          >
-                            <Edit2 size={17} strokeWidth={1.75} />
-                          </button>
-                          <button
-                            className="rem-action-btn rem-action-del"
-                            aria-label="Eliminar"
-                            onClick={() => handleDelete(task.id)}
-                            id={`rem-up-del-${task.id}`}
-                          >
-                            <Trash2 size={17} strokeWidth={1.75} />
-                          </button>
+                          {confirmId === task.id ? (
+                            <>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--error)', marginRight: 4 }}>¿Eliminar?</span>
+                              <button style={{ color: 'var(--on-surface-variant)', background: 'var(--surface-container)', borderRadius: 99, padding: '5px 12px', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }} onClick={cancelDelete}>No</button>
+                              <button style={{ color: 'white', background: 'var(--error)', borderRadius: 99, padding: '5px 12px', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }} onClick={() => handleDelete(task.id)}>Sí</button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                className="rem-action-btn rem-action-edit"
+                                aria-label="Editar"
+                                onClick={() => navigate('taskDetail', { taskId: task.id })}
+                                id={`rem-up-edit-${task.id}`}
+                              >
+                                <Edit2 size={17} strokeWidth={1.75} />
+                              </button>
+                              <button
+                                className="rem-action-btn rem-action-del"
+                                aria-label="Eliminar"
+                                onClick={() => requestDelete(task.id)}
+                                id={`rem-up-del-${task.id}`}
+                              >
+                                <Trash2 size={17} strokeWidth={1.75} />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                     );

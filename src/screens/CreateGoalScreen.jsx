@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { ArrowLeft, Target, Calendar, Plus, X } from 'lucide-react';
+import { ArrowLeft, Target, Calendar, Plus, X, Edit2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Input, Textarea } from '../components/ui/input';
+import { Input } from '../components/ui/input';
 import { DatePicker } from '../components/ui/date-picker';
 
 const CATEGORIES = ['Marketing', 'Personal', 'Espiritual', 'Trabajo', 'Salud'];
@@ -13,16 +13,30 @@ const COLORS = [
 const today = new Date().toISOString().split('T')[0];
 
 export default function CreateGoalScreen() {
-  const { dispatch, goBack, showToast } = useApp();
+  const { dispatch, goBack, showToast, state } = useApp();
 
-  const [form, setForm] = useState({
+  // ── Edit mode: pre-fill if navigated with a goalId ──
+  const editId   = state.screenParams?.goalId;
+  const editGoal = editId ? state.goals.find(g => g.id === editId) : null;
+  const isEdit   = !!editGoal;
+
+  const [form, setForm] = useState(() => editGoal ? {
+    title:    editGoal.title    || '',
+    category: editGoal.category || 'Personal',
+    deadline: editGoal.deadline || '',
+    color:    editGoal.color    || '#F8D7E8',
+    progress: editGoal.progress || 0,
+  } : {
     title:    '',
     category: 'Personal',
     deadline: '',
     color:    '#F8D7E8',
     progress: 0,
   });
-  const [tasks, setTasks]   = useState(['']);
+
+  const [tasks, setTasks]   = useState(() =>
+    isEdit && editGoal.tasks?.length ? editGoal.tasks : ['']
+  );
   const [saving, setSaving] = useState(false);
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
@@ -36,16 +50,28 @@ export default function CreateGoalScreen() {
     const filledTasks = tasks.filter(t => t.trim());
     setSaving(true);
     setTimeout(() => {
-      dispatch({
-        type: 'ADD_GOAL',
-        goal: {
-          ...form,
-          tasks: filledTasks,
-          completedTasks: 0,
-          progress: 0,
-        },
-      });
-      showToast('¡Objetivo creado!', 'success');
+      if (isEdit) {
+        dispatch({
+          type: 'UPDATE_GOAL',
+          goal: {
+            ...editGoal,
+            ...form,
+            tasks: filledTasks,
+          },
+        });
+        showToast('Objetivo actualizado', 'success');
+      } else {
+        dispatch({
+          type: 'ADD_GOAL',
+          goal: {
+            ...form,
+            tasks: filledTasks,
+            completedTasks: 0,
+            progress: 0,
+          },
+        });
+        showToast('¡Objetivo creado!', 'success');
+      }
       goBack();
     }, 500);
   };
@@ -149,10 +175,14 @@ export default function CreateGoalScreen() {
       <div className="cg-screen">
         <button className="cg-back" onClick={goBack}>
           <ArrowLeft size={16} strokeWidth={2} />
-          Volver a objetivos
+          {isEdit ? 'Volver al objetivo' : 'Volver a objetivos'}
         </button>
-        <h1 className="cg-title">Nuevo Objetivo</h1>
-        <p className="cg-sub">Define hacia dónde quieres ir y cómo llegar.</p>
+        <h1 className="cg-title">
+          {isEdit ? 'Editar Objetivo' : 'Nuevo Objetivo'}
+        </h1>
+        <p className="cg-sub">
+          {isEdit ? 'Modifica los detalles de tu objetivo.' : 'Define hacia dónde quieres ir y cómo llegar.'}
+        </p>
 
         {/* Title */}
         <div className="cg-card">
@@ -254,8 +284,8 @@ export default function CreateGoalScreen() {
           disabled={!form.title.trim() || saving}
           id="cg-save"
         >
-          <Target size={16} />
-          {saving ? 'Creando…' : 'Crear Objetivo'}
+          {isEdit ? <Edit2 size={16} /> : <Target size={16} />}
+          {saving ? (isEdit ? 'Guardando…' : 'Creando…') : (isEdit ? 'Guardar Cambios' : 'Crear Objetivo')}
         </Button>
       </div>
     </>

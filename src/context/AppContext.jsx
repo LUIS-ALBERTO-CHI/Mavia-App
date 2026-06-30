@@ -293,6 +293,8 @@ function reducer(state, action) {
       );
       return { ...state, goals };
     }
+    case 'DELETE_GOAL':
+      return { ...state, goals: state.goals.filter(g => g.id !== action.id) };
 
     /* ── Journal ── */
     case 'ADD_JOURNAL': {
@@ -727,6 +729,27 @@ export function AppProvider({ children }) {
         case 'ADD_GOAL':
           await saveGoal(uid, enrichedAction.goal);
           break;
+
+        case 'UPDATE_GOAL':
+          await saveGoal(uid, enrichedAction.goal);
+          break;
+
+        case 'UPDATE_GOAL_PROGRESS': {
+          const g = state.goals.find(g => g.id === enrichedAction.id);
+          if (g) await saveGoal(uid, { ...g, progress: Math.min(100, Math.max(0, enrichedAction.progress)) });
+          break;
+        }
+
+        case 'DELETE_GOAL': {
+          try {
+            const { doc, deleteDoc } = await import('firebase/firestore');
+            const { db } = await import('../lib/firebase');
+            await deleteDoc(doc(db, 'users', uid, 'goals', enrichedAction.id));
+          } catch (e) {
+            console.warn('[Mavia] DELETE_GOAL Firestore error:', e.message);
+          }
+          break;
+        }
 
         case 'ADD_JOURNAL':
           await saveJournalEntry(uid, enrichedAction.entry);

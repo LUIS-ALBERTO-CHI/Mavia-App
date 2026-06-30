@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Target, Calendar, CheckCircle2, Circle, TrendingUp, Plus } from 'lucide-react';
+import { Target, Calendar, CheckCircle2, Circle, TrendingUp, Plus, Edit2, Trash2 } from 'lucide-react';
 import { Progress } from '../components/ui/progress';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -38,6 +38,7 @@ export default function GoalsScreen() {
   const { state, navigate, dispatch, showToast } = useApp();
   const { goals } = state;
   const [filter, setFilter] = useState('Todos');
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const avgProgress = goals.length
     ? Math.round(goals.reduce((a, g) => a + g.progress, 0) / goals.length)
@@ -425,8 +426,38 @@ export default function GoalsScreen() {
                         )}
                       </div>
                     </div>
-                    <div className="gls-card-pct" style={{ color: style.text }}>
-                      {goal.progress}%
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <div className="gls-card-pct" style={{ color: style.text }}>
+                        {goal.progress}%
+                      </div>
+                      {/* Edit button */}
+                      <button
+                        onClick={e => { e.stopPropagation(); navigate('createGoal', { goalId: goal.id }); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 8, color: style.text, opacity: 0.7, display: 'flex', alignItems: 'center', transition: 'opacity 0.15s' }}
+                        aria-label="Editar objetivo"
+                        id={`gls-edit-${goal.id}`}
+                        title="Editar"
+                      >
+                        <Edit2 size={15} strokeWidth={1.75} />
+                      </button>
+                      {/* Delete button */}
+                      {confirmDeleteId === goal.id ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--error)' }}>¿Eliminar?</span>
+                          <button onClick={() => setConfirmDeleteId(null)} style={{ border: 'none', background: 'var(--surface-container)', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)', color: 'var(--on-surface-variant)' }}>No</button>
+                          <button onClick={() => { dispatch({ type: 'DELETE_GOAL', id: goal.id }); showToast('Objetivo eliminado'); setConfirmDeleteId(null); }} style={{ border: 'none', background: 'var(--error)', color: 'white', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Sí</button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={e => { e.stopPropagation(); setConfirmDeleteId(goal.id); }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 8, color: 'var(--error)', opacity: 0.6, display: 'flex', alignItems: 'center', transition: 'opacity 0.15s' }}
+                          aria-label="Eliminar objetivo"
+                          id={`gls-del-${goal.id}`}
+                          title="Eliminar"
+                        >
+                          <Trash2 size={15} strokeWidth={1.75} />
+                        </button>
+                      )}
                     </div>
                   </div>
 

@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { ArrowLeft, Calendar, Clock, MapPin, Trash2, Edit2, Users, BookOpen, Briefcase, Heart } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, MapPin, Trash2, Edit2, Users, BookOpen, Briefcase, Heart, AlertTriangle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { formatTime12h } from '../lib/utils';
 
@@ -22,6 +23,7 @@ function formatDate(dateStr) {
 
 export default function EventDetailScreen() {
   const { state, dispatch, goBack, navigate, showToast } = useApp();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const eventId = state.screenParams?.eventId;
   const event   = state.events.find(e => e.id === eventId);
@@ -205,16 +207,24 @@ export default function EventDetailScreen() {
             >
               <Edit2 size={18} />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full"
-              onClick={handleDelete}
-              id="evd-delete"
-              style={{ color: 'var(--error)' }}
-            >
-              <Trash2 size={18} />
-            </Button>
+            {confirmDelete ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--error)' }}>¿Eliminar?</span>
+                <button onClick={() => setConfirmDelete(false)} style={{ border: 'none', background: 'var(--surface-container)', borderRadius: 99, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)', color: 'var(--on-surface-variant)' }}>No</button>
+                <button onClick={() => { dispatch({ type: 'DELETE_EVENT', id: event.id }); showToast('Evento eliminado'); goBack(); }} style={{ border: 'none', background: 'var(--error)', color: 'white', borderRadius: 99, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Sí</button>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full"
+                onClick={() => setConfirmDelete(true)}
+                id="evd-delete"
+                style={{ color: 'var(--error)' }}
+              >
+                <Trash2 size={18} />
+              </Button>
+            )}
           </div>
         </div>
 
@@ -283,21 +293,30 @@ export default function EventDetailScreen() {
         )}
 
         {/* Delete button */}
-        <Button
-          variant="ghost"
-          className="w-full"
-          style={{
-            color: 'var(--error)',
-            border: '1px solid var(--error-container)',
-            borderRadius: 'var(--radius-2xl)',
-            padding: '14px',
-          }}
-          onClick={handleDelete}
-          id="evd-delete-main"
-        >
-          <Trash2 size={16} />
-          Eliminar evento
-        </Button>
+        {confirmDelete ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '14px', background: 'var(--error-container)', borderRadius: 'var(--radius-2xl)', border: '1px solid var(--error)' }}>
+            <AlertTriangle size={16} color="var(--error)" />
+            <span style={{ color: 'var(--on-error-container)', fontSize: 14, fontWeight: 600 }}>¿Eliminar este evento?</span>
+            <button onClick={() => setConfirmDelete(false)} style={{ border: 'none', background: 'var(--surface-container)', borderRadius: 99, padding: '6px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)', color: 'var(--on-surface-variant)' }}>Cancelar</button>
+            <button onClick={() => { dispatch({ type: 'DELETE_EVENT', id: event.id }); showToast('Evento eliminado'); goBack(); }} style={{ border: 'none', background: 'var(--error)', color: 'white', borderRadius: 99, padding: '6px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Sí, eliminar</button>
+          </div>
+        ) : (
+          <Button
+            variant="ghost"
+            className="w-full"
+            style={{
+              color: 'var(--error)',
+              border: '1px solid var(--error-container)',
+              borderRadius: 'var(--radius-2xl)',
+              padding: '14px',
+            }}
+            onClick={() => setConfirmDelete(true)}
+            id="evd-delete-main"
+          >
+            <Trash2 size={16} />
+            Eliminar evento
+          </Button>
+        )}
 
       </div>
     </>
