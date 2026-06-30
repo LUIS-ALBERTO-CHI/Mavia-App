@@ -679,7 +679,7 @@ a { text-decoration: none; color: inherit; }
   pointer-events: none;
 }
 
-/* The pill — contains the 4 nav items */
+/* The pill — contains the 5 nav items */
 .mobile-bottom-nav {
   display: flex;
   align-items: center;
@@ -689,10 +689,13 @@ a { text-decoration: none; color: inherit; }
   -webkit-backdrop-filter: blur(28px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 100px;
-  padding: 6px 10px;
-  gap: 2px;
+  padding: 6px 8px;
+  gap: 1px;
   pointer-events: auto;
   box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3);
+  /* Ensure full-width on very small screens */
+  flex: 1;
+  max-width: 400px;
 }
 
 :root:not(.dark) .mobile-bottom-nav {
@@ -711,14 +714,15 @@ a { text-decoration: none; color: inherit; }
   align-items: center;
   justify-content: center;
   gap: 3px;
-  padding: 8px 14px;
+  padding: 8px 10px;
   border-radius: 80px;
   cursor: pointer;
   border: none;
   background: none;
   color: rgba(150, 140, 135, 0.9);
   transition: color var(--transition-fast), background var(--transition-fast);
-  min-width: 56px;
+  min-width: 46px;
+  flex: 1;
 }
 
 .bottom-nav-item.active {

@@ -268,18 +268,21 @@ function MobileBottomNav() {
   const { state, navigate } = useApp();
   const { currentScreen } = state;
 
+  /* Mirror MAIN_NAV exactly so mobile matches desktop */
   const BOTTOM_NAV = [
-    { id: 'dashboard', label: 'Inicio',    icon: 'dashboard'          },
-    { id: 'wellness',  label: 'Bienestar', icon: 'energy_savings_leaf' },
-    { id: 'tasks',     label: 'Tareas',    icon: 'check_circle'        },
-    { id: 'profile',   label: 'Perfil',    icon: 'person'              },
+    { id: 'dashboard', label: 'Inicio',     icon: 'dashboard'          },
+    { id: 'calendar',  label: 'Calendario', icon: 'calendar_today'      },
+    { id: 'tasks',     label: 'Tareas',     icon: 'check_circle'        },
+    { id: 'wellness',  label: 'Bienestar',  icon: 'energy_savings_leaf' },
+    { id: 'profile',   label: 'Perfil',     icon: 'person'              },
   ];
 
   // Map sub-screens to their parent tab
   const TAB_GROUPS = {
-    dashboard: ['dashboard', 'agenda', 'calendar'],
+    dashboard: ['dashboard', 'agenda'],
+    calendar:  ['calendar', 'createEvent', 'events', 'eventDetail'],
+    tasks:     ['tasks', 'createTask', 'taskDetail', 'reminders'],
     wellness:  ['wellness', 'meditation', 'habits', 'createHabit', 'goals', 'createGoal', 'journal', 'gratitude', 'phrases'],
-    tasks:     ['tasks', 'createTask', 'taskDetail', 'events', 'createEvent', 'reminders'],
     profile:   ['profile', 'settings', 'notifications', 'statistics', 'search'],
   };
 
