@@ -305,39 +305,61 @@ function MiniDrum({ items, value, onChange, label }) {
 }
 
 // ─── Duration Modal ───────────────────────────────────────────────────────────
+// Renders via createPortal so it is NOT clipped by the time picker panel overflow.
+const DUR_ANIM = `
+  @keyframes durIn {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+`;
+
 function DurationModal({ onClose }) {
   const [hours,   setHours]   = useState(0);
   const [minutes, setMinutes] = useState(1);
+  const modalRef = useRef(null);
 
-  const applyPreset = (preset) => {
-    setHours(preset.h);
-    setMinutes(preset.m);
-  };
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
 
-  const reset = () => { setHours(0); setMinutes(1); };
+  const applyPreset = (preset) => { setHours(preset.h); setMinutes(preset.m); };
+  const reset       = ()       => { setHours(0); setMinutes(1); };
 
-  return (
-    <div style={{
-      position: 'absolute', inset: 0, zIndex: 50,
-      display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
-    }}>
+  return createPortal(
+    <div
+      ref={modalRef}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 999999,
+        display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+      }}
+    >
+      <style>{DUR_ANIM}</style>
+
       {/* Backdrop */}
       <div
-        onClick={onClose}
+        onMouseDown={e => { e.stopPropagation(); onClose(); }}
         style={{
           position: 'absolute', inset: 0,
-          background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(4px)',
+          background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)',
         }}
       />
 
       {/* Sheet */}
-      <div style={{
-        position: 'relative', zIndex: 1,
-        background: 'var(--surface-container-lowest)',
-        borderRadius: '20px 20px 0 0',
-        padding: '0 0 24px',
-        animation: 'durIn 0.25s var(--ease-out) both',
-      }}>
+      <div
+        onMouseDown={e => e.stopPropagation()}
+        style={{
+          position: 'relative', zIndex: 1,
+          background: 'var(--surface-container-lowest)',
+          borderRadius: '20px 20px 0 0',
+          padding: '0 0 32px',
+          animation: 'durIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+        }}
+      >
         {/* Handle */}
         <div style={{
           width: 36, height: 4, borderRadius: 99,
@@ -372,16 +394,13 @@ function DurationModal({ onClose }) {
 
         {/* Two-column drums */}
         <div style={{
-          display: 'flex',
-          margin: '0 16px',
+          display: 'flex', margin: '0 16px',
           background: 'var(--surface-container-lowest)',
           borderRadius: 16, overflow: 'hidden',
           border: '1px solid rgba(208,195,200,0.15)',
         }}>
           <MiniDrum items={HOURS_DRUM}   value={hours}   onChange={setHours}   label="horas" />
-          <div style={{
-            width: 1, background: 'rgba(208,195,200,0.25)', margin: '20px 0',
-          }} />
+          <div style={{ width: 1, background: 'rgba(208,195,200,0.25)', margin: '20px 0' }} />
           <MiniDrum items={MINUTES_DRUM} value={minutes} onChange={setMinutes} label="min" />
         </div>
 
@@ -396,13 +415,11 @@ function DurationModal({ onClose }) {
               fontWeight: 700, color: 'var(--on-surface)',
             }}>Preajustes</span>
             <button
-              type="button"
-              onClick={reset}
+              type="button" onClick={reset}
               style={{
                 display: 'flex', alignItems: 'center', gap: 4,
                 background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: 12, fontWeight: 600,
-                color: 'var(--on-surface-variant)',
+                fontSize: 12, fontWeight: 600, color: 'var(--on-surface-variant)',
               }}
             >
               ↺ Restablecer
@@ -414,32 +431,23 @@ function DurationModal({ onClose }) {
               const isActive = hours === p.h && minutes === p.m;
               return (
                 <button
-                  key={p.label}
-                  type="button"
+                  key={p.label} type="button"
                   onClick={() => applyPreset(p)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '7px 14px',
-                    borderRadius: 99,
+                    padding: '7px 14px', borderRadius: 99,
                     border: `1.5px solid ${isActive ? 'var(--primary)' : 'rgba(208,195,200,0.5)'}`,
                     background: isActive ? 'var(--primary-container)' : 'var(--surface-container)',
                     color: isActive ? 'var(--primary)' : 'var(--on-surface)',
-                    fontSize: 13, fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
-                    fontFamily: 'var(--font-body)',
+                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    transition: 'all 0.15s', fontFamily: 'var(--font-body)',
                   }}
                 >
                   {p.label}
-                  <span
-                    onClick={e => { e.stopPropagation(); }}
-                    style={{
-                      fontSize: 10, fontWeight: 700,
-                      color: isActive ? 'var(--primary)' : 'var(--outline)',
-                    }}
-                  >
-                    ×
-                  </span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700,
+                    color: isActive ? 'var(--primary)' : 'var(--outline)',
+                  }}>×</span>
                 </button>
               );
             })}
@@ -449,22 +457,20 @@ function DurationModal({ onClose }) {
         {/* Confirm */}
         <div style={{ padding: '20px 20px 0' }}>
           <button
-            type="button"
-            onClick={onClose}
+            type="button" onClick={onClose}
             style={{
-              width: '100%', padding: '14px',
-              borderRadius: 99,
+              width: '100%', padding: '14px', borderRadius: 99,
               background: 'var(--gradient-primary)', color: 'white',
               border: 'none', cursor: 'pointer',
-              fontSize: 15, fontWeight: 700,
-              fontFamily: 'var(--font-body)',
+              fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-body)',
             }}
           >
             Continuar — {hours > 0 ? `${hours}h ` : ''}{minutes > 0 ? `${minutes} min` : hours === 0 ? '0 min' : ''}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -634,7 +640,7 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
         ref={triggerRef}
         type="button"
         className={`tp-trigger${!value ? ' placeholder' : ''}${open ? ' open' : ''}`}
-        onClick={() => setOpen(o => !o)}
+        onClick={() => { setOpen(o => !o); setShowDuration(false); }}
         id={id}
       >
         <Clock size={17} className="tp-icon" strokeWidth={1.75} />
@@ -644,7 +650,7 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
 
       {/* Popover */}
       {open && (
-        <TimePopover triggerRef={triggerRef} onClose={() => setOpen(false)}>
+        <TimePopover triggerRef={triggerRef} onClose={() => { setOpen(false); setShowDuration(false); }}>
           <div className="tp-panel">
 
             {/* Header */}
@@ -677,7 +683,7 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
               </button>
             </div>
 
-            {/* Duration modal — slides up inside the panel */}
+            {/* Duration modal — rendered in document.body via portal */}
             {showDuration && (
               <DurationModal onClose={() => setShowDuration(false)} />
             )}
