@@ -375,3 +375,33 @@ export async function markAllNotificationsRead(uid, notifIds) {
   });
   await batch.commit();
 }
+
+/** Deletes a single notification document from Firestore */
+export async function deleteNotification(uid, notifId) {
+  try {
+    await deleteDoc(docRef(uid, 'notifications', notifId));
+  } catch (e) {
+    console.warn('[Mavia] deleteNotification error:', e.message);
+  }
+}
+
+/** Batch-deletes all notifications marked as read for a user */
+export async function deleteReadNotifications(uid, readIds) {
+  if (!readIds || readIds.length === 0) return;
+  try {
+    const batch = writeBatch(db);
+    readIds.forEach(id => batch.delete(docRef(uid, 'notifications', id)));
+    await batch.commit();
+  } catch (e) {
+    console.warn('[Mavia] deleteReadNotifications error:', e.message);
+  }
+}
+
+/** Saves a new notification document in Firestore (used on foreground FCM) */
+export async function saveNotification(uid, notif) {
+  try {
+    await setDoc(docRef(uid, 'notifications', notif.id), notif);
+  } catch (e) {
+    console.warn('[Mavia] saveNotification error:', e.message);
+  }
+}

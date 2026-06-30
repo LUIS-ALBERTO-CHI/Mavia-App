@@ -4,6 +4,7 @@ import { onAuthChange } from '../lib/authService';
 import { loadUserData, saveTask, deleteTask, saveHabit, saveEvent, deleteEvent,
          saveGoal, saveJournalEntry, saveGratitudeEntry,
          markNotificationRead, markAllNotificationsRead, saveUserProfile,
+         deleteNotification, deleteReadNotifications, saveNotification,
          saveSettings } from '../lib/firestoreService';
 import {
   initFCM,
@@ -855,6 +856,13 @@ export function AppProvider({ children }) {
           await saveGratitudeEntry(uid, enrichedAction.entry);
           break;
 
+        case 'ADD_NOTIFICATION': {
+          // Persist foreground FCM notification to Firestore so it survives reload
+          const notif = enrichedAction.notification;
+          if (notif?.id) await saveNotification(uid, notif).catch(() => {});
+          break;
+        }
+
         case 'MARK_NOTIFICATION_READ':
           await markNotificationRead(uid, enrichedAction.id);
           break;
@@ -862,6 +870,18 @@ export function AppProvider({ children }) {
         case 'MARK_ALL_NOTIFICATIONS_READ':
           await markAllNotificationsRead(uid, state.notifications.map(n => n.id));
           break;
+
+        case 'DELETE_NOTIFICATION':
+          // Delete from Firestore so it doesn't come back on reload
+          await deleteNotification(uid, enrichedAction.id).catch(() => {});
+          break;
+
+        case 'CLEAR_READ_NOTIFICATIONS': {
+          // Batch-delete all read notifications from Firestore
+          const readIds = state.notifications.filter(n => n.read).map(n => n.id);
+          await deleteReadNotifications(uid, readIds).catch(() => {});
+          break;
+        }
 
         case 'UPDATE_USER':
           await saveUserProfile(uid, enrichedAction.updates);
