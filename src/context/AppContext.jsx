@@ -221,21 +221,20 @@ function reducer(state, action) {
       }]};
 
     case 'TOGGLE_HABIT': {
-      const todayStr  = new Date().toISOString().split('T')[0];
-      const todayIdx  = (new Date().getDay() + 6) % 7;
+      const todayStr  = new Date().toLocaleDateString('en-CA');
+      const todayIdx  = (new Date().getDay() + 6) % 7; // Mon=0 … Sun=6
       const habits = state.habits.map(h => {
         if (h.id !== action.id) return h;
-        const wasCompleted  = h.completedToday;
-        const newCompleted  = !wasCompleted;
-        const weekData      = [...(h.weekData || Array(7).fill(false))];
-        weekData[todayIdx]  = newCompleted;
+        const wasCompleted = h.completedToday;
+        const newCompleted = !wasCompleted;
+        const weekData     = [...(h.weekData || Array(7).fill(false))];
+        weekData[todayIdx] = newCompleted;
 
-        // Streak logic: only increment if completing (not un-completing)
-        let newStreak = h.streak ?? 0;
-        if (newCompleted) {
-          newStreak = newStreak + 1;
-        } else {
-          newStreak = Math.max(0, newStreak - 1);
+        // Streak = consecutive filled days going backwards from today in weekData
+        let newStreak = 0;
+        for (let i = todayIdx; i >= 0; i--) {
+          if (weekData[i]) newStreak++;
+          else break;
         }
 
         return {
@@ -250,8 +249,8 @@ function reducer(state, action) {
     }
 
     case 'DAILY_RESET_HABITS': {
-      // Called on app load: if lastCompletedDate !== today, reset completedToday
-      const todayStr = new Date().toISOString().split('T')[0];
+      // Called on app load: if lastCompletedDate !== today (local), reset completedToday
+      const todayStr = new Date().toLocaleDateString('en-CA');
       const habits = state.habits.map(h => {
         if (h.lastCompletedDate === todayStr) return h; // already completed today, keep
         return { ...h, completedToday: false };
@@ -673,15 +672,16 @@ export function AppProvider({ children }) {
           const todayIdx = (new Date().getDay() + 6) % 7;
           const h = state.habits.find(h => h.id === enrichedAction.id);
           if (h) {
-            const todayStr     = new Date().toISOString().split('T')[0];
-            const newCompleted = !h.completedToday;       // flip same as reducer
+            const todayStr     = new Date().toLocaleDateString('en-CA');
+            const newCompleted = !h.completedToday;
             const weekData     = [...(h.weekData || Array(7).fill(false))];
             weekData[todayIdx] = newCompleted;
-            // Use the same streak formula as the reducer
-            const safeStreak  = Number(h.streak) || 0;
-            const newStreak   = newCompleted
-              ? safeStreak + 1
-              : Math.max(0, safeStreak - 1);
+            // Same streak formula as reducer: consecutive filled days backwards from today
+            let newStreak = 0;
+            for (let i = todayIdx; i >= 0; i--) {
+              if (weekData[i]) newStreak++;
+              else break;
+            }
             await saveHabit(uid, {
               ...h,
               completedToday:    newCompleted,

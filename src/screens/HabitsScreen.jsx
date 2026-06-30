@@ -417,7 +417,7 @@ export default function HabitsScreen() {
                       aria-label={habit.completedToday ? 'Marcar pendiente' : 'Completar'}
                     >
                       {habit.completedToday
-                        ? <CheckCircle2 size={22} color="white" strokeWidth={2} />
+                        ? <CheckCircle2 size={22} color="#fff" strokeWidth={2.5} style={{ filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.25))' }} />
                         : <Circle size={22} color="var(--outline)" strokeWidth={1.75} />
                       }
                     </button>
