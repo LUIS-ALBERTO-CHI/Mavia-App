@@ -91,51 +91,64 @@ function slotTo24h(slot) {
 
 // ─── Drum Scroller ────────────────────────────────────────────────────────────
 function DrumScroller({ slots, value, onChange }) {
-  const containerRef = useRef(null);
-  const isScrolling  = useRef(false);
+  const containerRef     = useRef(null);
+  const isUserScrolling  = useRef(false);   // true while user is actively scrolling
+  const isProgrammatic   = useRef(false);   // true while we're doing a programmatic snap
+  const snapTimerRef     = useRef(null);
 
-  const idx = slots.indexOf(value);
+  const idx = Math.max(0, slots.indexOf(value));
 
-  // Scroll to correct position on open / value change (no animation on first mount)
-  const scrollTo = useCallback((index, animate = true) => {
+  // ── Programmatic scroll helper ──
+  const scrollTo = useCallback((index, animate) => {
     const el = containerRef.current;
     if (!el) return;
-    const target = index * ITEM_H;
     if (animate) {
-      el.scrollTo({ top: target, behavior: 'smooth' });
+      isProgrammatic.current = true;
+      el.scrollTo({ top: index * ITEM_H, behavior: 'smooth' });
+      // Reset flag after animation finishes (~300ms)
+      setTimeout(() => { isProgrammatic.current = false; }, 350);
     } else {
-      el.scrollTop = target;
+      el.scrollTop = index * ITEM_H;
     }
   }, []);
 
-  useEffect(() => {
-    scrollTo(Math.max(0, idx), false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // ── Mount: jump instantly to initial position ──
+  useEffect(() => { scrollTo(idx, false); }, []); // eslint-disable-line
 
+  // ── External value change (preset pill, etc.) ──
+  // Only scroll if user is NOT currently dragging
   useEffect(() => {
-    scrollTo(Math.max(0, idx), true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+    if (!isUserScrolling.current) scrollTo(idx, true);
+  }, [value]); // eslint-disable-line
 
-  // On scroll end — snap to nearest item
+  // ── Scroll handler ──
   const handleScroll = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
-    clearTimeout(isScrolling.current);
-    isScrolling.current = setTimeout(() => {
-      const raw     = el.scrollTop;
-      const nearest = Math.round(raw / ITEM_H);
-      const clamped = Math.max(0, Math.min(slots.length - 1, nearest));
-      // snap back
-      el.scrollTo({ top: clamped * ITEM_H, behavior: 'smooth' });
-      onChange(slots[clamped]);
-    }, 80);
-  }, [slots, onChange]);
+
+    // Ignore scroll events triggered by our own scrollTo() calls
+    if (isProgrammatic.current) return;
+
+    isUserScrolling.current = true;
+
+    // Compute nearest slot in real-time and update state immediately
+    // so "slot" in the parent is ALWAYS current when Continuar is clicked
+    const raw     = el.scrollTop;
+    const nearest = Math.round(raw / ITEM_H);
+    const clamped = Math.max(0, Math.min(slots.length - 1, nearest));
+    onChange(slots[clamped]);
+
+    // After user stops scrolling, snap to the nearest item
+    clearTimeout(snapTimerRef.current);
+    snapTimerRef.current = setTimeout(() => {
+      isUserScrolling.current = false;
+      scrollTo(clamped, true);   // smooth snap (sets isProgrammatic = true)
+    }, 150);
+  }, [slots, onChange, scrollTo]);
 
   const handleClick = useCallback((index) => {
-    scrollTo(index, true);
     onChange(slots[index]);
+    scrollTo(index, true);
   }, [slots, onChange, scrollTo]);
 
   return (
