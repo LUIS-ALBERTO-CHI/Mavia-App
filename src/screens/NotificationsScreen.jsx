@@ -41,10 +41,18 @@ export default function NotificationsScreen() {
 
         .ntf-hero-row {
           display: flex;
-          align-items: flex-end;
+          align-items: flex-start;
           justify-content: space-between;
           margin-bottom: var(--space-xl);
           gap: var(--space-md);
+          flex-wrap: wrap;
+        }
+        .ntf-actions-group {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 4px;
+          flex-shrink: 0;
         }
         .ntf-hero-title {
           font-family: var(--font-display);
@@ -204,18 +212,32 @@ export default function NotificationsScreen() {
               {unread.length > 0 ? `${unread.length} sin leer` : 'Todo al día'}
             </p>
           </div>
-          {unread.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={markAll} id="ntf-mark-all">
-              Marcar todas leídas
-            </Button>
+          {(unread.length > 0 || read.length > 0) && (
+            <div className="ntf-actions-group">
+              {unread.length > 0 && (
+                <Button variant="ghost" size="sm" onClick={markAll} id="ntf-mark-all"
+                  style={{ fontSize: 12, padding: '4px 10px', whiteSpace: 'nowrap' }}>
+                  Marcar todas leídas
+                </Button>
+              )}
+              {read.length > 0 && (
+                <Button variant="ghost" size="sm" onClick={clearRead} id="ntf-clear-read"
+                  style={{ color: 'var(--error)', opacity: 0.8, fontSize: 12, padding: '4px 10px', whiteSpace: 'nowrap' }}>
+                  Limpiar leídas
+                </Button>
+              )}
+              {/* Quick nuke for 56-notif pile-up */}
+              {(unread.length + read.length) > 10 && (
+                <Button variant="ghost" size="sm"
+                  onClick={() => { dispatch({ type: 'MARK_ALL_NOTIFICATIONS_READ' }); setTimeout(() => dispatch({ type: 'CLEAR_READ_NOTIFICATIONS' }), 100); }}
+                  id="ntf-clear-all"
+                  style={{ color: 'var(--error)', fontWeight: 700, fontSize: 12, padding: '4px 10px', whiteSpace: 'nowrap' }}>
+                  Borrar todas ({unread.length + read.length})
+                </Button>
+              )}
+            </div>
           )}
-          {read.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={clearRead} id="ntf-clear-read"
-              style={{ color: 'var(--error)', opacity: 0.8 }}>
-              Limpiar leídas
-            </Button>
-          )}
-        </div>
+        </div>{/* /ntf-hero-row */}
 
         {/* Unread */}
         {unread.length > 0 && (
