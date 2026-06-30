@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import LottieIcon from '../components/LottieIcon';
-import { Search, Clock, MoreVertical, Check, Trash2, ChevronRight } from 'lucide-react';
+import { Search, Clock, MoreVertical, Check, AlertCircle, Minus, ChevronsDown } from 'lucide-react';
 import { localToday, localDateOffset } from '../lib/utils';
 
 const FILTERS = ['Hoy', 'Mañana', 'Semana', 'Urgentes', 'Marketing', 'Personal', 'Espiritual'];
@@ -555,23 +555,26 @@ function TaskCard({ task, onToggle, onDelete, onOpen }) {
               {task.category}
             </span>
           )}
-          {/* Priority pill: icon + text */}
+          {/* Priority pill: SVG icon + text */}
           {task.priority === 'alta' && (
             <span className="ts-priority-pill ts-priority-alta">
-              <i className="pip-icon">!</i> Alta
+              <AlertCircle size={11} strokeWidth={2.5} />
+              Alta
             </span>
           )}
           {task.priority === 'media' && (
             <span className="ts-priority-pill ts-priority-media">
-              <i className="pip-icon">=</i> Media
+              <Minus size={11} strokeWidth={2.5} />
+              Media
             </span>
           )}
           {task.priority === 'baja' && (
             <span className="ts-priority-pill ts-priority-baja">
-              <i className="pip-icon">⇓</i> Baja
+              <ChevronsDown size={11} strokeWidth={2.5} />
+              Baja
             </span>
           )}
-          {/* Time pill: clock + Hoy/date + time */}
+          {/* Time pill */}
           {(task.time || task.date) && (
             <span className="ts-time">
               <Clock size={12} strokeWidth={2} />

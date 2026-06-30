@@ -2,6 +2,7 @@ import { useApp } from '../context/AppContext';
 import AppIcon from '../components/AppIcon';
 import LottieIcon from '../components/LottieIcon';
 import { localToday } from '../lib/utils';
+import { AlertCircle, Minus, ChevronsDown, Clock } from 'lucide-react';
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -680,13 +681,14 @@ export default function DashboardScreen() {
                             </span>
                           )}
                           {/* Priority */}
-                          {task.priority === 'alta' && <span className="ti-pill ti-alta"><i style={{ fontStyle:'normal' }}>!</i> Alta</span>}
-                          {task.priority === 'media' && <span className="ti-pill ti-media"><i style={{ fontStyle:'normal' }}>=</i> Media</span>}
-                          {task.priority === 'baja' && <span className="ti-pill ti-baja"><i style={{ fontStyle:'normal' }}>⇓</i> Baja</span>}
+                          {task.priority === 'alta'  && <span className="ti-pill ti-alta"><AlertCircle size={10} strokeWidth={2.5} /> Alta</span>}
+                          {task.priority === 'media' && <span className="ti-pill ti-media"><Minus size={10} strokeWidth={2.5} /> Media</span>}
+                          {task.priority === 'baja'  && <span className="ti-pill ti-baja"><ChevronsDown size={10} strokeWidth={2.5} /> Baja</span>}
                           {/* Time */}
                           {(task.time || task.date) && (
                             <span className="ti-pill ti-time">
-                              🕐 {task.date === today
+                              <Clock size={10} strokeWidth={2} />
+                              {task.date === today
                                 ? task.time ? `Hoy, ${task.time}` : 'Hoy'
                                 : task.time ? `${task.date}, ${task.time}` : task.date}
                             </span>
