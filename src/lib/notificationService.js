@@ -327,33 +327,38 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
     }
   }
 
-  // ── Local setTimeout — fires while browser is open ──
-  const ids = [];
-  const offsetMin = task.reminderOffset || 15;
-  const warnMs    = taskMs - offsetMin * 60 * 1000;
+  // ── Local setTimeout — ONLY used as fallback when FCM is unavailable ──
+  // If FCM push is active (token present + uid + future task), the Vercel cron
+  // handles delivery. Local timers would create duplicates.
+  const hasFCM = !!(uid && fcmToken && taskMs > now);
+  if (!hasFCM) {
+    const ids = [];
+    const offsetMin = task.reminderOffset || 15;
+    const warnMs    = taskMs - offsetMin * 60 * 1000;
 
-  if (warnMs > now) {
-    ids.push(setTimeout(() => {
-      showNotification(
-        'Recordatorio',
-        `En ${offsetMin} min: ${task.title}\nComienza a las ${task.time}`,
-        { tag: `task-warn-${task.id}` }   // tag deduplicates browser notifs
-      );
-    }, warnMs - now));
-  }
+    if (warnMs > now) {
+      ids.push(setTimeout(() => {
+        showNotification(
+          `En ${offsetMin >= 60 ? '1 hora' : `${offsetMin} min`}`,
+          `${task.title}\nTu tarea comienza a las ${formatTime12h(time24)}`,
+          { tag: `task-warn-${task.id}` }
+        );
+      }, warnMs - now));
+    }
 
-  if (taskMs > now) {
-    ids.push(setTimeout(() => {
-      showNotification(
-        '¡Es hora!',
-        `${task.title}\nInicia ahora | ${task.time}`,
-        { tag: `task-now-${task.id}` }   // tag deduplicates browser notifs
-      );
-    }, taskMs - now));
-  }
+    if (taskMs > now) {
+      ids.push(setTimeout(() => {
+        showNotification(
+          '¡Es hora!',
+          `${task.title}\nInicia ahora | ${formatTime12h(time24)}`,
+          { tag: `task-now-${task.id}` }
+        );
+      }, taskMs - now));
+    }
 
-  if (ids.length > 0) {
-    _timers.set(task.id, ids);
+    if (ids.length > 0) {
+      _timers.set(task.id, ids);
+    }
   }
 }
 
