@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { ArrowLeft, Flame } from 'lucide-react';
+import { ArrowLeft, Flame, Edit2 } from 'lucide-react';
 import HabitIcon, { HABIT_CATALOGUE } from '../components/HabitIcon';
 
 const CATEGORIES = ['Ejercicio', 'Mente', 'Sueño', 'Nutrición', 'Productividad', 'Espiritual'];
 
 const COLORS = [
-  { value: '#F8D7E8', label: 'Rosa'    },
-  { value: '#EDE7F6', label: 'Lavanda' },
-  { value: '#D5E5C2', label: 'Sage'    },
-  { value: '#F0DFAE', label: 'Dorado'  },
-  { value: '#DBEAFE', label: 'Azul'    },
+  { value: '#F8D7E8', label: 'Rosa'     },
+  { value: '#EDE7F6', label: 'Lavanda'  },
+  { value: '#D5E5C2', label: 'Sage'     },
+  { value: '#F0DFAE', label: 'Dorado'   },
+  { value: '#DBEAFE', label: 'Azul'     },
   { value: '#FCE4D6', label: 'Melocotón'},
 ];
 
@@ -23,9 +23,23 @@ const FREQ_OPTIONS = [
 const DAYS_SHORT = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
 export default function CreateHabitScreen() {
-  const { dispatch, goBack, showToast } = useApp();
+  const { dispatch, goBack, showToast, state } = useApp();
 
-  const [form, setForm] = useState({
+  // ── Edit mode: pre-fill if navigated with a habitId ──
+  const editId   = state.screenParams?.habitId;
+  const editHabit = editId ? state.habits.find(h => h.id === editId) : null;
+  const isEdit   = !!editHabit;
+
+  const [form, setForm] = useState(() => editHabit ? {
+    name:        editHabit.name        || '',
+    icon:        editHabit.icon        || 'meditation',
+    color:       editHabit.color       || '#F8D7E8',
+    frequency:   editHabit.frequency   || 'daily',
+    customDays:  editHabit.activeDays  || [true,true,true,true,true,false,false],
+    target:      editHabit.target      ? String(editHabit.target) : '',
+    reminder:    editHabit.reminder    || false,
+    reminderTime:editHabit.reminderTime|| '07:00',
+  } : {
     name:        '',
     icon:        'meditation',
     color:       '#F8D7E8',
@@ -35,7 +49,15 @@ export default function CreateHabitScreen() {
     reminder:    false,
     reminderTime:'07:00',
   });
-  const [activeCategory, setActiveCategory] = useState('Mente');
+
+  // Auto-select the category tab for the icon when editing
+  const getInitialCategory = () => {
+    if (!isEdit || !editHabit?.icon) return 'Mente';
+    const found = HABIT_CATALOGUE.find(h => h.id === editHabit.icon);
+    return found?.category || 'Mente';
+  };
+
+  const [activeCategory, setActiveCategory] = useState(getInitialCategory);
   const [saving, setSaving] = useState(false);
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
@@ -57,20 +79,38 @@ export default function CreateHabitScreen() {
     if (!form.name.trim()) return;
     setSaving(true);
     setTimeout(() => {
-      dispatch({
-        type: 'ADD_HABIT',
-        habit: {
-          name:            form.name.trim(),
-          icon:            form.icon,
-          color:           form.color,
-          frequency:       form.frequency,
-          activeDays:      getActiveDays(),
-          ...(form.target ? { target: Number(form.target), current: 0 } : {}),
-          reminder:        form.reminder,
-          reminderTime:    form.reminder ? form.reminderTime : null,
-        },
-      });
-      showToast('¡Hábito creado! 🌱', 'success');
+      if (isEdit) {
+        dispatch({
+          type: 'UPDATE_HABIT',
+          habit: {
+            ...editHabit,
+            name:         form.name.trim(),
+            icon:         form.icon,
+            color:        form.color,
+            frequency:    form.frequency,
+            activeDays:   getActiveDays(),
+            ...(form.target ? { target: Number(form.target) } : { target: null }),
+            reminder:     form.reminder,
+            reminderTime: form.reminder ? form.reminderTime : null,
+          },
+        });
+        showToast('Hábito actualizado', 'success');
+      } else {
+        dispatch({
+          type: 'ADD_HABIT',
+          habit: {
+            name:         form.name.trim(),
+            icon:         form.icon,
+            color:        form.color,
+            frequency:    form.frequency,
+            activeDays:   getActiveDays(),
+            ...(form.target ? { target: Number(form.target), current: 0 } : {}),
+            reminder:     form.reminder,
+            reminderTime: form.reminder ? form.reminderTime : null,
+          },
+        });
+        showToast('¡Hábito creado! 🌱', 'success');
+      }
       goBack();
     }, 400);
   };
@@ -279,10 +319,14 @@ export default function CreateHabitScreen() {
       <div className="ch-screen">
         <button className="ch-back" onClick={goBack}>
           <ArrowLeft size={16} strokeWidth={2} />
-          Volver a hábitos
+          {isEdit ? 'Volver a hábitos' : 'Volver a hábitos'}
         </button>
-        <h1 className="ch-title">Nuevo Hábito</h1>
-        <p className="ch-sub">Crea una rutina que se repita cada día automáticamente.</p>
+        <h1 className="ch-title">{isEdit ? 'Editar Hábito' : 'Nuevo Hábito'}</h1>
+        <p className="ch-sub">
+          {isEdit
+            ? 'Modifica los detalles de tu hábito.'
+            : 'Crea una rutina que se repita cada día automáticamente.'}
+        </p>
 
         {/* Name */}
         <div className="ch-card">
@@ -432,8 +476,10 @@ export default function CreateHabitScreen() {
           disabled={!form.name.trim() || saving}
           id="ch-save"
         >
-          <Flame size={18} />
-          {saving ? 'Creando…' : 'Crear Hábito'}
+          {isEdit ? <Edit2 size={18} /> : <Flame size={18} />}
+          {saving
+            ? (isEdit ? 'Guardando…' : 'Creando…')
+            : (isEdit ? 'Guardar Cambios' : 'Crear Hábito')}
         </button>
       </div>
     </>

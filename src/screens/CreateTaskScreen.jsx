@@ -580,6 +580,17 @@ export default function CreateTaskScreen() {
                     onChange={v => set('time', v)}
                     placeholder="Seleccionar hora"
                     id="ct-time"
+                    minTime={(() => {
+                      // Only block past times when the selected date is today
+                      if (form.date !== today) return undefined;
+                      const now = new Date();
+                      // Round up to next 5-min slot
+                      const totalMin = now.getHours() * 60 + now.getMinutes() + 5;
+                      const snapped  = Math.ceil(totalMin / 5) * 5;
+                      const h = Math.floor(snapped / 60) % 24;
+                      const m = snapped % 60;
+                      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+                    })()}
                   />
                 </div>
 

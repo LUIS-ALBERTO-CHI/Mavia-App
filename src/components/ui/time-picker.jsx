@@ -101,6 +101,13 @@ function slotTo24h(slot) {
   return `${String(h).padStart(2, '0')}:${mStr}`;
 }
 
+/** Returns total minutes since midnight for a "HH:MM" string, for numeric comparison. */
+function hhmm2min(hhmm) {
+  if (!hhmm) return 0;
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + (m || 0);
+}
+
 // ─── Drum Scroller ────────────────────────────────────────────────────────────
 function DrumScroller({ slots, value, onChange }) {
   const containerRef     = useRef(null);
@@ -661,17 +668,38 @@ const TP_STYLES = `
  * TimePicker — drum scroll style matching iOS design.
  * value:    "HH:MM" (24h) stored; displays as "h:mm AM/PM"
  * onChange: ("HH:MM") => void
+ * minTime:  "HH:MM" (24h) — slots before this time will be disabled/greyed (use for today)
  */
-export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', id }) {
+export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', id, minTime }) {
   const [open, setOpen]               = useState(false);
-  const [slot, setSlot]               = useState(() => valueToSlot(value));
   const [showCustom, setShowCustom]   = useState(false);
   const triggerRef                    = useRef(null);
 
+  // Filter SLOTS to only those >= minTime (when date is today)
+  const minMin  = minTime ? hhmm2min(minTime) : 0;
+  const slots   = minTime
+    ? SLOTS.filter(s => hhmm2min(slotTo24h(s)) >= minMin)
+    : SLOTS;
+
+  // Pick initial slot: if value is set and valid, use it; else pick first available
+  const getInitialSlot = () => {
+    const preferred = valueToSlot(value);
+    if (!minTime) return preferred;
+    // If preferred slot is before minTime, jump to first available
+    if (hhmm2min(slotTo24h(preferred)) < minMin) {
+      return slots[0] || preferred;
+    }
+    return preferred;
+  };
+
+  const [slot, setSlot] = useState(getInitialSlot);
+
   // Sync slot when external value changes
   useEffect(() => {
-    setSlot(valueToSlot(value));
-  }, [value]);
+    const s = getInitialSlot();
+    setSlot(s);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, minTime]);
 
   // Confirm the selected time from the drum
   const handleConfirm = () => {
@@ -734,7 +762,7 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
             {/* Drum */}
             <div className="tp-drum-wrap">
               <DrumScroller
-                slots={SLOTS}
+                slots={slots}
                 value={slot}
                 onChange={setSlot}
               />

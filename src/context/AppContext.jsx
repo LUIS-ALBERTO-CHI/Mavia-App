@@ -271,6 +271,10 @@ function reducer(state, action) {
       const habits = state.habits.map(h => h.id === action.id ? { ...h, current: action.current } : h);
       return { ...state, habits };
     }
+    case 'UPDATE_HABIT': {
+      const habits = state.habits.map(h => h.id === action.habit.id ? { ...h, ...action.habit } : h);
+      return { ...state, habits };
+    }
     case 'DELETE_HABIT':
       return { ...state, habits: state.habits.filter(h => h.id !== action.id) };
 
@@ -609,6 +613,21 @@ export function AppProvider({ children }) {
         case 'ADD_HABIT':
           await saveHabit(uid, enrichedAction.habit);
           break;
+
+        case 'UPDATE_HABIT':
+          await saveHabit(uid, enrichedAction.habit);
+          break;
+
+        case 'DELETE_HABIT': {
+          try {
+            const { doc, deleteDoc } = await import('firebase/firestore');
+            const { db } = await import('../lib/firebase');
+            await deleteDoc(doc(db, 'users', uid, 'habits', enrichedAction.id));
+          } catch (e) {
+            console.warn('[Mavia] DELETE_HABIT Firestore error:', e.message);
+          }
+          break;
+        }
 
         case 'TOGGLE_HABIT': {
           // state here is the PRE-dispatch snapshot (same data the reducer received).

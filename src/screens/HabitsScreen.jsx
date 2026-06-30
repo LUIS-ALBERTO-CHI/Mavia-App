@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Flame, CheckCircle2, Circle, Plus, Droplets, Trash2 } from 'lucide-react';
+import { Flame, CheckCircle2, Circle, Plus, Droplets, Trash2, Edit2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import HabitIcon from '../components/HabitIcon';
 
@@ -17,6 +17,7 @@ export default function HabitsScreen() {
   const { state, dispatch, showToast, navigate } = useApp();
   const { habits } = state;
   const [showAll, setShowAll] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const totalDone   = habits.filter(h => h.completedToday).length;
   const pct         = habits.length ? Math.round((totalDone / habits.length) * 100) : 0;
@@ -392,6 +393,23 @@ export default function HabitsScreen() {
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {/* Edit button */}
+                    <button
+                      onClick={() => navigate('createHabit', { habitId: habit.id })}
+                      id={`hbt-edit-${habit.id}`}
+                      aria-label="Editar hábito"
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: 'var(--outline)', padding: 4,
+                        transition: 'color var(--transition-fast)',
+                      }}
+                      onMouseOver={e => e.currentTarget.style.color = 'var(--primary)'}
+                      onMouseOut={e => e.currentTarget.style.color = 'var(--outline)'}
+                    >
+                      <Edit2 size={15} strokeWidth={1.75} />
+                    </button>
+
+                    {/* Toggle done */}
                     <button
                       className={`hbt-toggle-btn${habit.completedToday ? ' done' : ''}`}
                       onClick={() => handleToggle(habit)}
@@ -403,25 +421,30 @@ export default function HabitsScreen() {
                         : <Circle size={22} color="var(--outline)" strokeWidth={1.75} />
                       }
                     </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`¿Eliminar “${habit.name}”?`)) {
-                          dispatch({ type: 'DELETE_HABIT', id: habit.id });
-                          showToast('Hábito eliminado');
-                        }
-                      }}
-                      id={`hbt-delete-${habit.id}`}
-                      aria-label="Eliminar hábito"
-                      style={{
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: 'var(--outline)', padding: 4,
-                        transition: 'color var(--transition-fast)',
-                      }}
-                      onMouseOver={e => e.currentTarget.style.color = 'var(--error)'}
-                      onMouseOut={e => e.currentTarget.style.color = 'var(--outline)'}
-                    >
-                      <Trash2 size={15} strokeWidth={1.75} />
-                    </button>
+
+                    {/* Delete with inline confirmation */}
+                    {confirmDeleteId === habit.id ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--error)', whiteSpace: 'nowrap' }}>¿Eliminar?</span>
+                        <button onClick={() => setConfirmDeleteId(null)} style={{ border: 'none', background: 'var(--surface-container)', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)', color: 'var(--on-surface-variant)' }}>No</button>
+                        <button onClick={() => { dispatch({ type: 'DELETE_HABIT', id: habit.id }); showToast('Hábito eliminado'); setConfirmDeleteId(null); }} style={{ border: 'none', background: 'var(--error)', color: 'white', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Sí</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDeleteId(habit.id)}
+                        id={`hbt-delete-${habit.id}`}
+                        aria-label="Eliminar hábito"
+                        style={{
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          color: 'var(--outline)', padding: 4,
+                          transition: 'color var(--transition-fast)',
+                        }}
+                        onMouseOver={e => e.currentTarget.style.color = 'var(--error)'}
+                        onMouseOut={e => e.currentTarget.style.color = 'var(--outline)'}
+                      >
+                        <Trash2 size={15} strokeWidth={1.75} />
+                      </button>
+                    )}
                   </div>
                 </div>
 
