@@ -747,12 +747,15 @@ export default function DashboardScreen() {
                   className={`habit-pill-circle${habit.completedToday ? ' done' : ''}`}
                   style={habit.completedToday ? {
                     background: `linear-gradient(135deg, ${habit.color}BB 0%, ${habit.color} 100%)`,
-                  } : {}}
+                  } : {
+                    background: 'var(--surface-container)',
+                    borderColor: 'var(--outline-variant)',
+                  }}
                 >
                   <HabitIcon
                     id={habit.icon || 'meditation'}
                     size={20}
-                    color={habit.completedToday ? 'white' : habit.color || 'var(--primary)'}
+                    color={habit.completedToday ? 'white' : 'var(--outline)'}
                   />
                 </div>
                 <span className="habit-pill-label">{habit.name}</span>
