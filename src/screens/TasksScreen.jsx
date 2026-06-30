@@ -271,7 +271,7 @@ export default function TasksScreen() {
           display: flex;
           flex-wrap: wrap;
           align-items: center;
-          gap: var(--space-md);
+          gap: 6px;
         }
 
         .ts-cat-pill {
@@ -282,6 +282,8 @@ export default function TasksScreen() {
           border-radius: 9999px;
           font-size: var(--text-label-sm);
           font-weight: 600;
+          background: var(--surface-container-high);
+          color: var(--on-surface-variant);
         }
 
         .ts-cat-dot {
@@ -291,11 +293,36 @@ export default function TasksScreen() {
           flex-shrink: 0;
         }
 
-        .ts-time {
-          display: flex;
+        /* Priority pills — icon + text style */
+        .ts-priority-pill {
+          display: inline-flex;
           align-items: center;
           gap: 4px;
+          padding: 3px 9px;
+          border-radius: 9999px;
           font-size: var(--text-label-sm);
+          font-weight: 700;
+          flex-shrink: 0;
+        }
+        .ts-priority-pill .pip-icon {
+          font-size: 11px;
+          line-height: 1;
+          font-style: normal;
+        }
+        .ts-priority-alta  { background: rgba(186,26,26,0.10);  color: #ba1a1a; }
+        .ts-priority-media { background: rgba(120,100,60,0.10); color: #7a6234; }
+        .ts-priority-baja  { background: rgba(84,99,71,0.12);   color: var(--secondary); }
+
+        /* Time pill */
+        .ts-time {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 3px 9px;
+          border-radius: 9999px;
+          font-size: var(--text-label-sm);
+          font-weight: 500;
+          background: var(--surface-container-high);
           color: var(--on-surface-variant);
         }
 
@@ -521,32 +548,36 @@ function TaskCard({ task, onToggle, onDelete, onOpen }) {
       <div className="ts-card-body">
         <div className="ts-card-title">{task.title}</div>
         <div className="ts-card-meta">
-          {/* Priority badge */}
-          {task.priority === 'alta' && (
-            <span style={{ padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 700, background: 'rgba(186,26,26,0.1)', color: 'var(--error)', letterSpacing: '0.03em' }}>
-              Alta
-            </span>
-          )}
-          {task.priority === 'baja' && (
-            <span style={{ padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 700, background: 'rgba(84,99,71,0.12)', color: 'var(--secondary)' }}>
-              Baja
-            </span>
-          )}
+          {/* Category pill: dot + name */}
           {task.category && (
             <span className="ts-cat-pill" style={{ background: catStyle.bg, color: catStyle.color }}>
               <span className="ts-cat-dot" style={{ background: catStyle.dot }} />
               {task.category}
             </span>
           )}
-          {task.time && (
-            <span className="ts-time">
-              <Clock size={13} strokeWidth={2} />
-              {task.time}
+          {/* Priority pill: icon + text */}
+          {task.priority === 'alta' && (
+            <span className="ts-priority-pill ts-priority-alta">
+              <i className="pip-icon">!</i> Alta
             </span>
           )}
-          {task.date && (
+          {task.priority === 'media' && (
+            <span className="ts-priority-pill ts-priority-media">
+              <i className="pip-icon">=</i> Media
+            </span>
+          )}
+          {task.priority === 'baja' && (
+            <span className="ts-priority-pill ts-priority-baja">
+              <i className="pip-icon">⇓</i> Baja
+            </span>
+          )}
+          {/* Time pill: clock + Hoy/date + time */}
+          {(task.time || task.date) && (
             <span className="ts-time">
-              {task.date === localToday() ? 'Hoy' : task.date}
+              <Clock size={12} strokeWidth={2} />
+              {task.date === localToday()
+                ? task.time ? `Hoy, ${task.time}` : 'Hoy'
+                : task.time ? `${task.date}, ${task.time}` : task.date}
             </span>
           )}
         </div>

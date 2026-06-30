@@ -10,6 +10,15 @@ function getGreeting() {
   return 'Buenas noches';
 }
 
+const CAT_DOTS = {
+  Marketing:  '#546347',
+  Personal:   '#705675',
+  Espiritual: '#c4a25a',
+  Urgente:    '#ba1a1a',
+  Trabajo:    '#4a6fa5',
+  Salud:      '#5a9e7a',
+};
+
 export default function DashboardScreen() {
   const { state, navigate, dispatch, showToast } = useApp();
   const { user, tasks, events, habits, phrases, darkMode } = state;
@@ -321,18 +330,13 @@ export default function DashboardScreen() {
 
         .task-list-item {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           gap: var(--space-md);
           padding: var(--space-md);
-          padding-left: calc(var(--space-md) + 3px);
           border-bottom: 1px solid rgba(208, 195, 200, 0.10);
-          border-left: 3px solid transparent;
-          transition: opacity var(--transition-fast), border-color var(--transition-fast);
+          transition: opacity var(--transition-fast);
+          cursor: pointer;
         }
-        .task-list-item.priority-alta  { border-left-color: var(--error); }
-        .task-list-item.priority-media { border-left-color: transparent; }
-        .task-list-item.priority-baja  { border-left-color: var(--secondary); }
-
         .task-list-item:last-child { border-bottom: none; }
 
         .task-check-btn {
@@ -374,9 +378,9 @@ export default function DashboardScreen() {
         .task-item-text {
           font-size: var(--text-body-md);
           color: var(--on-surface);
-          flex: 1;
-          line-height: 1.6;
+          line-height: 1.4;
           transition: all var(--transition-fast);
+          margin-bottom: 5px;
         }
 
         .task-item-text.done {
@@ -384,24 +388,30 @@ export default function DashboardScreen() {
           opacity: 0.5;
         }
 
-        .task-priority-today {
-          padding: 2px var(--space-sm);
-          background: var(--error-container);
-          color: var(--on-error-container);
-          font-size: 10px;
-          font-weight: 700;
-          border-radius: 4px;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-          flex-shrink: 0;
+        .task-item-badges {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 5px;
+          align-items: center;
         }
 
-        .task-category-label {
-          font-size: var(--text-label-sm);
-          color: var(--on-surface-variant);
-          font-style: italic;
-          flex-shrink: 0;
+        /* Shared pill style for home badges */
+        .ti-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 2px 8px;
+          border-radius: 9999px;
+          font-size: 11px;
+          font-weight: 600;
+          white-space: nowrap;
         }
+        .ti-cat   { background: var(--surface-container-high); color: var(--on-surface-variant); }
+        .ti-alta  { background: rgba(186,26,26,0.10);  color: #ba1a1a; font-weight: 700; }
+        .ti-media { background: rgba(120,100,60,0.10); color: #7a6234; font-weight: 700; }
+        .ti-baja  { background: rgba(84,99,71,0.12);  color: var(--secondary); font-weight: 700; }
+        .ti-time  { background: var(--surface-container-high); color: var(--on-surface-variant); }
+        .ti-dot   { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 
         /* ---- Habits strip ---- */
         .habits-strip {
@@ -650,28 +660,39 @@ export default function DashboardScreen() {
                     >
                       <button
                         className={`task-check-btn${task.completed ? ' checked' : ''}`}
-                        onClick={() => handleToggle(task.id)}
+                        onClick={e => { e.stopPropagation(); handleToggle(task.id); }}
                         id={`dash-check-${task.id}`}
                         aria-label={task.completed ? 'Desmarcar' : 'Completar'}
+                        style={{ marginTop: '2px', flexShrink: 0 }}
                       >
                         <span className="material-symbols-outlined task-check-icon">check</span>
                       </button>
-                      <span className={`task-item-text${task.completed ? ' done' : ''}`}>
-                        {task.title}
-                      </span>
-                      {/* Priority badge */}
-                      {task.priority === 'alta' && (
-                        <span style={{ padding: '2px 8px', borderRadius: '99px', fontSize: '10px', fontWeight: 700, background: 'rgba(186,26,26,0.1)', color: 'var(--error)', whiteSpace: 'nowrap', flexShrink: 0 }}>Alta</span>
-                      )}
-                      {task.priority === 'baja' && (
-                        <span style={{ padding: '2px 8px', borderRadius: '99px', fontSize: '10px', fontWeight: 700, background: 'rgba(84,99,71,0.12)', color: 'var(--secondary)', whiteSpace: 'nowrap', flexShrink: 0 }}>Baja</span>
-                      )}
-                      {task.time && (
-                        <span style={{ fontSize: '11px', color: 'var(--on-surface-variant)', flexShrink: 0, opacity: 0.75 }}>{task.time}</span>
-                      )}
-                      {task.category && (
-                        <span className="task-category-label">{task.category}</span>
-                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className={`task-item-text${task.completed ? ' done' : ''}`}>
+                          {task.title}
+                        </div>
+                        <div className="task-item-badges">
+                          {/* Category */}
+                          {task.category && (
+                            <span className="ti-pill ti-cat">
+                              <span className="ti-dot" style={{ background: CAT_DOTS[task.category] || 'var(--outline)' }} />
+                              {task.category}
+                            </span>
+                          )}
+                          {/* Priority */}
+                          {task.priority === 'alta' && <span className="ti-pill ti-alta"><i style={{ fontStyle:'normal' }}>!</i> Alta</span>}
+                          {task.priority === 'media' && <span className="ti-pill ti-media"><i style={{ fontStyle:'normal' }}>=</i> Media</span>}
+                          {task.priority === 'baja' && <span className="ti-pill ti-baja"><i style={{ fontStyle:'normal' }}>⇓</i> Baja</span>}
+                          {/* Time */}
+                          {(task.time || task.date) && (
+                            <span className="ti-pill ti-time">
+                              🕐 {task.date === today
+                                ? task.time ? `Hoy, ${task.time}` : 'Hoy'
+                                : task.time ? `${task.date}, ${task.time}` : task.date}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
