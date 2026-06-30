@@ -69,6 +69,14 @@ async function fsPatch(tok, pid, path, fields) {
   );
 }
 
+async function fsPost(tok, pid, path, fields) {
+  const r = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${pid}/databases/(default)/documents/${path}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` }, body: JSON.stringify({ fields }) }
+  );
+  return r.json();
+}
+
 // ─── Time helpers ────────────────────────────────────────────────────────────
 
 /** Converts "HH:MM" (24h) to "H:MM a.m./p.m." */
@@ -212,6 +220,26 @@ export default async function handler(req, res) {
           await sendFCM(tok, pid, { token, title: notifTitle, body: notifBody });
           sent++;
           console.log(`[Cron] ✅ ${taskName} | ${schedTime}`);
+
+          // ── Write in-app notification to users/{uid}/notifications ──
+          const uid = f?.uid?.stringValue;
+          if (uid) {
+            const notifId  = `cron_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+            const nowIso   = new Date().toISOString();
+            // Friendly relative time (always "Ahora" since it was just triggered)
+            const timeLabel = new Intl.DateTimeFormat('es-MX', {
+              hour: '2-digit', minute: '2-digit', hour12: true,
+              timeZone: 'America/Mexico_City',
+            }).format(new Date());
+            await fsPost(tok, pid, `users/${uid}/notifications`, {
+              title:     { stringValue: notifTitle  },
+              text:      { stringValue: notifBody   },
+              type:      { stringValue: 'reminder'  },
+              read:      { booleanValue: false       },
+              time:      { stringValue: timeLabel    },
+              createdAt: { stringValue: nowIso       },
+            }).catch(e => console.warn('[Cron] in-app notif write failed:', e.message));
+          }
         } catch (err) {
           errors.push(err.message);
           console.error(`[Cron] ❌ ${taskName}:`, err.message);

@@ -309,6 +309,11 @@ function reducer(state, action) {
     }
 
     /* ── Notifications ── */
+    case 'ADD_NOTIFICATION': {
+      // Prepend new notification, avoid duplicates by id
+      if (state.notifications.some(n => n.id === action.notification.id)) return state;
+      return { ...state, notifications: [action.notification, ...state.notifications] };
+    }
     case 'MARK_NOTIFICATION_READ': {
       const notifications = state.notifications.map(n => n.id === action.id ? { ...n, read: true } : n);
       return { ...state, notifications };
@@ -400,15 +405,35 @@ export function AppProvider({ children }) {
         // ── Notifications ── wait for FCM token then reschedule all
         const _uid   = firebaseUser.uid;
         const _tasks = data.tasks || [];
-        const _today = localToday();
         initFCM(_uid)
           .then(token => {
             if (token) dispatch({ type: 'SET_FCM_TOKEN', token });
-            // Reschedule NOW that we have the FCM token
             rescheduleAllReminders(_tasks, _uid, token || null);
+
+            // ── Foreground push → add to in-app notifications list ──
+            import('firebase/messaging').then(({ onMessage }) => {
+              import('./firebase').then(({ getMessagingInstance }) => {
+                getMessagingInstance().then(msg => {
+                  if (!msg) return;
+                  onMessage(msg, (payload) => {
+                    const d = payload.data || {};
+                    const notif = {
+                      id:    `fcm_${Date.now()}`,
+                      title: d.title || 'Recordatorio',
+                      text:  d.body  || '',
+                      type:  'reminder',
+                      read:  false,
+                      time:  new Intl.DateTimeFormat('es-MX', {
+                        hour: '2-digit', minute: '2-digit', hour12: true,
+                      }).format(new Date()),
+                    };
+                    dispatch({ type: 'ADD_NOTIFICATION', notification: notif });
+                  });
+                });
+              });
+            });
           })
           .catch(() => {
-            // No FCM — still schedule local timers
             rescheduleAllReminders(_tasks, null, null);
           });
         scheduleHabitReminder(data.habits || []);
