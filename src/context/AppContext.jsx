@@ -158,17 +158,31 @@ function reducer(state, action) {
 
     /* ── Navigation ── */
     case 'NAVIGATE':
+      if (action.replace) {
+        // Replace current screen without adding to history
+        return {
+          ...state,
+          currentScreen:  action.screen,
+          screenParams:   action.params || null,
+          sideDrawerOpen: false,
+        };
+      }
       return {
         ...state,
         currentScreen:  action.screen,
         screenParams:   action.params || null,
-        screenHistory:  [...state.screenHistory.slice(-10), state.currentScreen],
+        // Store {screen, params} pairs so GO_BACK can restore params
+        screenHistory:  [...state.screenHistory.slice(-10), { screen: state.currentScreen, params: state.screenParams }],
         sideDrawerOpen: false,
       };
     case 'GO_BACK': {
       const history = [...state.screenHistory];
-      const prev = history.pop() || 'dashboard';
-      return { ...state, currentScreen: prev, screenHistory: history, screenParams: null };
+      const prev = history.pop();
+      if (!prev) return { ...state, currentScreen: 'dashboard', screenHistory: [], screenParams: null };
+      // Support both legacy string entries and new {screen, params} pairs
+      const prevScreen = typeof prev === 'string' ? prev : prev.screen;
+      const prevParams = typeof prev === 'string' ? null : (prev.params || null);
+      return { ...state, currentScreen: prevScreen, screenHistory: history, screenParams: prevParams };
     }
 
     /* ── UI ── */
@@ -637,7 +651,8 @@ export function AppProvider({ children }) {
   }, [state]);
 
   /* ── Helper functions ──────────────────────────────────────── */
-  const navigate = (screen, params = null) => dispatch({ type: 'NAVIGATE', screen, params });
+  const navigate = (screen, params = null, replace = false) =>
+    dispatch({ type: 'NAVIGATE', screen, params, replace });
   const goBack   = ()                       => dispatch({ type: 'GO_BACK' });
 
   const showToast = (message, type = 'default') => {

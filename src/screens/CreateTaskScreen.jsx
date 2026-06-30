@@ -82,7 +82,7 @@ export default function CreateTaskScreen() {
       if (isEdit) {
         dispatch({ type: 'UPDATE_TASK', task: { ...editTask, ...taskData } });
         showToast('Tarea actualizada', 'success');
-        navigate('taskDetail', { taskId: editTask.id });
+        navigate('taskDetail', { taskId: editTask.id }, true);
       } else {
         dispatch({ type: 'ADD_TASK', task: { ...taskData, completed: false } });
         showToast('¡Tarea creada!', 'success');
@@ -388,7 +388,7 @@ export default function CreateTaskScreen() {
       <form className="ct-screen" onSubmit={handleSave}>
 
         {/* ── Header ── */}
-        <button type="button" className="ct-back" onClick={() => isEdit ? navigate('taskDetail', { taskId: editTask.id }) : goBack()}>
+        <button type="button" className="ct-back" onClick={() => isEdit ? navigate('taskDetail', { taskId: editTask.id }, true) : goBack()}>
           <ArrowLeft size={16} strokeWidth={2} />
           {isEdit ? 'Volver al detalle' : 'Volver a mis tareas'}
         </button>
@@ -703,7 +703,7 @@ export default function CreateTaskScreen() {
                 type="button"
                 variant="outline"
                 size="lg"
-                onClick={() => isEdit ? navigate('taskDetail', { taskId: editTask.id }) : goBack()}
+                onClick={() => isEdit ? navigate('taskDetail', { taskId: editTask.id }, true) : goBack()}
                 id="ct-cancel"
                 className="w-full"
               >
