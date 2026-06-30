@@ -210,18 +210,54 @@ function reducer(state, action) {
 
     /* ── Habits ── */
     case 'ADD_HABIT':
-      return { ...state, habits: [...state.habits, { ...action.habit, id: action.habit.id || Date.now().toString() }] };
+      return { ...state, habits: [...state.habits, {
+        ...action.habit,
+        id: action.habit.id || Date.now().toString(),
+        streak: 0,
+        weekData: Array(7).fill(false),
+        completedToday: false,
+        lastCompletedDate: null,
+      }]};
+
     case 'TOGGLE_HABIT': {
-      const todayIdx = (new Date().getDay() + 6) % 7;
+      const todayStr  = new Date().toISOString().split('T')[0];
+      const todayIdx  = (new Date().getDay() + 6) % 7;
       const habits = state.habits.map(h => {
         if (h.id !== action.id) return h;
-        const newCompleted = !h.completedToday;
-        const weekData = [...(h.weekData || Array(7).fill(false))];
-        weekData[todayIdx] = newCompleted;
-        return { ...h, completedToday: newCompleted, streak: newCompleted ? h.streak + 1 : Math.max(0, h.streak - 1), weekData };
+        const wasCompleted  = h.completedToday;
+        const newCompleted  = !wasCompleted;
+        const weekData      = [...(h.weekData || Array(7).fill(false))];
+        weekData[todayIdx]  = newCompleted;
+
+        // Streak logic: only increment if completing (not un-completing)
+        let newStreak = h.streak ?? 0;
+        if (newCompleted) {
+          newStreak = newStreak + 1;
+        } else {
+          newStreak = Math.max(0, newStreak - 1);
+        }
+
+        return {
+          ...h,
+          completedToday: newCompleted,
+          lastCompletedDate: newCompleted ? todayStr : h.lastCompletedDate,
+          streak: newStreak,
+          weekData,
+        };
       });
       return { ...state, habits };
     }
+
+    case 'DAILY_RESET_HABITS': {
+      // Called on app load: if lastCompletedDate !== today, reset completedToday
+      const todayStr = new Date().toISOString().split('T')[0];
+      const habits = state.habits.map(h => {
+        if (h.lastCompletedDate === todayStr) return h; // already completed today, keep
+        return { ...h, completedToday: false };
+      });
+      return { ...state, habits };
+    }
+
     case 'TOGGLE_HABIT_DAY': {
       const habits = state.habits.map(h => {
         if (h.id !== action.id) return h;
@@ -235,6 +271,8 @@ function reducer(state, action) {
       const habits = state.habits.map(h => h.id === action.id ? { ...h, current: action.current } : h);
       return { ...state, habits };
     }
+    case 'DELETE_HABIT':
+      return { ...state, habits: state.habits.filter(h => h.id !== action.id) };
 
     /* ── Events ── */
     case 'ADD_EVENT':
@@ -375,6 +413,8 @@ export function AppProvider({ children }) {
           });
         scheduleHabitReminder(data.habits || []);
         scheduleEventReminders((data.events || []).filter(e => e.date === localToday()));
+        // Reset completedToday for habits that weren't completed today
+        dispatch({ type: 'DAILY_RESET_HABITS' });
 
       } catch (err) {
         // Offline fallback: log in from Firebase Auth profile, data will

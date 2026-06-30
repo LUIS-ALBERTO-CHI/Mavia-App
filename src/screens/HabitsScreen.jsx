@@ -1,22 +1,27 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Flame, CheckCircle2, Circle, Plus, Droplets, Trophy, TrendingUp } from 'lucide-react';
-import { Progress } from '../components/ui/progress';
+import { Flame, CheckCircle2, Circle, Plus, Droplets, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 
 const DAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
-function HabitIcon({ icon, color }) {
-  const icons = {
-    meditation: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round"><circle cx="12" cy="5" r="2"/><path d="M12 7c-4 0-7 3-7 7h14c0-4-3-7-7-7z"/><path d="M5 14c0 3 3 5 7 5s7-2 7-5"/></svg>,
-    book:       () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
-    water:      () => <Droplets size={22} color={color} strokeWidth={1.75} />,
-    exercise:   () => <TrendingUp size={22} color={color} strokeWidth={1.75} />,
-    sleep:      () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
-  };
-  const IconComp = icons[icon] || (() => <Circle size={22} color={color} />);
-  return <IconComp />;
-}
+const FREQ_LABEL = {
+  daily:    'Todos los días',
+  weekdays: 'Lun – Vie',
+  weekend:  'Fin de semana',
+  custom:   'Personalizado',
+};
+
+/* Map icon id -> emoji (for backwards compat + new icons) */
+const ICON_EMOJI = {
+  meditation:'🌸', book:'📚', water:'💧', exercise:'🏋️', sleep:'🌙',
+  run:'🏃', gym:'🏋️', walk:'🚶', yoga:'🧘', stretch:'🤸', bike:'🚴',
+  journal:'📓', gratitude:'✨', breathe:'💨', no_phone:'📵', affirmation:'💬',
+  nap:'😴', early_rise:'🌅',
+  healthy_eat:'🥗', no_sugar:'🚫', vitamins:'💊',
+  deep_work:'🎯', planning:'📋', no_social:'🔇',
+  prayer:'🙏', connect:'💛', nature:'🌿',
+};
 
 export default function HabitsScreen() {
   const { state, dispatch, showToast, navigate } = useApp();
@@ -369,36 +374,62 @@ export default function HabitsScreen() {
             return (
               <div key={habit.id} className={`hbt-card${habit.completedToday ? ' done' : ''}`} id={`hbt-card-${habit.id}`}>
 
-                {/* Top row */}
+                  {/* Top row */}
                 <div className="hbt-card-top">
                   <div
                     className="hbt-card-icon"
                     style={{
-                      background: habit.completedToday ? habit.color : `${habit.color}33`,
+                      background: habit.completedToday ? habit.color : `${habit.color}44`,
+                      fontSize: '22px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   >
-                    <HabitIcon icon={habit.icon} color={habit.completedToday ? 'white' : habit.color} />
+                    {ICON_EMOJI[habit.icon] || '⭐'}
                   </div>
 
                   <div className="hbt-card-body">
                     <div className="hbt-card-name">{habit.name}</div>
                     <div className="hbt-card-streak">
-                      <Flame size={14} strokeWidth={2} />
-                      {habit.streak} días seguidos
+                      <Flame size={13} strokeWidth={2} />
+                      {habit.streak} días &nbsp;·&nbsp;
+                      <span style={{ fontWeight: 400, opacity: 0.75 }}>
+                        {FREQ_LABEL[habit.frequency] || 'Todos los días'}
+                      </span>
                     </div>
                   </div>
 
-                  <button
-                    className={`hbt-toggle-btn${habit.completedToday ? ' done' : ''}`}
-                    onClick={() => handleToggle(habit)}
-                    id={`hbt-toggle-${habit.id}`}
-                    aria-label={habit.completedToday ? 'Marcar pendiente' : 'Completar'}
-                  >
-                    {habit.completedToday
-                      ? <CheckCircle2 size={22} color="white" strokeWidth={2} />
-                      : <Circle size={22} color="var(--outline)" strokeWidth={1.75} />
-                    }
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      className={`hbt-toggle-btn${habit.completedToday ? ' done' : ''}`}
+                      onClick={() => handleToggle(habit)}
+                      id={`hbt-toggle-${habit.id}`}
+                      aria-label={habit.completedToday ? 'Marcar pendiente' : 'Completar'}
+                    >
+                      {habit.completedToday
+                        ? <CheckCircle2 size={22} color="white" strokeWidth={2} />
+                        : <Circle size={22} color="var(--outline)" strokeWidth={1.75} />
+                      }
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`¿Eliminar “${habit.name}”?`)) {
+                          dispatch({ type: 'DELETE_HABIT', id: habit.id });
+                          showToast('Hábito eliminado');
+                        }
+                      }}
+                      id={`hbt-delete-${habit.id}`}
+                      aria-label="Eliminar hábito"
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: 'var(--outline)', padding: 4,
+                        transition: 'color var(--transition-fast)',
+                      }}
+                      onMouseOver={e => e.currentTarget.style.color = 'var(--error)'}
+                      onMouseOut={e => e.currentTarget.style.color = 'var(--outline)'}
+                    >
+                      <Trash2 size={15} strokeWidth={1.75} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Week tracker — visual only, no click */}
