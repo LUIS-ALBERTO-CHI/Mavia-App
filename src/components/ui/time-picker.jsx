@@ -22,6 +22,25 @@ function buildSlots() {
 }
 const SLOTS = buildSlots();
 
+// Duration drums
+const HOURS_DRUM   = Array.from({ length: 13 }, (_, i) => i); // 0-12
+const MINUTES_DRUM = Array.from({ length: 60 }, (_, i) => i); // 0-59
+
+const PRESETS = [
+  { label: '1 min',    h: 0, m: 1  },
+  { label: '15 min',   h: 0, m: 15 },
+  { label: '30 min',   h: 0, m: 30 },
+  { label: '45 min',   h: 0, m: 45 },
+  { label: '1 h',      h: 1, m: 0  },
+  { label: '1 h 30 min', h: 1, m: 30 },
+];
+
+// Smaller drum constants for the duration modal
+const D_ITEM_H = 40;
+const D_VISIBLE = 5;
+const D_DRUM_H  = D_ITEM_H * D_VISIBLE;
+const D_PAD     = D_ITEM_H * Math.floor(D_VISIBLE / 2);
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 /**
  * Converts a stored "HH:MM" (24h) or "h:mm AM/PM" string to the nearest slot string.
@@ -191,7 +210,264 @@ function DrumScroller({ slots, value, onChange }) {
   );
 }
 
-// ─── Popover ─────────────────────────────────────────────────────────────────
+// ─── Mini Drum for Duration ───────────────────────────────────────────────────
+function MiniDrum({ items, value, onChange, label }) {
+  const containerRef = useRef(null);
+  const isScrolling  = useRef(false);
+  const idx = items.indexOf(value);
+
+  const scrollTo = useCallback((index, animate = true) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const target = index * D_ITEM_H;
+    animate ? el.scrollTo({ top: target, behavior: 'smooth' }) : (el.scrollTop = target);
+  }, []);
+
+  useEffect(() => { scrollTo(Math.max(0, idx), false); }, []); // eslint-disable-line
+  useEffect(() => { scrollTo(Math.max(0, idx), true);  }, [value]); // eslint-disable-line
+
+  const handleScroll = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    clearTimeout(isScrolling.current);
+    isScrolling.current = setTimeout(() => {
+      const nearest = Math.round(el.scrollTop / D_ITEM_H);
+      const clamped = Math.max(0, Math.min(items.length - 1, nearest));
+      el.scrollTo({ top: clamped * D_ITEM_H, behavior: 'smooth' });
+      onChange(items[clamped]);
+    }, 80);
+  }, [items, onChange]);
+
+  return (
+    <div style={{ flex: 1, position: 'relative' }}>
+      {/* Selected highlight */}
+      <div style={{
+        position: 'absolute', left: 8, right: 8,
+        top: D_PAD, height: D_ITEM_H,
+        background: 'var(--surface-container-high)',
+        borderRadius: 10, zIndex: 0, pointerEvents: 'none',
+      }} />
+
+      {/* Scroll list */}
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        style={{
+          height: D_DRUM_H, overflowY: 'scroll', scrollbarWidth: 'none',
+          paddingTop: D_PAD, paddingBottom: D_PAD,
+          position: 'relative', zIndex: 1,
+        }}
+      >
+        {items.map((item, i) => {
+          const dist    = Math.abs(i - idx);
+          const opacity = dist === 0 ? 1 : dist === 1 ? 0.45 : 0.2;
+          const weight  = dist === 0 ? 700 : 400;
+          const size    = dist === 0 ? 16 : 14;
+          return (
+            <div
+              key={item}
+              onClick={() => { onChange(item); scrollTo(i, true); }}
+              style={{
+                height: D_ITEM_H, display: 'flex', alignItems: 'center',
+                justifyContent: 'center', gap: 6,
+                fontSize: size, fontWeight: weight,
+                fontFamily: 'var(--font-display)',
+                color: 'var(--on-surface)',
+                opacity, cursor: 'pointer', userSelect: 'none',
+                position: 'relative', zIndex: 1,
+              }}
+            >
+              {item}
+              {dist === 0 && (
+                <span style={{
+                  fontSize: 12, fontWeight: 500,
+                  color: 'var(--on-surface-variant)',
+                }}>
+                  {label}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Fade edges */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
+        background: `linear-gradient(to bottom,
+          var(--surface-container-lowest) 0%,
+          transparent ${100 * (D_PAD / D_DRUM_H)}%,
+          transparent ${100 * ((D_PAD + D_ITEM_H) / D_DRUM_H)}%,
+          var(--surface-container-lowest) 100%)`,
+      }} />
+    </div>
+  );
+}
+
+// ─── Duration Modal ───────────────────────────────────────────────────────────
+function DurationModal({ onClose }) {
+  const [hours,   setHours]   = useState(0);
+  const [minutes, setMinutes] = useState(1);
+
+  const applyPreset = (preset) => {
+    setHours(preset.h);
+    setMinutes(preset.m);
+  };
+
+  const reset = () => { setHours(0); setMinutes(1); };
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 50,
+      display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+    }}>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'absolute', inset: 0,
+          background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(4px)',
+        }}
+      />
+
+      {/* Sheet */}
+      <div style={{
+        position: 'relative', zIndex: 1,
+        background: 'var(--surface-container-lowest)',
+        borderRadius: '20px 20px 0 0',
+        padding: '0 0 24px',
+        animation: 'durIn 0.25s var(--ease-out) both',
+      }}>
+        {/* Handle */}
+        <div style={{
+          width: 36, height: 4, borderRadius: 99,
+          background: 'var(--outline-variant)',
+          margin: '12px auto 16px',
+        }} />
+
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 20px 16px',
+        }}>
+          <span style={{
+            fontFamily: 'var(--font-display)', fontSize: 18,
+            fontWeight: 700, color: 'var(--on-surface)',
+          }}>Duración</span>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              width: 30, height: 30, borderRadius: '50%',
+              border: 'none', background: 'var(--surface-container-high)',
+              cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              fontSize: 14, fontWeight: 700, color: 'var(--on-surface-variant)',
+            }}
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Two-column drums */}
+        <div style={{
+          display: 'flex',
+          margin: '0 16px',
+          background: 'var(--surface-container-lowest)',
+          borderRadius: 16, overflow: 'hidden',
+          border: '1px solid rgba(208,195,200,0.15)',
+        }}>
+          <MiniDrum items={HOURS_DRUM}   value={hours}   onChange={setHours}   label="horas" />
+          <div style={{
+            width: 1, background: 'rgba(208,195,200,0.25)', margin: '20px 0',
+          }} />
+          <MiniDrum items={MINUTES_DRUM} value={minutes} onChange={setMinutes} label="min" />
+        </div>
+
+        {/* Presets */}
+        <div style={{ padding: '20px 20px 0' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center',
+            justifyContent: 'space-between', marginBottom: 12,
+          }}>
+            <span style={{
+              fontFamily: 'var(--font-display)', fontSize: 15,
+              fontWeight: 700, color: 'var(--on-surface)',
+            }}>Preajustes</span>
+            <button
+              type="button"
+              onClick={reset}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 12, fontWeight: 600,
+                color: 'var(--on-surface-variant)',
+              }}
+            >
+              ↺ Restablecer
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {PRESETS.map(p => {
+              const isActive = hours === p.h && minutes === p.m;
+              return (
+                <button
+                  key={p.label}
+                  type="button"
+                  onClick={() => applyPreset(p)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '7px 14px',
+                    borderRadius: 99,
+                    border: `1.5px solid ${isActive ? 'var(--primary)' : 'rgba(208,195,200,0.5)'}`,
+                    background: isActive ? 'var(--primary-container)' : 'var(--surface-container)',
+                    color: isActive ? 'var(--primary)' : 'var(--on-surface)',
+                    fontSize: 13, fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                    fontFamily: 'var(--font-body)',
+                  }}
+                >
+                  {p.label}
+                  <span
+                    onClick={e => { e.stopPropagation(); }}
+                    style={{
+                      fontSize: 10, fontWeight: 700,
+                      color: isActive ? 'var(--primary)' : 'var(--outline)',
+                    }}
+                  >
+                    ×
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Confirm */}
+        <div style={{ padding: '20px 20px 0' }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              width: '100%', padding: '14px',
+              borderRadius: 99,
+              background: 'var(--gradient-primary)', color: 'white',
+              border: 'none', cursor: 'pointer',
+              fontSize: 15, fontWeight: 700,
+              fontFamily: 'var(--font-body)',
+            }}
+          >
+            Continuar — {hours > 0 ? `${hours}h ` : ''}{minutes > 0 ? `${minutes} min` : hours === 0 ? '0 min' : ''}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TimePopover({ triggerRef, onClose, children }) {
   const panelRef = useRef(null);
   const [pos, setPos] = useState({ top: 0, left: 0, width: 300 });
@@ -267,10 +543,15 @@ const TP_STYLES = `
     box-shadow: 0 24px 64px rgba(112,87,101,0.22), 0 4px 16px rgba(112,87,101,0.1);
     overflow: hidden;
     animation: tpIn 0.18s var(--ease-out) both;
+    position: relative;
   }
   @keyframes tpIn {
     from { opacity: 0; transform: translateY(-6px) scale(0.97); }
     to   { opacity: 1; transform: translateY(0)   scale(1); }
+  }
+  @keyframes durIn {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
   }
 
   /* ── Panel header ── */
@@ -325,9 +606,10 @@ const TP_STYLES = `
  * onChange: ("HH:MM") => void
  */
 export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', id }) {
-  const [open, setOpen]     = useState(false);
-  const [slot, setSlot]     = useState(() => valueToSlot(value));
-  const triggerRef          = useRef(null);
+  const [open, setOpen]               = useState(false);
+  const [slot, setSlot]               = useState(() => valueToSlot(value));
+  const [showDuration, setShowDuration] = useState(false);
+  const triggerRef                    = useRef(null);
 
   // Sync slot when external value changes
   useEffect(() => {
@@ -368,7 +650,11 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
             {/* Header */}
             <div className="tp-panel-header">
               <span className="tp-panel-title">Tiempo</span>
-              <button className="tp-panel-dots" type="button" aria-label="Opciones">
+              <button
+                className="tp-panel-dots" type="button"
+                aria-label="Duración"
+                onClick={() => setShowDuration(true)}
+              >
                 <span className="tp-panel-dot" />
                 <span className="tp-panel-dot" />
                 <span className="tp-panel-dot" />
@@ -390,6 +676,11 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
                 Continuar — {slot}
               </button>
             </div>
+
+            {/* Duration modal — slides up inside the panel */}
+            {showDuration && (
+              <DurationModal onClose={() => setShowDuration(false)} />
+            )}
 
           </div>
         </TimePopover>
