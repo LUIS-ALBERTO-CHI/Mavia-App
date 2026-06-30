@@ -310,7 +310,6 @@ function reducer(state, action) {
 
     /* ── Notifications ── */
     case 'ADD_NOTIFICATION': {
-      // Prepend new notification, avoid duplicates by id
       if (state.notifications.some(n => n.id === action.notification.id)) return state;
       return { ...state, notifications: [action.notification, ...state.notifications] };
     }
@@ -320,6 +319,14 @@ function reducer(state, action) {
     }
     case 'MARK_ALL_NOTIFICATIONS_READ': {
       const notifications = state.notifications.map(n => ({ ...n, read: true }));
+      return { ...state, notifications };
+    }
+    case 'DELETE_NOTIFICATION': {
+      const notifications = state.notifications.filter(n => n.id !== action.id);
+      return { ...state, notifications };
+    }
+    case 'CLEAR_READ_NOTIFICATIONS': {
+      const notifications = state.notifications.filter(n => !n.read);
       return { ...state, notifications };
     }
 

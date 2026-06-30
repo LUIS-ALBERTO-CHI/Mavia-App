@@ -4,7 +4,7 @@ import { Clock, ChevronUp, ChevronDown } from 'lucide-react';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 const HOURS_12 = ['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'];
-const MINUTES  = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+const MINUTES  = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function currentTimeDefaults() {
@@ -22,7 +22,10 @@ function parseValue(v) {
   const upper = v.toUpperCase();
   const [hStr, mStr] = v.replace(/[APM\s]/gi, '').split(':');
   let h = parseInt(hStr, 10) || 9;
-  const m = (mStr?.slice(0, 2) || '00').padStart(2, '0');
+  const mRaw = parseInt(mStr?.slice(0, 2) || '0', 10);
+  // Snap to nearest 5-min slot
+  const mSnapped = Math.min(55, Math.round(mRaw / 5) * 5);
+  const m = String(mSnapped).padStart(2, '0');
   if (!upper.includes('AM') && !upper.includes('PM')) {
     if (h === 0)     h = 12;
     else if (h > 12) h -= 12;

@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Search, CheckCircle2, Calendar, BookOpen, Target, Clock, MapPin, TrendingUp, X } from 'lucide-react';
+import { Search, CheckCircle2, Calendar, BookOpen, Target, Clock, MapPin, TrendingUp, X, Dumbbell, Quote } from 'lucide-react';
+import { formatTime12h } from '../lib/utils';
 
 const CATEGORIES = [
   { id: 'tasks',   label: 'Tareas',    icon: CheckCircle2, color: 'var(--primary)',   bg: 'var(--primary-container)'   },
   { id: 'events',  label: 'Eventos',   icon: Calendar,     color: 'var(--secondary)', bg: 'var(--secondary-container)' },
   { id: 'journal', label: 'Diario',    icon: BookOpen,     color: '#695e37',          bg: '#FDF8EC'                     },
   { id: 'goals',   label: 'Objetivos', icon: Target,       color: 'var(--tertiary)',  bg: 'var(--tertiary-container)'   },
+  { id: 'habits',  label: 'Hábitos',   icon: Dumbbell,     color: '#546347',          bg: 'rgba(84,99,71,0.12)'         },
+  { id: 'phrases', label: 'Frases',    icon: Quote,        color: '#705765',          bg: 'rgba(112,87,101,0.1)'        },
 ];
 
 export default function SearchScreen() {
@@ -21,6 +24,8 @@ export default function SearchScreen() {
     events:  q ? state.events.filter(e => e.title.toLowerCase().includes(q) || e.location?.toLowerCase().includes(q)) : [],
     journal: q ? state.journalEntries.filter(e => e.content.toLowerCase().includes(q)) : [],
     goals:   q ? state.goals.filter(g => g.title.toLowerCase().includes(q) || g.category.toLowerCase().includes(q)) : [],
+    habits:  q ? (state.habits || []).filter(h => h.name?.toLowerCase().includes(q) || h.category?.toLowerCase().includes(q)) : [],
+    phrases: q ? (state.phrases || []).filter(p => p.text?.toLowerCase().includes(q) || p.author?.toLowerCase().includes(q)) : [],
   };
 
   const totalResults = Object.values(results).reduce((a, r) => a + r.length, 0);
@@ -269,7 +274,7 @@ export default function SearchScreen() {
 
         {/* ── Hero ── */}
         <h1 className="srch-hero-title">Buscar</h1>
-        <p className="srch-hero-sub">Encuentra tareas, eventos, notas y objetivos al instante.</p>
+        <p className="srch-hero-sub">Encuentra tareas, eventos, notas, hábitos, frases y objetivos al instante.</p>
 
         {/* ── Search bar ── */}
         <div className="srch-bar-wrap">
@@ -319,7 +324,7 @@ export default function SearchScreen() {
             </div>
             <div className="srch-empty-title">¿Qué buscas?</div>
             <p className="srch-empty-sub">
-              Escribe para buscar entre tus tareas, eventos, notas del diario y objetivos.
+            Escribe para buscar entre tus tareas, eventos, diario, hábitos, frases y objetivos.
             </p>
           </div>
         )}
@@ -355,9 +360,11 @@ export default function SearchScreen() {
                     key={item.id}
                     className="srch-result"
                     onClick={() => {
-                      if (cat === 'tasks')  navigate('taskDetail', { taskId: item.id });
+                      if (cat === 'tasks')        navigate('taskDetail', { taskId: item.id });
                       else if (cat === 'events')  navigate('events');
                       else if (cat === 'journal') navigate('journal');
+                      else if (cat === 'habits')  navigate('habits');
+                      else if (cat === 'phrases') navigate('phrases');
                       else navigate('goals');
                     }}
                     id={`search-result-${item.id}`}
@@ -370,7 +377,7 @@ export default function SearchScreen() {
                     {/* Body */}
                     <div className="srch-result-body">
                       <div className="srch-result-title">
-                        {item.title || item.content?.slice(0, 70) + '…'}
+                        {item.title || item.name || item.content?.slice(0, 70) + '…' || item.text?.slice(0, 70)}
                       </div>
                       <div className="srch-result-meta">
                         {cat === 'tasks' && (
@@ -410,6 +417,21 @@ export default function SearchScreen() {
                               <TrendingUp size={12} /> {item.progress}%
                             </span>
                           </>
+                        )}
+                        {cat === 'habits' && (
+                          <>
+                            <span className="srch-result-chip" style={{ background: 'rgba(84,99,71,0.12)', color: '#546347' }}>
+                              {item.category || 'Hábito'}
+                            </span>
+                            <span style={{ display:'flex', alignItems:'center', gap:3 }}>
+                              🔥 {item.streak || 0} días de racha
+                            </span>
+                          </>
+                        )}
+                        {cat === 'phrases' && (
+                          <span style={{ fontStyle:'italic', color:'var(--on-surface-variant)', fontSize:12 }}>
+                            {item.author ? `— ${item.author}` : 'Frase del día'}
+                          </span>
                         )}
                       </div>
                     </div>

@@ -51,7 +51,11 @@ export default function TasksScreen() {
       case 'Hoy':      base = state.tasks.filter(t => t.date === today); break;
       case 'Mañana':   base = state.tasks.filter(t => t.date === tomorrow); break;
       case 'Semana':   base = state.tasks.filter(t => t.date >= today && t.date <= weekEnd); break;
-      case 'Urgentes': base = state.tasks.filter(t => (t.priority === 'alta' || t.category === 'Urgente') && !t.completed); break;
+      case 'Urgentes': base = state.tasks.filter(t =>
+        (t.priority === 'alta' || t.priority === 'Alta' ||
+         t.category === 'Urgente' || t.category === 'urgente') &&
+        !t.completed
+      ); break;
       default:         base = state.tasks.filter(t => t.category === activeFilter);
     }
     if (search.trim()) {
@@ -166,6 +170,8 @@ export default function TasksScreen() {
         /* ---- Filter chips ---- */
         .ts-chips {
           /* Uses global .scroll-x-row for breakout scrolling */
+          /* Extra right padding ensures last chip is never clipped */
+          padding-right: calc(var(--space-container) + 16px) !important;
           margin-bottom: var(--space-xl);
         }
 

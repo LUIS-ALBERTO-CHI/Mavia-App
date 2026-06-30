@@ -23,8 +23,10 @@ export default function NotificationsScreen() {
   const unread = notifications.filter(n => !n.read);
   const read   = notifications.filter(n => n.read);
 
-  const markAll = () => dispatch({ type: 'MARK_ALL_NOTIFICATIONS_READ' });
-  const markOne = (id) => dispatch({ type: 'MARK_NOTIFICATION_READ', id });
+  const markAll  = () => dispatch({ type: 'MARK_ALL_NOTIFICATIONS_READ' });
+  const markOne  = (id) => dispatch({ type: 'MARK_NOTIFICATION_READ', id });
+  const deleteOne = (id) => dispatch({ type: 'DELETE_NOTIFICATION', id });
+  const clearRead = () => dispatch({ type: 'CLEAR_READ_NOTIFICATIONS' });
 
   return (
     <>
@@ -150,7 +152,18 @@ export default function NotificationsScreen() {
           top: 16px; right: 14px;
         }
 
-        /* ── Empty ── */
+        /* ── Delete btn (shows on card hover) ── */
+        .ntf-delete-btn {
+          width: 32px; height: 32px; border-radius: 50%;
+          border: none; background: transparent;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; color: var(--outline);
+          opacity: 0; transition: opacity var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+          flex-shrink: 0;
+        }
+        .ntf-card:hover .ntf-delete-btn { opacity: 1; }
+        .ntf-delete-btn:hover { background: var(--error-container); color: var(--error); }
+
         .ntf-empty {
           text-align: center;
           padding: var(--space-xxl) var(--space-xl);
@@ -196,6 +209,12 @@ export default function NotificationsScreen() {
               Marcar todas leídas
             </Button>
           )}
+          {read.length > 0 && (
+            <Button variant="ghost" size="sm" onClick={clearRead} id="ntf-clear-read"
+              style={{ color: 'var(--error)', opacity: 0.8 }}>
+              Limpiar leídas
+            </Button>
+          )}
         </div>
 
         {/* Unread */}
@@ -225,6 +244,14 @@ export default function NotificationsScreen() {
                       <div className="ntf-text">{n.text}</div>
                     </div>
                     <span className="ntf-time">{timeAgo(n.time)}</span>
+                    <button
+                      className="ntf-delete-btn"
+                      onClick={(e) => { e.stopPropagation(); deleteOne(n.id); }}
+                      aria-label="Eliminar notificación"
+                      id={`ntf-del-${n.id}`}
+                    >
+                      <Trash2 size={14} strokeWidth={2} />
+                    </button>
                     <div className="ntf-unread-dot" />
                   </div>
                 );
@@ -245,7 +272,7 @@ export default function NotificationsScreen() {
                 const cfg = TYPE_CONFIG[n.type] || TYPE_CONFIG.reminder;
                 const Icon = cfg.icon;
                 return (
-                  <div key={n.id} className="ntf-card" id={`ntf-${n.id}`} style={{ opacity: 0.7 }}>
+                  <div key={n.id} className="ntf-card" id={`ntf-${n.id}`} style={{ opacity: 0.65 }}>
                     <div className="ntf-icon" style={{ background: 'var(--surface-container)' }}>
                       <Icon size={19} color="var(--outline)" strokeWidth={1.75} />
                     </div>
@@ -254,6 +281,14 @@ export default function NotificationsScreen() {
                       <div className="ntf-text">{n.text}</div>
                     </div>
                     <span className="ntf-time">{timeAgo(n.time)}</span>
+                    <button
+                      className="ntf-delete-btn"
+                      onClick={(e) => { e.stopPropagation(); deleteOne(n.id); }}
+                      aria-label="Eliminar notificación"
+                      id={`ntf-del-${n.id}`}
+                    >
+                      <Trash2 size={14} strokeWidth={2} />
+                    </button>
                   </div>
                 );
               })}
