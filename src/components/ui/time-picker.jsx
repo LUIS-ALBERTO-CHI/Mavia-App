@@ -45,11 +45,11 @@ const D_PAD     = D_ITEM_H * Math.floor(D_VISIBLE / 2);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 /**
- * Converts a stored "HH:MM" (24h) or "h:mm AM/PM" string to the nearest slot string.
+ * For the drum: converts HH:MM → nearest 5-min slot string "h:mm AM/PM".
+ * Used to position the drum, NOT for display on the trigger.
  */
 function valueToSlot(v) {
   if (!v || typeof v !== 'string') {
-    // Default to current rounded time
     const now = new Date();
     const h   = now.getHours();
     const m   = Math.round(now.getMinutes() / 5) * 5 % 60;
@@ -57,23 +57,35 @@ function valueToSlot(v) {
     const h12 = h % 12 || 12;
     return `${h12}:${String(m).padStart(2, '0')} ${ap}`;
   }
-  const upper = v.toUpperCase();
+  const upper   = v.toUpperCase();
   const cleaned = v.replace(/[APM\s]/gi, '');
   const [hStr, mStr] = cleaned.split(':');
   let h = parseInt(hStr, 10) || 0;
-  const mRaw = parseInt(mStr || '0', 10);
+  const mRaw     = parseInt(mStr || '0', 10);
   const mSnapped = Math.min(55, Math.round(mRaw / 5) * 5);
-  // Detect if it was already in 12h format
   if (!upper.includes('AM') && !upper.includes('PM')) {
-    // 24h input — keep as is
+    // 24h input — already converted
   } else {
-    // 12h — convert back
     if (upper.includes('PM') && h !== 12) h += 12;
     if (upper.includes('AM') && h === 12) h = 0;
   }
   const ap  = h >= 12 ? 'PM' : 'AM';
   const h12 = h % 12 || 12;
   return `${h12}:${String(mSnapped).padStart(2, '0')} ${ap}`;
+}
+
+/**
+ * For the trigger label: converts HH:MM → EXACT "h:mm AM/PM" without snapping.
+ * This is what the user actually sees on the button.
+ */
+function to12h(v) {
+  if (!v || typeof v !== 'string') return null;
+  const [hStr, mStr] = v.split(':');
+  let h = parseInt(hStr, 10) || 0;
+  const m  = parseInt(mStr || '0', 10);
+  const ap  = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${ap}`;
 }
 
 /**
@@ -658,17 +670,20 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
     setShowCustom(false);
   };
 
-  // Custom time modal confirmed: slot comes pre-built as "h:mm AP"
+  // Custom time modal confirmed: customSlot is "h:mm AP" with exact minutes
   const handleCustomConfirm = (customSlot) => {
-    setSlot(customSlot);              // update drum to show the new exact time
-    onChange(slotTo24h(customSlot));  // also persist immediately
+    // Save exact 24h value — do NOT try to put a non-5-min slot into the drum
+    const exact24 = slotTo24h(customSlot);
+    onChange(exact24);
+    // Sync drum to nearest 5-min (useEffect[value] will fire, but we set it now too)
+    setSlot(valueToSlot(exact24));
     setShowCustom(false);
-    setOpen(false);                   // close everything
+    setOpen(false);
   };
 
-  // Display label on trigger
-  const displayLabel = value ? valueToSlot(value) : placeholder;
-  const period       = value ? valueToSlot(value).split(' ')[1] : null;
+  // Trigger display — use EXACT minutes (no 5-min rounding)
+  const displayLabel = value ? (to12h(value) || placeholder) : placeholder;
+  const period       = value ? (parseInt(value.split(':')[0] || '0') >= 12 ? 'PM' : 'AM') : null;
 
   return (
     <>
@@ -679,7 +694,7 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
         ref={triggerRef}
         type="button"
         className={`tp-trigger${!value ? ' placeholder' : ''}${open ? ' open' : ''}`}
-        onClick={() => { setOpen(o => !o); setShowDuration(false); }}
+        onClick={() => { setOpen(o => !o); setShowCustom(false); }}
         id={id}
       >
         <Clock size={17} className="tp-icon" strokeWidth={1.75} />
