@@ -35,7 +35,7 @@ function CircleProgress({ value, size = 80 }) {
 }
 
 export default function GoalsScreen() {
-  const { state, navigate } = useApp();
+  const { state, navigate, dispatch, showToast } = useApp();
   const { goals } = state;
   const [filter, setFilter] = useState('Todos');
 
@@ -270,6 +270,43 @@ export default function GoalsScreen() {
         .gls-task.done { opacity: 0.55; }
         .gls-task.done span { text-decoration: line-through; }
 
+        /* ── Progress slider — inline update ── */
+        .gls-slider-wrap {
+          margin-top: var(--space-sm);
+          padding-top: var(--space-sm);
+          border-top: 1px solid rgba(0,0,0,0.06);
+        }
+        .gls-slider-label {
+          font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+          text-transform: uppercase; color: var(--outline);
+          margin-bottom: 6px;
+        }
+        .gls-slider {
+          -webkit-appearance: none;
+          width: 100%; height: 6px;
+          border-radius: 99px;
+          outline: none; cursor: pointer;
+          transition: opacity 0.15s;
+        }
+        .gls-slider:hover { opacity: 0.9; }
+        .gls-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 20px; height: 20px;
+          border-radius: 50%;
+          background: white;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          cursor: pointer;
+          border: 2px solid currentColor;
+        }
+        .gls-slider::-moz-range-thumb {
+          width: 20px; height: 20px;
+          border-radius: 50%;
+          background: white;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          cursor: pointer;
+          border: 2px solid currentColor;
+        }
+
         /* ── Empty ── */
         .gls-empty {
           text-align: center;
@@ -395,6 +432,28 @@ export default function GoalsScreen() {
 
                   {/* Progress bar */}
                   <Progress value={goal.progress} color={style.bar} className="mb-3" />
+
+                  {/* Inline progress slider */}
+                  <div className="gls-slider-wrap" onClick={e => e.stopPropagation()}>
+                    <div className="gls-slider-label">Desliza para actualizar — {goal.progress}%</div>
+                    <input
+                      type="range"
+                      min="0" max="100" step="5"
+                      value={goal.progress}
+                      className="gls-slider"
+                      style={{
+                        background: `linear-gradient(to right, ${style.text} ${goal.progress}%, var(--surface-container-high) ${goal.progress}%)`,
+                        color: style.text,
+                      }}
+                      onChange={e => {
+                        const val = Number(e.target.value);
+                        dispatch({ type: 'UPDATE_GOAL_PROGRESS', id: goal.id, progress: val });
+                        if (val === 100) showToast('¡Objetivo completado! 🎉');
+                      }}
+                      id={`gls-slider-${goal.id}`}
+                      aria-label={`Progreso de ${goal.title}`}
+                    />
+                  </div>
 
                   {/* Meta */}
                   <div className="gls-card-meta">

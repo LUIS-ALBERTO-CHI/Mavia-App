@@ -20,9 +20,23 @@ const CATEGORIES = [
 const REMINDER_OPTIONS = ['15 minutos antes', '30 minutos antes', '1 hora antes', '1 día antes'];
 
 export default function CreateEventScreen() {
-  const { dispatch, navigate, showToast, state } = useApp();
+  const { dispatch, navigate, goBack, showToast, state } = useApp();
 
-  const [form, setForm] = useState({
+  // Edit mode: pre-fill if navigated with an eventId
+  const editId    = state.screenParams?.eventId;
+  const editEvent = editId ? state.events.find(e => e.id === editId) : null;
+  const isEdit    = !!editEvent;
+
+  const [form, setForm] = useState(() => editEvent ? {
+    title:      editEvent.title     || '',
+    date:       editEvent.date      || today,
+    startTime:  editEvent.startTime || '',
+    location:   editEvent.location  || '',
+    category:   editEvent.category  || 'Personal',
+    notes:      editEvent.notes     || '',
+    reminder:   editEvent.reminder  || '15 minutos antes',
+    reminderOn: editEvent.reminderOn ?? true,
+  } : {
     title:     '',
     date:      today,
     startTime: '',
@@ -43,28 +57,26 @@ export default function CreateEventScreen() {
     setSaving(true);
     await new Promise(r => setTimeout(r, 900));
 
-    dispatch({
-      type: 'ADD_EVENT',
-      event: {
-        id:          Date.now().toString(),
-        title:       form.title,
-        date:        form.date,
-        startTime:   form.startTime,
-        location:    form.location,
-        category:    form.category,
-        notes:       form.notes,
-        color:       CATEGORIES.find(c => c.id === form.category)?.color || '#705765',
-        type:        form.category.toLowerCase(),
-        // ── Reminder fields — needed by AppContext to schedule FCM push ──
-        reminderOn:  form.reminderOn,
-        reminder:    form.reminder,
-      },
-    });
+    const eventData = {
+      id:         isEdit ? editEvent.id : Date.now().toString(),
+      title:      form.title,
+      date:       form.date,
+      startTime:  form.startTime,
+      location:   form.location,
+      category:   form.category,
+      notes:      form.notes,
+      color:      CATEGORIES.find(c => c.id === form.category)?.color || '#705765',
+      type:       form.category.toLowerCase(),
+      reminderOn: form.reminderOn,
+      reminder:   form.reminder,
+    };
+
+    dispatch({ type: isEdit ? 'UPDATE_EVENT' : 'ADD_EVENT', event: eventData });
 
     setSaving(false);
     setSaved(true);
-    showToast('Evento creado', 'success');
-    setTimeout(() => navigate('calendar'), 900);
+    showToast(isEdit ? 'Evento actualizado' : 'Evento creado', 'success');
+    setTimeout(() => isEdit ? navigate('eventDetail', { eventId: editEvent.id }) : navigate('calendar'), 900);
   };
 
   return (
@@ -513,9 +525,9 @@ export default function CreateEventScreen() {
         <div style={{ marginBottom: 'var(--space-xl)' }}>
           <div className="ce-eyebrow">
             <CalendarPlus size={16} />
-            Crear Nuevo Evento
+            {isEdit ? 'Editar Evento' : 'Crear Nuevo Evento'}
           </div>
-          <h2 className="ce-heading">Diseña tu momento de hoy</h2>
+          <h2 className="ce-heading">{isEdit ? `Editando: ${editEvent.title}` : 'Diseña tu momento de hoy'}</h2>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
@@ -726,15 +738,15 @@ export default function CreateEventScreen() {
               {saving ? (
                 <span style={{ opacity: 0.8 }}>Guardando...</span>
               ) : saved ? (
-                <><Check size={18} /> Evento guardado</>
+                <><Check size={18} /> {isEdit ? 'Evento actualizado' : 'Evento guardado'}</>
               ) : (
-                'Guardar Evento'
+                isEdit ? 'Guardar cambios' : 'Guardar Evento'
               )}
             </button>
             <button
               type="button"
               className="ce-btn-cancel"
-              onClick={() => navigate('calendar')}
+              onClick={() => isEdit ? navigate('eventDetail', { eventId: editEvent.id }) : navigate('calendar')}
               id="ce-cancel"
             >
               Cancelar

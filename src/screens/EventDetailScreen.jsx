@@ -1,6 +1,7 @@
 import { useApp } from '../context/AppContext';
 import { ArrowLeft, Calendar, Clock, MapPin, Trash2, Edit2, Users, BookOpen, Briefcase, Heart } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { formatTime12h } from '../lib/utils';
 
 const TYPE_CONFIG = {
   'reunión':  { icon: Users,    bg: 'var(--secondary-container)', color: 'var(--secondary)', label: 'Reunión'  },
@@ -199,6 +200,15 @@ export default function EventDetailScreen() {
               variant="ghost"
               size="icon"
               className="rounded-full"
+              onClick={() => navigate('createEvent', { eventId: event.id })}
+              id="evd-edit"
+            >
+              <Edit2 size={18} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full"
               onClick={handleDelete}
               id="evd-delete"
               style={{ color: 'var(--error)' }}
@@ -245,7 +255,8 @@ export default function EventDetailScreen() {
             <div>
               <div className="evd-info-label">Hora</div>
               <div className="evd-info-value">
-                {event.startTime}{event.endTime ? ` — ${event.endTime}` : ''}
+                {formatTime12h(event.startTime, 'Por definir')}
+                {event.endTime ? ` — ${formatTime12h(event.endTime)}` : ''}
               </div>
             </div>
           </div>

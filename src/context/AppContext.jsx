@@ -277,12 +277,22 @@ function reducer(state, action) {
     /* ── Events ── */
     case 'ADD_EVENT':
       return { ...state, events: [{ ...action.event, id: action.event.id || Date.now().toString() }, ...state.events] };
+    case 'UPDATE_EVENT':
+      return { ...state, events: state.events.map(e => e.id === action.event.id ? { ...e, ...action.event } : e) };
     case 'DELETE_EVENT':
       return { ...state, events: state.events.filter(e => e.id !== action.id) };
 
     /* ── Goals ── */
     case 'ADD_GOAL':
       return { ...state, goals: [...state.goals, { ...action.goal, id: action.goal.id || Date.now().toString() }] };
+    case 'UPDATE_GOAL':
+      return { ...state, goals: state.goals.map(g => g.id === action.goal.id ? { ...g, ...action.goal } : g) };
+    case 'UPDATE_GOAL_PROGRESS': {
+      const goals = state.goals.map(g =>
+        g.id === action.id ? { ...g, progress: Math.min(100, Math.max(0, action.progress)) } : g
+      );
+      return { ...state, goals };
+    }
 
     /* ── Journal ── */
     case 'ADD_JOURNAL': {
