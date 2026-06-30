@@ -622,6 +622,16 @@ const TP_STYLES = `
   }
   .tp-panel-exact-btn:active { transform: scale(0.96); }
 
+  /* ── Panel header ── */
+  .tp-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px 8px;
+  }
+  .tp-panel-title {
+    font-family: var(--font-display); font-size: 16px;
+    font-weight: 700; color: var(--on-surface);
+  }
+
   /* ── Drum wrapper ── */
   .tp-drum-wrap {
     margin: 8px 16px;
