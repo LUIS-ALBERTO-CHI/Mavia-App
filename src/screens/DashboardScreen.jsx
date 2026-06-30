@@ -51,10 +51,27 @@ export default function DashboardScreen() {
   const todayEvents    = events.filter(e => e.date === today).sort((a, b) => a.startTime.localeCompare(b.startTime));
   const todayPhrase    = phrases[new Date().getDay() % phrases.length];
 
-  const handleToggle = (taskId) => {
+  const handleToggle = (taskId, e) => {
+    if (e) e.stopPropagation();
     const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    // Guard: if completing a task with pending checklist items
+    if (!task.completed) {
+      const pending = (task.checklist || []).filter(item => !item.done);
+      if (pending.length > 0) {
+        const ok = window.confirm(
+          `Esta tarea tiene ${pending.length} ítem${pending.length > 1 ? 's' : ''} pendiente${pending.length > 1 ? 's' : ''} en el checklist.\n\n¿Completarla de todas formas?`
+        );
+        if (!ok) {
+          navigate('taskDetail', { taskId: task.id });
+          return;
+        }
+      }
+    }
+
     dispatch({ type: 'TOGGLE_TASK', id: taskId });
-    if (!task.completed) showToast('Tarea completada', 'success');
+    if (!task.completed) showToast('¡Tarea completada! 🎉', 'success');
   };
 
   return (
@@ -659,7 +676,7 @@ export default function DashboardScreen() {
                     >
                       <button
                         className={`task-check-btn${task.completed ? ' checked' : ''}`}
-                        onClick={e => { e.stopPropagation(); handleToggle(task.id); }}
+                        onClick={e => handleToggle(task.id, e)}
                         id={`dash-check-${task.id}`}
                         aria-label={task.completed ? 'Desmarcar' : 'Completar'}
                         style={{ marginTop: '2px', flexShrink: 0 }}

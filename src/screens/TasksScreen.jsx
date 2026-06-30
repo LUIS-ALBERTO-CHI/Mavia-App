@@ -62,10 +62,27 @@ export default function TasksScreen() {
   const pending   = filtered.filter(t => !t.completed && t.priority !== 'alta');
   const completed = filtered.filter(t => t.completed);
 
+
   const handleToggle = (id) => {
     const task = state.tasks.find(t => t.id === id);
+    if (!task) return;
+
+    // Guard: task with pending checklist items
+    if (!task.completed) {
+      const pending = (task.checklist || []).filter(item => !item.done);
+      if (pending.length > 0) {
+        const ok = window.confirm(
+          `Esta tarea tiene ${pending.length} ítem${pending.length > 1 ? 's' : ''} pendiente${pending.length > 1 ? 's' : ''} en el checklist.\n\n¿Completarla de todas formas?`
+        );
+        if (!ok) {
+          navigate('taskDetail', { taskId: task.id });
+          return;
+        }
+      }
+    }
+
     dispatch({ type: 'TOGGLE_TASK', id });
-    if (!task.completed) showToast('¡Tarea completada!', 'success');
+    if (!task.completed) showToast('¡Tarea completada! 🎉', 'success');
   };
 
   const handleDelete = (id) => {
