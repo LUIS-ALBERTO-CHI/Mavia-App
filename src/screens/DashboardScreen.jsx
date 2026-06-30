@@ -659,7 +659,13 @@ export default function DashboardScreen() {
                       <span className={`task-item-text${task.completed ? ' done' : ''}`}>
                         {task.title}
                       </span>
-                      {/* Time instead of static 'Hoy' */}
+                      {/* Priority badge */}
+                      {task.priority === 'alta' && (
+                        <span style={{ padding: '2px 8px', borderRadius: '99px', fontSize: '10px', fontWeight: 700, background: 'rgba(186,26,26,0.1)', color: 'var(--error)', whiteSpace: 'nowrap', flexShrink: 0 }}>Alta</span>
+                      )}
+                      {task.priority === 'baja' && (
+                        <span style={{ padding: '2px 8px', borderRadius: '99px', fontSize: '10px', fontWeight: 700, background: 'rgba(84,99,71,0.12)', color: 'var(--secondary)', whiteSpace: 'nowrap', flexShrink: 0 }}>Baja</span>
+                      )}
                       {task.time && (
                         <span style={{ fontSize: '11px', color: 'var(--on-surface-variant)', flexShrink: 0, opacity: 0.75 }}>{task.time}</span>
                       )}
