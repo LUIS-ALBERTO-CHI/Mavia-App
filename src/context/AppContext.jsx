@@ -609,14 +609,27 @@ export function AppProvider({ children }) {
           break;
 
         case 'TOGGLE_HABIT': {
+          // state here is the PRE-dispatch snapshot (same data the reducer received).
+          // So h.completedToday = OLD value before the toggle.
           const todayIdx = (new Date().getDay() + 6) % 7;
           const h = state.habits.find(h => h.id === enrichedAction.id);
           if (h) {
-            const newCompleted = !h.completedToday;
-            const weekData = [...(h.weekData || Array(7).fill(false))];
+            const todayStr     = new Date().toISOString().split('T')[0];
+            const newCompleted = !h.completedToday;       // flip same as reducer
+            const weekData     = [...(h.weekData || Array(7).fill(false))];
             weekData[todayIdx] = newCompleted;
-            const safeStreak = Number(h.streak) || 0;
-            await saveHabit(uid, { ...h, completedToday: newCompleted, streak: newCompleted ? safeStreak + 1 : Math.max(0, safeStreak - 1), weekData });
+            // Use the same streak formula as the reducer
+            const safeStreak  = Number(h.streak) || 0;
+            const newStreak   = newCompleted
+              ? safeStreak + 1
+              : Math.max(0, safeStreak - 1);
+            await saveHabit(uid, {
+              ...h,
+              completedToday:    newCompleted,
+              lastCompletedDate: newCompleted ? todayStr : h.lastCompletedDate,
+              streak:            newStreak,
+              weekData,
+            });
           }
           break;
         }
