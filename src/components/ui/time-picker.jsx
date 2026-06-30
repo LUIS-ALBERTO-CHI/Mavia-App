@@ -23,16 +23,18 @@ function buildSlots() {
 const SLOTS = buildSlots();
 
 // Duration drums
-const HOURS_DRUM   = Array.from({ length: 13 }, (_, i) => i); // 0-12
-const MINUTES_DRUM = Array.from({ length: 60 }, (_, i) => i); // 0-59
+const HOURS_DRUM   = Array.from({ length: 24 }, (_, i) => i); // 0–23 horas
+const MINUTES_DRUM = Array.from({ length: 60 }, (_, i) => i); // 0–59 minutos (1 en 1)
 
 const PRESETS = [
-  { label: '1 min',    h: 0, m: 1  },
-  { label: '15 min',   h: 0, m: 15 },
-  { label: '30 min',   h: 0, m: 30 },
-  { label: '45 min',   h: 0, m: 45 },
-  { label: '1 h',      h: 1, m: 0  },
-  { label: '1 h 30 min', h: 1, m: 30 },
+  { label: '30 min',      h: 0,  m: 30 },
+  { label: '1 hora',      h: 1,  m: 0  },
+  { label: '1 h 30 min',  h: 1,  m: 30 },
+  { label: '2 horas',     h: 2,  m: 0  },
+  { label: '3 horas',     h: 3,  m: 0  },
+  { label: '4 horas',     h: 4,  m: 0  },
+  { label: '6 horas',     h: 6,  m: 0  },
+  { label: '8 horas',     h: 8,  m: 0  },
 ];
 
 // Smaller drum constants for the duration modal
