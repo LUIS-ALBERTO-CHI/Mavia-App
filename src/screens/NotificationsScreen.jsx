@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { Bell, CheckCheck, Dumbbell, Target, Calendar, Award, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -16,17 +17,100 @@ function timeAgo(time) {
   return time;
 }
 
+// ─── Animated Card ────────────────────────────────────────────────────────────
+// Holds its own "exiting" state so it can animate out before the parent removes it
+function NotifCard({ n, isUnread, onMarkRead, onDelete, forceExit }) {
+  const [selfExiting, setSelfExiting] = useState(false);
+  const exiting = selfExiting || forceExit;
+  const cfg  = TYPE_CONFIG[n.type] || TYPE_CONFIG.reminder;
+  const Icon = cfg.icon;
+
+  const handleDelete = useCallback((e) => {
+    e.stopPropagation();
+    setSelfExiting(true);
+    // Let animation finish (~340ms) then actually remove from state
+    setTimeout(() => onDelete(n.id), 320);
+  }, [n.id, onDelete]);
+
+  const handleClick = useCallback(() => {
+    if (isUnread) onMarkRead(n.id);
+  }, [isUnread, n.id, onMarkRead]);
+
+  return (
+    <div
+      className={`ntf-card${isUnread ? ' unread' : ''}${exiting ? ' exiting' : ''}`}
+      onClick={handleClick}
+      id={`ntf-${n.id}`}
+      style={!isUnread ? { opacity: 0.65 } : undefined}
+    >
+      <div
+        className="ntf-icon"
+        style={{ background: isUnread ? cfg.bg : 'var(--surface-container)' }}
+      >
+        <Icon
+          size={19}
+          color={isUnread ? cfg.color : 'var(--outline)'}
+          strokeWidth={1.75}
+        />
+      </div>
+      <div className="ntf-body">
+        <div className="ntf-title">{n.title}</div>
+        <div className="ntf-text">{n.text}</div>
+      </div>
+      <span className="ntf-time">{timeAgo(n.time)}</span>
+      <button
+        className="ntf-delete-btn"
+        onClick={handleDelete}
+        aria-label="Eliminar notificación"
+        id={`ntf-del-${n.id}`}
+      >
+        <Trash2 size={14} strokeWidth={2} />
+      </button>
+      {isUnread && <div className="ntf-unread-dot" />}
+    </div>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function NotificationsScreen() {
   const { state, dispatch } = useApp();
   const { notifications } = state;
+
+  // Track IDs being animated out (bulk clear)
+  const [exitingIds, setExitingIds] = useState(new Set());
 
   const unread = notifications.filter(n => !n.read);
   const read   = notifications.filter(n => n.read);
 
   const markAll  = () => dispatch({ type: 'MARK_ALL_NOTIFICATIONS_READ' });
   const markOne  = (id) => dispatch({ type: 'MARK_NOTIFICATION_READ', id });
-  const deleteOne = (id) => dispatch({ type: 'DELETE_NOTIFICATION', id });
-  const clearRead = () => dispatch({ type: 'CLEAR_READ_NOTIFICATIONS' });
+
+  // Single delete — handled inside NotifCard (animated)
+  const deleteOne = useCallback((id) => {
+    dispatch({ type: 'DELETE_NOTIFICATION', id });
+  }, [dispatch]);
+
+  // Bulk animated clear: first mark all exiting, then dispatch after animation
+  const animatedClearRead = useCallback(() => {
+    const readIds = new Set(notifications.filter(n => n.read).map(n => n.id));
+    setExitingIds(readIds);
+    setTimeout(() => {
+      dispatch({ type: 'CLEAR_READ_NOTIFICATIONS' });
+      setExitingIds(new Set());
+    }, 340);
+  }, [notifications, dispatch]);
+
+  const animatedClearAll = useCallback(() => {
+    const allIds = new Set(notifications.map(n => n.id));
+    setExitingIds(allIds);
+    setTimeout(() => {
+      dispatch({ type: 'MARK_ALL_NOTIFICATIONS_READ' });
+      setTimeout(() => {
+        dispatch({ type: 'CLEAR_READ_NOTIFICATIONS' });
+        setExitingIds(new Set());
+      }, 50);
+    }, 340);
+  }, [notifications, dispatch]);
 
   return (
     <>
@@ -112,15 +196,38 @@ export default function NotificationsScreen() {
           border: 1px solid rgba(208,195,200,0.12);
           box-shadow: 0 4px 16px rgba(112,87,101,0.04);
           cursor: pointer;
-          transition: all var(--transition-spring);
-          position: relative;
+          /* Entry animation */
+          animation: ntfCardIn 0.3s var(--ease-out) both;
+          /* Exit transition — triggered by .exiting class */
+          transition:
+            opacity 0.28s ease,
+            transform 0.28s cubic-bezier(0.4, 0, 1, 1),
+            max-height 0.32s ease 0.05s,
+            margin-bottom 0.32s ease 0.05s,
+            padding 0.28s ease 0.05s;
+          max-height: 200px;
           overflow: hidden;
+          position: relative;
+        }
+        @keyframes ntfCardIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .ntf-card.exiting {
+          opacity: 0 !important;
+          transform: translateX(60px) scale(0.94) !important;
+          max-height: 0 !important;
+          padding-top: 0 !important;
+          padding-bottom: 0 !important;
+          margin-bottom: 0 !important;
+          pointer-events: none;
         }
         .ntf-card.unread {
           border-left: 3px solid var(--primary);
           background: rgba(248,215,232,0.08);
         }
         .ntf-card:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(112,87,101,0.08); }
+        .ntf-card.exiting:hover { transform: translateX(60px) scale(0.94) !important; }
 
         .ntf-icon {
           width: 42px; height: 42px;
@@ -179,6 +286,7 @@ export default function NotificationsScreen() {
           flex-direction: column;
           align-items: center;
           gap: var(--space-md);
+          animation: ntfCardIn 0.4s var(--ease-out) both;
         }
         .ntf-empty-icon {
           width: 80px; height: 80px;
@@ -221,15 +329,14 @@ export default function NotificationsScreen() {
                 </Button>
               )}
               {read.length > 0 && (
-                <Button variant="ghost" size="sm" onClick={clearRead} id="ntf-clear-read"
+                <Button variant="ghost" size="sm" onClick={animatedClearRead} id="ntf-clear-read"
                   style={{ color: 'var(--error)', opacity: 0.8, fontSize: 12, padding: '4px 10px', whiteSpace: 'nowrap' }}>
                   Limpiar leídas
                 </Button>
               )}
-              {/* Quick nuke for 56-notif pile-up */}
               {(unread.length + read.length) > 10 && (
                 <Button variant="ghost" size="sm"
-                  onClick={() => { dispatch({ type: 'MARK_ALL_NOTIFICATIONS_READ' }); setTimeout(() => dispatch({ type: 'CLEAR_READ_NOTIFICATIONS' }), 100); }}
+                  onClick={animatedClearAll}
                   id="ntf-clear-all"
                   style={{ color: 'var(--error)', fontWeight: 700, fontSize: 12, padding: '4px 10px', whiteSpace: 'nowrap' }}>
                   Borrar todas ({unread.length + read.length})
@@ -248,36 +355,16 @@ export default function NotificationsScreen() {
               <div className="ntf-section-line" />
             </div>
             <div className="ntf-list">
-              {unread.map(n => {
-                const cfg = TYPE_CONFIG[n.type] || TYPE_CONFIG.reminder;
-                const Icon = cfg.icon;
-                return (
-                  <div
-                    key={n.id}
-                    className="ntf-card unread"
-                    onClick={() => markOne(n.id)}
-                    id={`ntf-${n.id}`}
-                  >
-                    <div className="ntf-icon" style={{ background: cfg.bg }}>
-                      <Icon size={19} color={cfg.color} strokeWidth={1.75} />
-                    </div>
-                    <div className="ntf-body">
-                      <div className="ntf-title">{n.title}</div>
-                      <div className="ntf-text">{n.text}</div>
-                    </div>
-                    <span className="ntf-time">{timeAgo(n.time)}</span>
-                    <button
-                      className="ntf-delete-btn"
-                      onClick={(e) => { e.stopPropagation(); deleteOne(n.id); }}
-                      aria-label="Eliminar notificación"
-                      id={`ntf-del-${n.id}`}
-                    >
-                      <Trash2 size={14} strokeWidth={2} />
-                    </button>
-                    <div className="ntf-unread-dot" />
-                  </div>
-                );
-              })}
+              {unread.map(n => (
+                <NotifCard
+                  key={n.id}
+                  n={n}
+                  isUnread
+                  onMarkRead={markOne}
+                  onDelete={deleteOne}
+                  forceExit={exitingIds.has(n.id)}
+                />
+              ))}
             </div>
           </>
         )}
@@ -290,30 +377,16 @@ export default function NotificationsScreen() {
               <div className="ntf-section-line" />
             </div>
             <div className="ntf-list">
-              {read.map(n => {
-                const cfg = TYPE_CONFIG[n.type] || TYPE_CONFIG.reminder;
-                const Icon = cfg.icon;
-                return (
-                  <div key={n.id} className="ntf-card" id={`ntf-${n.id}`} style={{ opacity: 0.65 }}>
-                    <div className="ntf-icon" style={{ background: 'var(--surface-container)' }}>
-                      <Icon size={19} color="var(--outline)" strokeWidth={1.75} />
-                    </div>
-                    <div className="ntf-body">
-                      <div className="ntf-title">{n.title}</div>
-                      <div className="ntf-text">{n.text}</div>
-                    </div>
-                    <span className="ntf-time">{timeAgo(n.time)}</span>
-                    <button
-                      className="ntf-delete-btn"
-                      onClick={(e) => { e.stopPropagation(); deleteOne(n.id); }}
-                      aria-label="Eliminar notificación"
-                      id={`ntf-del-${n.id}`}
-                    >
-                      <Trash2 size={14} strokeWidth={2} />
-                    </button>
-                  </div>
-                );
-              })}
+              {read.map(n => (
+                <NotifCard
+                  key={n.id}
+                  n={n}
+                  isUnread={false}
+                  onMarkRead={markOne}
+                  onDelete={deleteOne}
+                  forceExit={exitingIds.has(n.id)}
+                />
+              ))}
             </div>
           </>
         )}
