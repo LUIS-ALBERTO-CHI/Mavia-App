@@ -13,121 +13,150 @@ const YoutubeIcon = () => (
 );
 
 /* ─────────────────────────────────────────────────────────────
-   CURATED MEDITATION LIBRARY
-   Free YouTube videos — no API key needed (IFrame embed).
-   Sources: The Honest Guys, Goodful, Great Meditation, Jason Stephenson
+   CURATED MEDITATION LIBRARY — EN ESPAÑOL
+   Canales: El Arte de Meditar, Medita con Mafe, RelajArte
 ───────────────────────────────────────────────────────────── */
 const LIBRARY = [
-  // Ansiedad
+  /* ── Ansiedad ── */
   {
-    id: 'yt-anxiety-1',
-    youtubeId: 'ZToicYcHIOU',
-    title: 'Meditación para calmar la ansiedad',
-    instructor: 'Great Meditation',
+    id: 'yt-anx-1',
+    youtubeId: 'W19PdslW7iw',
+    title: 'Meditación guiada para la ansiedad y el estrés',
+    instructor: 'El Arte de Meditar',
     duration: 10,
     category: 'Ansiedad',
     icon: 'wave',
-    description: 'Guía de 10 minutos para calmar el sistema nervioso.',
+    description: 'Una meditación suave para soltar la tensión del día y calmar el sistema nervioso.',
   },
   {
-    id: 'yt-anxiety-2',
-    youtubeId: 'inpok4MKVLM',
-    title: 'Meditación relajante profunda',
-    instructor: 'The Honest Guys',
+    id: 'yt-anx-2',
+    youtubeId: 'RqchqCaqioY',
+    title: 'Relajación profunda para momentos de angustia',
+    instructor: 'Medita con Mafe',
+    duration: 12,
+    category: 'Ansiedad',
+    icon: 'wave',
+    description: 'Guía de respiración consciente para aliviar la ansiedad rápidamente.',
+  },
+  {
+    id: 'yt-anx-3',
+    youtubeId: 'kfMBJV4KQPE',
+    title: 'Meditación para calmar la mente en 10 minutos',
+    instructor: 'RelajArte',
     duration: 10,
     category: 'Ansiedad',
     icon: 'wave',
-    description: 'Relajación guiada para liberar tensión y ansiedad.',
+    description: 'Técnica de atención plena para reducir el estrés y la preocupación.',
   },
 
-  // Concentración
+  /* ── Concentración ── */
   {
-    id: 'yt-focus-1',
-    youtubeId: 'rnDiXEhkBd8',
-    title: 'Meditación para el enfoque y la productividad',
-    instructor: 'Goodful',
+    id: 'yt-foc-1',
+    youtubeId: 'jPpUNAFHgDk',
+    title: 'Meditación para mejorar el enfoque y la concentración',
+    instructor: 'El Arte de Meditar',
     duration: 10,
     category: 'Concentración',
     icon: 'focus',
-    description: 'Claridad mental y estado de flow en 10 minutos.',
+    description: 'Entrena la mente para mantener el foco durante el trabajo o el estudio.',
   },
   {
-    id: 'yt-focus-2',
-    youtubeId: 'Jyy0ra2WcQQ',
-    title: 'Meditación de concentración profunda',
-    instructor: 'Calm',
+    id: 'yt-foc-2',
+    youtubeId: 'Ap6P4TFgfys',
+    title: 'Meditación de productividad y estado de flow',
+    instructor: 'Medita con Mafe',
     duration: 15,
     category: 'Concentración',
     icon: 'focus',
-    description: 'Entrena la atención plena para un trabajo más eficaz.',
+    description: 'Activa tu mente para entrar en un estado de máxima claridad y rendimiento.',
   },
 
-  // Dormir
+  /* ── Dormir ── */
   {
-    id: 'yt-sleep-1',
-    youtubeId: 'aEqlQvczMJQ',
-    title: 'Meditación para dormir profundo',
-    instructor: 'Jason Stephenson',
+    id: 'yt-slp-1',
+    youtubeId: 'XqeAt45goBI',
+    title: 'Meditación para dormir profundamente',
+    instructor: 'El Arte de Meditar',
     duration: 30,
     category: 'Dormir',
     icon: 'sleep',
-    description: 'Música y guía para un sueño reparador.',
+    description: 'Suelta los pensamientos del día y prepara el cuerpo para un sueño reparador.',
   },
   {
-    id: 'yt-sleep-2',
-    youtubeId: 'vd6CsM6p3r4',
-    title: 'Relajación para conciliar el sueño',
-    instructor: 'The Honest Guys',
+    id: 'yt-slp-2',
+    youtubeId: 'lFcSrYw2zqU',
+    title: 'Relajación muscular progresiva para conciliar el sueño',
+    instructor: 'RelajArte',
     duration: 20,
     category: 'Dormir',
     icon: 'sleep',
-    description: 'Visualización guiada para relajar cuerpo y mente.',
+    description: 'Técnica científica para relajar el cuerpo de pies a cabeza antes de dormir.',
   },
 
-  // Gratitud
+  /* ── Gratitud ── */
   {
-    id: 'yt-gratitude-1',
-    youtubeId: 'AhWEGPpOwNs',
-    title: 'Meditación de gratitud y abundancia',
-    instructor: 'Great Meditation',
+    id: 'yt-gra-1',
+    youtubeId: 'mRqtMZiHO7k',
+    title: 'Meditación de gratitud y amor propio',
+    instructor: 'Medita con Mafe',
     duration: 10,
     category: 'Gratitud',
     icon: 'flower',
-    description: 'Cultiva un corazón agradecido con esta práctica matutina.',
+    description: 'Cultiva un corazón agradecido y conecta con la abundancia que ya tienes.',
+  },
+  {
+    id: 'yt-gra-2',
+    youtubeId: '0PDjN4FSWKU',
+    title: 'Meditación matutina de gratitud y positividad',
+    instructor: 'El Arte de Meditar',
+    duration: 10,
+    category: 'Gratitud',
+    icon: 'flower',
+    description: 'Comienza tu día con una actitud agradecida y llena de energía positiva.',
   },
 
-  // Energía
+  /* ── Energía ── */
   {
-    id: 'yt-energy-1',
-    youtubeId: 'nmFUDkj1Aq0',
-    title: 'Meditación energizante matutina',
-    instructor: 'Goodful',
+    id: 'yt-ene-1',
+    youtubeId: '7mYScRTkZ2Y',
+    title: 'Meditación energizante para empezar el día',
+    instructor: 'RelajArte',
     duration: 10,
     category: 'Energía',
     icon: 'sun',
-    description: 'Activa tu energía positiva para comenzar el día.',
+    description: 'Despierta tu energía vital y activa el entusiasmo para afrontar el día.',
   },
   {
-    id: 'yt-energy-2',
-    youtubeId: 'VpHlmHRMDB4',
-    title: 'Meditación de energía y motivación',
-    instructor: 'Great Meditation',
+    id: 'yt-ene-2',
+    youtubeId: 'nmFU9kj1Aq0',
+    title: 'Meditación de motivación y propósito',
+    instructor: 'Medita con Mafe',
     duration: 12,
     category: 'Energía',
     icon: 'sun',
-    description: 'Despierta el poder interior y la motivación.',
+    description: 'Conecta con tu propósito y genera motivación desde adentro.',
   },
 
-  // Respiración (técnicas guiadas)
+  /* ── Respiración ── */
   {
-    id: 'yt-breathe-1',
+    id: 'yt-brt-1',
     youtubeId: 'wfDTp2GogaQ',
-    title: 'Técnica de respiración 4-7-8',
-    instructor: 'Goodful',
+    title: 'Técnica de respiración 4-7-8 guiada en español',
+    instructor: 'El Arte de Meditar',
     duration: 5,
     category: 'Respiración',
     icon: 'breathe',
-    description: 'La técnica de respiración anti-ansiedad más efectiva.',
+    description: 'La técnica respiratoria más efectiva para calmar la ansiedad en minutos.',
+  },
+  {
+    id: 'yt-brt-2',
+    youtubeId: 'MIc299aIOzc',
+    title: 'Respiración coherente para equilibrar el sistema nervioso',
+    instructor: 'RelajArte',
+    duration: 8,
+    category: 'Respiración',
+    icon: 'breathe',
+    description: 'Sincroniza corazón y mente con la respiración de 5 segundos.',
   },
 ];
 
