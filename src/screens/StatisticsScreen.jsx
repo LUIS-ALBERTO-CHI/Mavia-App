@@ -108,7 +108,10 @@ function getWeekTaskCounts(tasks) {
 
 export default function StatisticsScreen() {
   const { state } = useApp();
-  const { tasks, habits, goals, meditations } = state;
+  const { tasks, habits, goals, meditations, user } = state;
+
+  // App usage streak
+  const appStreak = user?.appStreak || 0;
 
   // ── Tasks ──
   const totalTasks     = tasks.length;
@@ -363,14 +366,24 @@ export default function StatisticsScreen() {
             }
           />
 
-          {/* Streak */}
+          {/* Streak hábitos */}
           <KpiCard
             icon={Flame}
             iconColor="#E56B4E"
             iconBg="rgba(229,107,78,0.12)"
             value={maxStreak}
-            label="Racha máxima"
+            label="Racha hábito"
             sub={maxStreak === 1 ? 'día seguido' : 'días seguidos'}
+          />
+
+          {/* Racha de app */}
+          <KpiCard
+            icon={TrendingUp}
+            iconColor="var(--secondary)"
+            iconBg="var(--secondary-container)"
+            value={appStreak}
+            label="Racha Mavia"
+            sub={appStreak === 1 ? 'día consecutivo' : 'días consecutivos'}
           />
 
           {/* Meditations */}

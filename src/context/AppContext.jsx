@@ -474,6 +474,34 @@ export function AppProvider({ children }) {
         // Reset completedToday for habits that weren't completed today
         dispatch({ type: 'DAILY_RESET_HABITS' });
 
+        // ── App usage streak ──
+        // Compute how many consecutive days the user has opened the app
+        const today        = localToday();
+        const lastLogin    = fsUser?.lastLoginDate || null;
+        const currentStreak = Number(fsUser?.appStreak) || 0;
+
+        let newAppStreak = currentStreak;
+        if (lastLogin === today) {
+          // Same day — keep streak unchanged
+          newAppStreak = currentStreak;
+        } else if (lastLogin) {
+          // Check if yesterday
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yStr = yesterday.toLocaleDateString('en-CA');
+          newAppStreak = lastLogin === yStr ? currentStreak + 1 : 1;
+        } else {
+          // First login ever
+          newAppStreak = 1;
+        }
+
+        if (newAppStreak !== currentStreak || lastLogin !== today) {
+          dispatch({
+            type: 'UPDATE_USER',
+            updates: { appStreak: newAppStreak, lastLoginDate: today },
+          });
+        }
+
       } catch (err) {
         // Offline fallback: log in from Firebase Auth profile, data will
         // be served from IndexedDB cache that was populated on last online visit.

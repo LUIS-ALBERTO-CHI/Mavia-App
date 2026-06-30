@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import {
   Edit2, Moon, Globe, Bell, Shield, HelpCircle,
-  LogOut, ChevronRight, Check, X, TrendingUp, Flame
+  LogOut, ChevronRight, Check, X, TrendingUp, Flame, Camera
 } from 'lucide-react';
 import { Switch } from '../components/ui/switch';
 import { Button } from '../components/ui/button';
@@ -15,8 +15,10 @@ export default function ProfileScreen() {
   const { state, dispatch, navigate, showToast } = useApp();
   const { user, habits, tasks, goals, darkMode } = state;
 
-  const [editing,  setEditing]  = useState(false);
-  const [form,     setForm]     = useState({ name: user.name || '', email: user.email || '' });
+  const [editing,    setEditing]    = useState(false);
+  const [uploading,  setUploading]  = useState(false);
+  const [form,       setForm]       = useState({ name: user.name || '', email: user.email || '' });
+  const fileInputRef = useRef(null);
 
   /* Stats */
   const completedTasks = tasks.filter(t => t.completed).length;
@@ -27,6 +29,7 @@ export default function ProfileScreen() {
   const streakMax      = habits.length
     ? Math.max(...habits.map(h => h.streak))
     : 0;
+  const appStreak      = user.appStreak || 0;
 
   const wellbeingScore = Math.min(100, Math.round(
     (habitsDone / Math.max(habits.length, 1)) * 50 + avgGoals * 0.5
@@ -36,6 +39,34 @@ export default function ProfileScreen() {
     dispatch({ type: 'UPDATE_USER', updates: { name: form.name, email: form.email, firstName: form.name.split(' ')[0] } });
     showToast('Perfil actualizado', 'success');
     setEditing(false);
+  };
+
+  /* Photo upload — reads file as base64 dataURL, stores in user profile */
+  const handlePhotoClick = () => fileInputRef.current?.click();
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      showToast('La imagen debe ser menor a 2 MB', 'error');
+      return;
+    }
+    setUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataURL = ev.target.result;
+        dispatch({ type: 'UPDATE_USER', updates: { photoURL: dataURL } });
+        showToast('Foto actualizada', 'success');
+        setUploading(false);
+      };
+      reader.onerror = () => { showToast('Error al leer la imagen', 'error'); setUploading(false); };
+      reader.readAsDataURL(file);
+    } catch {
+      showToast('Error al subir la foto', 'error');
+      setUploading(false);
+    }
+    e.target.value = '';
   };
 
   const handleLogout = async () => {
@@ -379,6 +410,30 @@ export default function ProfileScreen() {
           transform: scale(0.97);
         }
 
+        .prof-edit-name-btn {
+          margin-top: 6px;
+          background: none;
+          border: none;
+          color: var(--on-surface-variant);
+          font-size: var(--text-label-sm);
+          font-family: var(--font-body);
+          cursor: pointer;
+          padding: 4px 10px;
+          border-radius: 99px;
+          transition: background var(--transition-fast), color var(--transition-fast);
+          display: inline-flex;
+          align-items: center;
+        }
+        .prof-edit-name-btn:hover {
+          background: var(--surface-container);
+          color: var(--primary);
+        }
+
+        /* Profile grid 2x2 */
+        .prof-stats {
+          grid-template-columns: 1fr 1fr;
+        }
+
         @keyframes screenEnter {
           from { opacity: 0; transform: translateY(12px); }
           to   { opacity: 1; transform: translateY(0); }
@@ -409,22 +464,56 @@ export default function ProfileScreen() {
         {/* ── Profile hero ── */}
         <section className="prof-hero">
           <div className="prof-avatar-wrap">
-            <div className="prof-avatar-ring">
-              <div className="prof-avatar-initials" style={{ background: avatarBg }}>
-                {initials}
-              </div>
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handlePhotoChange}
+              id="prof-photo-input"
+            />
+            <div
+              className="prof-avatar-ring"
+              onClick={handlePhotoClick}
+              title="Cambiar foto de perfil"
+            >
+              {user.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt="Foto de perfil"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <div className="prof-avatar-initials" style={{ background: avatarBg }}>
+                  {initials}
+                </div>
+              )}
             </div>
             <button
               className="prof-edit-btn"
-              onClick={() => setEditing(e => !e)}
+              onClick={handlePhotoClick}
               id="prof-edit-avatar"
-              aria-label="Editar perfil"
+              aria-label="Cambiar foto de perfil"
+              disabled={uploading}
+              style={uploading ? { opacity: 0.6 } : {}}
             >
-              <Edit2 size={16} strokeWidth={2.5} />
+              {uploading
+                ? <span style={{ fontSize: 10, fontWeight: 700 }}>...</span>
+                : <Camera size={16} strokeWidth={2.5} />}
             </button>
           </div>
           <h2 className="prof-name">{user.name || user.firstName || 'Usuario'}</h2>
           <p className="prof-role">{user.email || 'Mavia · Bienestar & Productividad'}</p>
+          <button
+            className="prof-edit-name-btn"
+            onClick={() => setEditing(e => !e)}
+            id="prof-edit-name"
+            aria-label="Editar nombre"
+          >
+            <Edit2 size={13} strokeWidth={2} style={{ display: 'inline', marginRight: 4 }} />
+            Editar nombre
+          </button>
         </section>
 
         {/* ── Stats bento ── */}
@@ -440,6 +529,18 @@ export default function ProfileScreen() {
               {wellbeingScore}%
             </span>
             <span className="prof-stat-label">Bienestar</span>
+          </div>
+          <div className="prof-stat-card">
+            <span className="prof-stat-num" style={{ color: '#E56B4E', display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center' }}>
+              <Flame size={18} color="#E56B4E" />{appStreak}
+            </span>
+            <span className="prof-stat-label">Racha de app</span>
+          </div>
+          <div className="prof-stat-card">
+            <span className="prof-stat-num" style={{ color: 'var(--tertiary)' }}>
+              {streakMax}
+            </span>
+            <span className="prof-stat-label">Racha hábito</span>
           </div>
         </div>
 
