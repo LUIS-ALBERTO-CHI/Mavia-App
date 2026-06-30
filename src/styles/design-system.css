@@ -163,16 +163,15 @@
   --radius-2xl:  1.5rem;   /* 24px — main cards */
   --radius-full: 9999px;
 
-  /* ============================================
-     SHADOWS — Glow shadow from Stitch
-     ============================================ */
-  --shadow-glow:  0 20px 40px -15px rgba(112, 87, 101, 0.08);
-  --shadow-xs:    0 1px 3px rgba(112, 87, 101, 0.06);
-  --shadow-sm:    0 2px 8px rgba(112, 87, 101, 0.08);
-  --shadow-md:    0 4px 20px rgba(112, 87, 101, 0.10);
-  --shadow-lg:    0 8px 40px rgba(112, 87, 101, 0.14);
-  --shadow-nav:   0 -4px 24px rgba(0, 0, 0, 0.06);
-  --shadow-fab:   0 6px 24px rgba(112, 87, 101, 0.35);
+  /* Soft, tinted glow shadows — per spec: low opacity, large radius, pink tint */
+  --shadow-card:  0 4px 32px -8px rgba(112, 87, 101, 0.05), 0 1px 4px rgba(112, 87, 101, 0.04);
+  --shadow-glow:  0 20px 60px -20px rgba(112, 87, 101, 0.08);
+  --shadow-xs:    0 1px 3px rgba(112, 87, 101, 0.04);
+  --shadow-sm:    0 2px 8px rgba(112, 87, 101, 0.06);
+  --shadow-md:    0 4px 20px rgba(112, 87, 101, 0.08);
+  --shadow-lg:    0 8px 40px rgba(112, 87, 101, 0.12);
+  --shadow-nav:   0 -4px 24px rgba(0, 0, 0, 0.04);
+  --shadow-fab:   0 6px 24px rgba(112, 87, 101, 0.28);
 
   /* ============================================
      TRANSITIONS
@@ -330,8 +329,9 @@ html {
 body {
   font-family: var(--font-body);
   font-size: var(--text-body-md);
+  line-height: 1.6;  /* airy body line-height per spec */
   color: var(--on-surface);
-  background-color: var(--color-bg);
+  background-color: var(--background); /* off-white #fbf9f7 */
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -730,7 +730,7 @@ a { text-decoration: none; color: inherit; }
 }
 
 :root:not(.dark) .bottom-nav-item.active {
-  color: #D4622E;
+  color: var(--primary); /* brand mauve per spec */
 }
 
 .bottom-nav-item .nav-icon {
@@ -801,21 +801,22 @@ a { text-decoration: none; color: inherit; }
 }
 
 /* ============================================
-   CARDS (Stitch style)
+   CARDS — white bg, 24px radius, pink glow shadow
    ============================================ */
 .card {
-  background: var(--surface-container-lowest);
-  border-radius: var(--radius-2xl);
+  background: var(--surface-container-lowest); /* white */
+  border-radius: var(--radius-2xl);            /* 24px */
   padding: var(--space-lg);
-  box-shadow: var(--shadow-glow);
-  transition: all var(--transition-base);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
 }
 
-.card:active { transform: scale(0.99); }
+.card:hover  { box-shadow: var(--shadow-md); }
+.card:active { transform: scale(0.99); box-shadow: var(--shadow-xs); }
 
 .card-sm {
   padding: var(--space-md);
-  border-radius: 1rem;
+  border-radius: var(--radius-xl); /* 16px */
 }
 
 /* ============================================
@@ -971,12 +972,14 @@ a { text-decoration: none; color: inherit; }
   letter-spacing: 0.02em;
 }
 
+/* Minimalist input: light fill + only bottom border, soft pink glow on focus */
 .input {
   width: 100%;
-  padding: var(--space-md);
+  padding: 0.75rem var(--space-md);
   background: var(--surface-container-low);
-  border: 1.5px solid var(--outline-variant);
-  border-radius: var(--radius-sm);
+  border: none;
+  border-bottom: 1.5px solid var(--outline-variant);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0; /* flat bottom */
   font-size: var(--text-body-md);
   color: var(--on-surface);
   transition: all var(--transition-fast);
@@ -987,9 +990,10 @@ a { text-decoration: none; color: inherit; }
 .input::placeholder { color: var(--outline); }
 
 .input:focus {
-  border-color: var(--primary);
+  border-bottom-color: var(--primary);
   background: var(--surface-container-lowest);
-  box-shadow: 0 0 0 3px rgba(112, 87, 101, 0.12);
+  /* Soft pink outer glow — not a sharp stroke */
+  box-shadow: 0 4px 16px -4px rgba(112, 87, 101, 0.14);
 }
 
 .textarea {
@@ -1033,7 +1037,8 @@ a { text-decoration: none; color: inherit; }
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-.switch input:checked + .switch-track { background: var(--primary); }
+/* Switch: sage green when on */
+.switch input:checked + .switch-track { background: var(--secondary); }
 .switch input:checked + .switch-track::after { transform: translateX(20px); }
 
 /* ============================================
@@ -1058,11 +1063,11 @@ a { text-decoration: none; color: inherit; }
 .progress-fill.gold    { background: var(--tertiary); }
 
 /* ============================================
-   TOAST
+   TOAST — top-positioned, lavender bg, 16px radius per spec
    ============================================ */
 .toast-container {
   position: fixed;
-  top: var(--space-4);
+  top: max(var(--space-md), env(safe-area-inset-top, 16px));
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--z-toast);
@@ -1070,22 +1075,35 @@ a { text-decoration: none; color: inherit; }
   flex-direction: column;
   gap: var(--space-sm);
   align-items: center;
+  pointer-events: none;
 }
 
 .toast {
-  background: var(--inverse-surface);
-  color: var(--inverse-on-surface);
+  background: var(--surface-container-low); /* light lavender-ish */
+  color: var(--on-surface);
+  border: 1px solid var(--outline-variant);
   padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md);   /* 16px per spec */
   font-size: var(--text-label-md);
   font-weight: 500;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   animation: toastIn 0.38s var(--ease-spring);
   white-space: nowrap;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: auto;
 }
 
-.toast.success { background: var(--secondary); color: var(--on-secondary); }
-.toast.error   { background: var(--error);     color: var(--on-error); }
+.toast.success {
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  border-color: var(--secondary-fixed-dim);
+}
+.toast.error   {
+  background: var(--error-container);
+  color: var(--on-error-container);
+  border-color: rgba(186,26,26,0.2);
+}
 
 /* ============================================
    BOTTOM SHEET / OVERLAY
@@ -1098,23 +1116,25 @@ a { text-decoration: none; color: inherit; }
   animation: fadeIn var(--transition-base) var(--ease-out);
 }
 
+/* Bottom sheet — 32px top radius with prominent handle per spec */
 .bottom-sheet {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   background: var(--surface-container-lowest);
-  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+  border-radius: 2rem 2rem 0 0;  /* 32px top */
   padding: var(--space-sm) var(--space-lg) var(--space-xl);
   z-index: var(--z-modal);
   max-height: 85dvh;
   overflow-y: auto;
   animation: slideUp var(--transition-spring) var(--ease-spring);
+  box-shadow: 0 -8px 40px rgba(112, 87, 101, 0.10);
 }
 
 .bottom-sheet-handle {
-  width: 36px;
-  height: 4px;
+  width: 48px;    /* more prominent per spec */
+  height: 5px;
   background: var(--outline-variant);
   border-radius: var(--radius-full);
   margin: var(--space-sm) auto var(--space-md);
