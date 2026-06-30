@@ -319,19 +319,37 @@ function MiniDrum({ items, value, onChange, label }) {
   );
 }
 
-// ─── Duration Modal ───────────────────────────────────────────────────────────
-// Renders via createPortal so it is NOT clipped by the time picker panel overflow.
-const DUR_ANIM = `
-  @keyframes durIn {
+// ─── Custom Time Modal ────────────────────────────────────────────────────────
+// Opens via ··· button — allows picking exact minutes (1 by 1) instead of 5-by-5
+// Three drums: Hours (1-12) | Minutes (0-59) | AM/PM
+const HOURS_12   = Array.from({ length: 12 }, (_, i) => i + 1); // 1–12
+const MINS_EXACT = Array.from({ length: 60 }, (_, i) => i);     // 0–59 (1 by 1)
+const PERIODS    = ['AM', 'PM'];
+
+const CUSTOM_ANIM = `
+  @keyframes customIn {
     from { transform: translateY(100%); opacity: 0; }
     to   { transform: translateY(0);    opacity: 1; }
   }
 `;
 
-function DurationModal({ onClose, onConfirm }) {
-  const [hours,   setHours]   = useState(0);
-  const [minutes, setMinutes] = useState(1);
-  const modalRef = useRef(null);
+function CustomTimeModal({ onClose, onConfirm, initialSlot }) {
+  // Parse initial values from the current slot ("h:mm AP")
+  const parseSlot = (s) => {
+    if (!s) return { h: 12, m: 0, ap: 'PM' };
+    const [timePart, period] = s.split(' ');
+    const [hStr, mStr] = timePart.split(':');
+    return {
+      h:  parseInt(hStr, 10) || 12,
+      m:  parseInt(mStr, 10) || 0,
+      ap: period || 'PM',
+    };
+  };
+
+  const init = parseSlot(initialSlot);
+  const [hour,   setHour]   = useState(init.h);
+  const [minute, setMinute] = useState(init.m);
+  const [period, setPeriod] = useState(init.ap);
 
   // Close on Escape
   useEffect(() => {
@@ -340,23 +358,23 @@ function DurationModal({ onClose, onConfirm }) {
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
 
-  const applyPreset = (preset) => { setHours(preset.h); setMinutes(preset.m); };
-  const reset       = ()       => { setHours(0); setMinutes(1); };
-
   const handleConfirm = () => {
-    if (onConfirm) onConfirm(hours, minutes);
+    // Build slot string matching SLOTS format: "h:mm AP"
+    const slot = `${hour}:${String(minute).padStart(2, '0')} ${period}`;
+    if (onConfirm) onConfirm(slot);
     else onClose();
   };
 
+  const displayTime = `${hour}:${String(minute).padStart(2, '0')} ${period}`;
+
   return createPortal(
     <div
-      ref={modalRef}
       style={{
         position: 'fixed', inset: 0, zIndex: 999999,
         display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
       }}
     >
-      <style>{DUR_ANIM}</style>
+      <style>{CUSTOM_ANIM}</style>
 
       {/* Backdrop */}
       <div
@@ -373,11 +391,9 @@ function DurationModal({ onClose, onConfirm }) {
         style={{
           position: 'relative', zIndex: 1,
           background: 'var(--surface-container-lowest)',
-          borderRadius: '20px 20px 0 0',
+          borderRadius: '24px 24px 0 0',
           padding: '0 0 32px',
-          animation: 'durIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both',
-          maxHeight: '90vh',
-          overflowY: 'auto',
+          animation: 'customIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both',
         }}
       >
         {/* Handle */}
@@ -390,15 +406,19 @@ function DurationModal({ onClose, onConfirm }) {
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 20px 16px',
+          padding: '0 20px 4px',
         }}>
-          <span style={{
-            fontFamily: 'var(--font-display)', fontSize: 18,
-            fontWeight: 700, color: 'var(--on-surface)',
-          }}>Duración</span>
+          <div>
+            <span style={{
+              fontFamily: 'var(--font-display)', fontSize: 18,
+              fontWeight: 700, color: 'var(--on-surface)', display: 'block',
+            }}>Hora exacta</span>
+            <span style={{
+              fontSize: 12, color: 'var(--on-surface-variant)', fontFamily: 'var(--font-body)',
+            }}>Minutos de 1 en 1</span>
+          </div>
           <button
-            type="button"
-            onClick={onClose}
+            type="button" onClick={onClose}
             style={{
               width: 30, height: 30, borderRadius: '50%',
               border: 'none', background: 'var(--surface-container-high)',
@@ -407,85 +427,71 @@ function DurationModal({ onClose, onConfirm }) {
               fontSize: 14, fontWeight: 700, color: 'var(--on-surface-variant)',
             }}
             aria-label="Cerrar"
-          >
-            ✕
-          </button>
+          >✕</button>
         </div>
 
-        {/* Two-column drums */}
+        {/* Three-column drums: Hour | Min | AM/PM */}
         <div style={{
-          display: 'flex', margin: '0 16px',
-          background: 'var(--surface-container-lowest)',
-          borderRadius: 16, overflow: 'hidden',
+          display: 'flex', margin: '16px 16px 0',
+          background: 'var(--surface-container)',
+          borderRadius: 18, overflow: 'hidden',
           border: '1px solid rgba(208,195,200,0.15)',
         }}>
-          <MiniDrum items={HOURS_DRUM}   value={hours}   onChange={setHours}   label="horas" />
+          {/* Hours 1-12 */}
+          <MiniDrum
+            items={HOURS_12}
+            value={hour}
+            onChange={setHour}
+            label="h"
+          />
+
+          {/* Divider */}
           <div style={{ width: 1, background: 'rgba(208,195,200,0.25)', margin: '20px 0' }} />
-          <MiniDrum items={MINUTES_DRUM} value={minutes} onChange={setMinutes} label="min" />
+
+          {/* Minutes 0-59 */}
+          <MiniDrum
+            items={MINS_EXACT}
+            value={minute}
+            onChange={setMinute}
+            label="min"
+          />
+
+          {/* Divider */}
+          <div style={{ width: 1, background: 'rgba(208,195,200,0.25)', margin: '20px 0' }} />
+
+          {/* AM / PM */}
+          <MiniDrum
+            items={PERIODS}
+            value={period}
+            onChange={setPeriod}
+            label=""
+          />
         </div>
 
-        {/* Presets */}
-        <div style={{ padding: '20px 20px 0' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center',
-            justifyContent: 'space-between', marginBottom: 12,
-          }}>
-            <span style={{
-              fontFamily: 'var(--font-display)', fontSize: 15,
-              fontWeight: 700, color: 'var(--on-surface)',
-            }}>Preajustes</span>
-            <button
-              type="button" onClick={reset}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 4,
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: 12, fontWeight: 600, color: 'var(--on-surface-variant)',
-              }}
-            >
-              ↺ Restablecer
-            </button>
-          </div>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {PRESETS.map(p => {
-              const isActive = hours === p.h && minutes === p.m;
-              return (
-                <button
-                  key={p.label} type="button"
-                  onClick={() => applyPreset(p)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '7px 14px', borderRadius: 99,
-                    border: `1.5px solid ${isActive ? 'var(--primary)' : 'rgba(208,195,200,0.5)'}`,
-                    background: isActive ? 'var(--primary-container)' : 'var(--surface-container)',
-                    color: isActive ? 'var(--primary)' : 'var(--on-surface)',
-                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                    transition: 'all 0.15s', fontFamily: 'var(--font-body)',
-                  }}
-                >
-                  {p.label}
-                  <span style={{
-                    fontSize: 10, fontWeight: 700,
-                    color: isActive ? 'var(--primary)' : 'var(--outline)',
-                  }}>×</span>
-                </button>
-              );
-            })}
-          </div>
+        {/* Live preview */}
+        <div style={{
+          textAlign: 'center', marginTop: 16,
+          fontFamily: 'var(--font-display)',
+          fontSize: 28, fontWeight: 800,
+          color: 'var(--primary)',
+          letterSpacing: '-0.02em',
+        }}>
+          {displayTime}
         </div>
 
         {/* Confirm */}
-        <div style={{ padding: '20px 20px 0' }}>
+        <div style={{ padding: '16px 20px 0' }}>
           <button
             type="button" onClick={handleConfirm}
             style={{
-              width: '100%', padding: '14px', borderRadius: 99,
+              width: '100%', padding: '15px', borderRadius: 99,
               background: 'var(--gradient-primary)', color: 'white',
               border: 'none', cursor: 'pointer',
               fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-body)',
+              letterSpacing: '0.02em',
             }}
           >
-            Continuar — {hours > 0 ? `${hours}h ` : ''}{minutes > 0 ? `${minutes} min` : hours === 0 ? '0 min' : ''}
+            Usar {displayTime}
           </button>
         </div>
       </div>
@@ -493,6 +499,9 @@ function DurationModal({ onClose, onConfirm }) {
     document.body
   );
 }
+
+
+
 
 function TimePopover({ triggerRef, onClose, children }) {
   const panelRef = useRef(null);
@@ -631,11 +640,10 @@ const TP_STYLES = `
  * value:    "HH:MM" (24h) stored; displays as "h:mm AM/PM"
  * onChange: ("HH:MM") => void
  */
-export function TimePicker({ value, onChange, onDuration, placeholder = 'Seleccionar hora', id }) {
+export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', id }) {
   const [open, setOpen]               = useState(false);
   const [slot, setSlot]               = useState(() => valueToSlot(value));
-  const [showDuration, setShowDuration] = useState(false);
-  const [duration, setDuration]       = useState(null); // { hours, minutes }
+  const [showCustom, setShowCustom]   = useState(false);
   const triggerRef                    = useRef(null);
 
   // Sync slot when external value changes
@@ -643,26 +651,24 @@ export function TimePicker({ value, onChange, onDuration, placeholder = 'Selecci
     setSlot(valueToSlot(value));
   }, [value]);
 
-  // Close the whole picker and persist the time
+  // Confirm the selected time from the drum
   const handleConfirm = () => {
     onChange(slotTo24h(slot));
     setOpen(false);
-    setShowDuration(false);
+    setShowCustom(false);
   };
 
-  // Called when Duration modal's Continuar is clicked
-  const handleDurationConfirm = (h, m) => {
-    setDuration({ hours: h, minutes: m });
-    if (onDuration) onDuration({ hours: h, minutes: m });
-    handleConfirm(); // also saves the time and closes everything
+  // Custom time modal confirmed: slot comes pre-built as "h:mm AP"
+  const handleCustomConfirm = (customSlot) => {
+    setSlot(customSlot);              // update drum to show the new exact time
+    onChange(slotTo24h(customSlot));  // also persist immediately
+    setShowCustom(false);
+    setOpen(false);                   // close everything
   };
 
   // Display label on trigger
   const displayLabel = value ? valueToSlot(value) : placeholder;
   const period       = value ? valueToSlot(value).split(' ')[1] : null;
-  const durLabel     = duration
-    ? `${duration.hours > 0 ? duration.hours + 'h ' : ''}${duration.minutes > 0 ? duration.minutes + 'min' : duration.hours === 0 ? '0min' : ''}`
-    : null;
 
   return (
     <>
@@ -679,16 +685,11 @@ export function TimePicker({ value, onChange, onDuration, placeholder = 'Selecci
         <Clock size={17} className="tp-icon" strokeWidth={1.75} />
         <span className={`tp-label${value ? ' has-value' : ''}`}>{displayLabel}</span>
         {period && <span className="tp-period-badge">{period}</span>}
-        {durLabel && (
-          <span className="tp-period-badge" style={{ background: 'var(--secondary-container)', color: 'var(--secondary)' }}>
-            {durLabel}
-          </span>
-        )}
       </button>
 
       {/* Popover */}
       {open && (
-        <TimePopover triggerRef={triggerRef} onClose={() => { setOpen(false); setShowDuration(false); }}>
+        <TimePopover triggerRef={triggerRef} onClose={() => { setOpen(false); setShowCustom(false); }}>
           <div className="tp-panel">
 
             {/* Header */}
@@ -696,8 +697,8 @@ export function TimePicker({ value, onChange, onDuration, placeholder = 'Selecci
               <span className="tp-panel-title">Tiempo</span>
               <button
                 className="tp-panel-dots" type="button"
-                aria-label="Duración"
-                onClick={() => setShowDuration(true)}
+                aria-label="Hora exacta"
+                onClick={() => setShowCustom(true)}
               >
                 <span className="tp-panel-dot" />
                 <span className="tp-panel-dot" />
@@ -721,11 +722,12 @@ export function TimePicker({ value, onChange, onDuration, placeholder = 'Selecci
               </button>
             </div>
 
-            {/* Duration modal — rendered in document.body via portal */}
-            {showDuration && (
-              <DurationModal
-                onClose={() => setShowDuration(false)}
-                onConfirm={handleDurationConfirm}
+            {/* Custom time modal — opens on ··· for exact minute selection */}
+            {showCustom && (
+              <CustomTimeModal
+                initialSlot={slot}
+                onClose={() => setShowCustom(false)}
+                onConfirm={handleCustomConfirm}
               />
             )}
 
