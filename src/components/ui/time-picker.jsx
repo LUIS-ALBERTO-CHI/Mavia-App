@@ -1,121 +1,197 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Clock, ChevronUp, ChevronDown } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
-// ─── Data ────────────────────────────────────────────────────────────────────
-const HOURS_12 = ['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'];
-const MINUTES  = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
+// ─── Constants ────────────────────────────────────────────────────────────────
+const ITEM_H    = 44;   // px per row in the drum
+const VISIBLE   = 5;    // rows visible at once (selected = middle)
+const DRUM_H    = ITEM_H * VISIBLE;
+const PAD       = ITEM_H * Math.floor(VISIBLE / 2); // top/bottom padding so first/last can center
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-function currentTimeDefaults() {
-  const now = new Date();
-  let h = now.getHours();
-  const m = String(now.getMinutes()).padStart(2, '0');
-  const period = h >= 12 ? 'PM' : 'AM';
-  if (h === 0) h = 12;
-  else if (h > 12) h -= 12;
-  return { hour12: String(h).padStart(2, '0'), minute: m, period };
-}
-
-function parseValue(v) {
-  if (!v) return currentTimeDefaults();
-  const upper = v.toUpperCase();
-  const [hStr, mStr] = v.replace(/[APM\s]/gi, '').split(':');
-  let h = parseInt(hStr, 10) || 9;
-  const mRaw = parseInt(mStr?.slice(0, 2) || '0', 10);
-  // Snap to nearest 5-min slot
-  const mSnapped = Math.min(55, Math.round(mRaw / 5) * 5);
-  const m = String(mSnapped).padStart(2, '0');
-  if (!upper.includes('AM') && !upper.includes('PM')) {
-    if (h === 0)     h = 12;
-    else if (h > 12) h -= 12;
+// Build all 5-minute slots: ["12:00 AM", "12:05 AM", ...]
+function buildSlots() {
+  const slots = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 5) {
+      const ap  = h >= 12 ? 'PM' : 'AM';
+      const h12 = h % 12 || 12;
+      slots.push(`${h12}:${String(m).padStart(2, '0')} ${ap}`);
+    }
   }
-  const hour12 = String(h).padStart(2, '0');
-  const minute = MINUTES.includes(m) ? m : '00';
-  return { hour12, minute, period: upper.includes('PM') ? 'PM' : (h >= 12 ? 'PM' : 'AM') };
+  return slots;
+}
+const SLOTS = buildSlots();
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+/**
+ * Converts a stored "HH:MM" (24h) or "h:mm AM/PM" string to the nearest slot string.
+ */
+function valueToSlot(v) {
+  if (!v || typeof v !== 'string') {
+    // Default to current rounded time
+    const now = new Date();
+    const h   = now.getHours();
+    const m   = Math.round(now.getMinutes() / 5) * 5 % 60;
+    const ap  = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    return `${h12}:${String(m).padStart(2, '0')} ${ap}`;
+  }
+  const upper = v.toUpperCase();
+  const cleaned = v.replace(/[APM\s]/gi, '');
+  const [hStr, mStr] = cleaned.split(':');
+  let h = parseInt(hStr, 10) || 0;
+  const mRaw = parseInt(mStr || '0', 10);
+  const mSnapped = Math.min(55, Math.round(mRaw / 5) * 5);
+  // Detect if it was already in 12h format
+  if (!upper.includes('AM') && !upper.includes('PM')) {
+    // 24h input — keep as is
+  } else {
+    // 12h — convert back
+    if (upper.includes('PM') && h !== 12) h += 12;
+    if (upper.includes('AM') && h === 12) h = 0;
+  }
+  const ap  = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(mSnapped).padStart(2, '0')} ${ap}`;
 }
 
-// ─── Spinner column with ▲ ▼ buttons ─────────────────────────────────────────
-function SpinnerColumn({ items, value, onChange, label }) {
-  const idx = items.indexOf(value);
+/**
+ * Converts "h:mm AM/PM" display string to "HH:MM" 24h for storage.
+ */
+function slotTo24h(slot) {
+  const parts = slot.split(' ');
+  const period = parts[1];
+  const [hStr, mStr] = parts[0].split(':');
+  let h = parseInt(hStr, 10);
+  if (period === 'PM' && h !== 12) h += 12;
+  if (period === 'AM' && h === 12) h = 0;
+  return `${String(h).padStart(2, '0')}:${mStr}`;
+}
 
-  const prev = () => onChange(items[(idx - 1 + items.length) % items.length]);
-  const next = () => onChange(items[(idx + 1) % items.length]);
+// ─── Drum Scroller ────────────────────────────────────────────────────────────
+function DrumScroller({ slots, value, onChange }) {
+  const containerRef = useRef(null);
+  const isScrolling  = useRef(false);
 
-  // Long-press support: hold button → repeat
-  const intervalRef = useRef(null);
-  const timeoutRef  = useRef(null);
-  // Track whether the last interaction was touch — if so, skip the synthetic click
-  const touchedRef  = useRef(false);
+  const idx = slots.indexOf(value);
 
-  const startRepeat = (fn) => {
-    fn(); // immediate first step
-    timeoutRef.current = setTimeout(() => {
-      intervalRef.current = setInterval(fn, 80);
-    }, 350);
-  };
+  // Scroll to correct position on open / value change (no animation on first mount)
+  const scrollTo = useCallback((index, animate = true) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const target = index * ITEM_H;
+    if (animate) {
+      el.scrollTo({ top: target, behavior: 'smooth' });
+    } else {
+      el.scrollTop = target;
+    }
+  }, []);
 
-  const stopRepeat = () => {
-    clearTimeout(timeoutRef.current);
-    clearInterval(intervalRef.current);
-  };
+  useEffect(() => {
+    scrollTo(Math.max(0, idx), false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Cleanup on unmount
-  useEffect(() => () => stopRepeat(), []);
+  useEffect(() => {
+    scrollTo(Math.max(0, idx), true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  // On scroll end — snap to nearest item
+  const handleScroll = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    clearTimeout(isScrolling.current);
+    isScrolling.current = setTimeout(() => {
+      const raw     = el.scrollTop;
+      const nearest = Math.round(raw / ITEM_H);
+      const clamped = Math.max(0, Math.min(slots.length - 1, nearest));
+      // snap back
+      el.scrollTo({ top: clamped * ITEM_H, behavior: 'smooth' });
+      onChange(slots[clamped]);
+    }, 80);
+  }, [slots, onChange]);
+
+  const handleClick = useCallback((index) => {
+    scrollTo(index, true);
+    onChange(slots[index]);
+  }, [slots, onChange, scrollTo]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-      {/* Label */}
-      {label && (
-        <div style={{
-          fontSize: '10px', fontWeight: 800, textTransform: 'uppercase',
-          letterSpacing: '0.1em', color: 'var(--on-surface-variant)', marginBottom: 2,
-        }}>
-          {label}
-        </div>
-      )}
+    <div style={{ position: 'relative', height: DRUM_H, overflow: 'hidden' }}>
+      {/* Selection highlight pill — fixed in the center */}
+      <div style={{
+        position: 'absolute',
+        left: 12, right: 12,
+        top: PAD,
+        height: ITEM_H,
+        background: 'var(--primary)',
+        borderRadius: 14,
+        pointerEvents: 'none',
+        zIndex: 1,
+      }} />
 
-      {/* Up button */}
-      <button
-        type="button"
-        className="tp-arrow-btn"
-        onMouseDown={() => { touchedRef.current = false; startRepeat(prev); }}
-        onMouseUp={stopRepeat}
-        onMouseLeave={stopRepeat}
-        onTouchStart={e => { e.preventDefault(); touchedRef.current = true; startRepeat(prev); }}
-        onTouchEnd={e => { e.preventDefault(); stopRepeat(); }}
-        onClick={() => { if (touchedRef.current) { touchedRef.current = false; return; } }}
-        aria-label="Anterior"
+      {/* Fade gradients top/bottom */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
+        background: `linear-gradient(to bottom,
+          var(--surface-container-lowest) 0%,
+          transparent ${100 * (PAD / DRUM_H)}%,
+          transparent ${100 * ((PAD + ITEM_H) / DRUM_H)}%,
+          var(--surface-container-lowest) 100%)`,
+      }} />
+
+      {/* Scrollable list */}
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        style={{
+          height: '100%',
+          overflowY: 'scroll',
+          scrollbarWidth: 'none',
+          paddingTop:    PAD,
+          paddingBottom: PAD,
+          position: 'relative',
+          zIndex: 0,
+        }}
       >
-        <ChevronUp size={22} strokeWidth={2.5} />
-      </button>
-
-      {/* Value display — shows prev / current / next for context */}
-      <div className="tp-spinner-track">
-        <div className="tp-ghost">{items[(idx - 1 + items.length) % items.length]}</div>
-        <div className="tp-value">{value}</div>
-        <div className="tp-ghost">{items[(idx + 1) % items.length]}</div>
+        {slots.map((slot, i) => {
+          const dist    = Math.abs(i - idx);
+          const opacity = dist === 0 ? 1 : dist === 1 ? 0.5 : 0.25;
+          const weight  = dist === 0 ? 700 : 400;
+          const color   = dist === 0 ? 'var(--on-primary)' : 'var(--on-surface)';
+          const size    = dist === 0 ? 17 : dist === 1 ? 15 : 13;
+          return (
+            <div
+              key={slot}
+              onClick={() => handleClick(i)}
+              style={{
+                height: ITEM_H,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: size,
+                fontWeight: weight,
+                fontFamily: 'var(--font-display)',
+                color,
+                opacity,
+                cursor: 'pointer',
+                userSelect: 'none',
+                position: 'relative',
+                zIndex: dist === 0 ? 3 : 0,
+                transition: 'opacity 0.15s, font-size 0.15s',
+              }}
+            >
+              {slot}
+            </div>
+          );
+        })}
       </div>
-
-      {/* Down button */}
-      <button
-        type="button"
-        className="tp-arrow-btn"
-        onMouseDown={() => { touchedRef.current = false; startRepeat(next); }}
-        onMouseUp={stopRepeat}
-        onMouseLeave={stopRepeat}
-        onTouchStart={e => { e.preventDefault(); touchedRef.current = true; startRepeat(next); }}
-        onTouchEnd={e => { e.preventDefault(); stopRepeat(); }}
-        onClick={() => { if (touchedRef.current) { touchedRef.current = false; return; } }}
-        aria-label="Siguiente"
-      >
-        <ChevronDown size={22} strokeWidth={2.5} />
-      </button>
     </div>
   );
 }
 
-// ─── Portal popover ───────────────────────────────────────────────────────────
+// ─── Popover ─────────────────────────────────────────────────────────────────
 function TimePopover({ triggerRef, onClose, children }) {
   const panelRef = useRef(null);
   const [pos, setPos] = useState({ top: 0, left: 0, width: 300 });
@@ -123,11 +199,11 @@ function TimePopover({ triggerRef, onClose, children }) {
   useEffect(() => {
     function place() {
       if (!triggerRef.current) return;
-      const r      = triggerRef.current.getBoundingClientRect();
-      const popH   = 340;
+      const r    = triggerRef.current.getBoundingClientRect();
+      const popH = 360;
       const spaceB = window.innerHeight - r.bottom - 12;
       const top    = spaceB >= popH ? r.bottom + 8 : r.top - popH - 8;
-      setPos({ top, left: r.left, width: Math.max(r.width, 300) });
+      setPos({ top, left: r.left, width: Math.max(r.width, 280) });
     }
     place();
     window.addEventListener('scroll', place, true);
@@ -146,7 +222,10 @@ function TimePopover({ triggerRef, onClose, children }) {
   }, [onClose, triggerRef]);
 
   return createPortal(
-    <div ref={panelRef} style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width, zIndex: 99999 }}>
+    <div ref={panelRef} style={{
+      position: 'fixed', top: pos.top, left: pos.left,
+      width: pos.width, zIndex: 99999,
+    }}>
       {children}
     </div>,
     document.body
@@ -155,7 +234,7 @@ function TimePopover({ triggerRef, onClose, children }) {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const TP_STYLES = `
-  /* Trigger button */
+  /* ── TimePicker trigger ── */
   .tp-trigger {
     display: flex; align-items: center; gap: 10px;
     width: 100%; padding: 12px 16px;
@@ -171,148 +250,98 @@ const TP_STYLES = `
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(112,87,101,0.1);
   }
-  .tp-icon { color: var(--primary); flex-shrink: 0; }
-  .tp-label { flex: 1; font-family: var(--font-display); font-size: var(--text-body-md); }
-  .tp-label.has-value { font-weight: 600; font-size: 1.05rem; }
+  .tp-icon   { color: var(--primary); flex-shrink: 0; }
+  .tp-label  { flex: 1; font-family: var(--font-display); font-size: var(--text-body-md); }
+  .tp-label.has-value { font-weight: 600; }
   .tp-period-badge {
     font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
     background: var(--primary-container); color: var(--primary);
     padding: 2px 8px; border-radius: 6px; flex-shrink: 0;
   }
 
-  /* Panel */
+  /* ── Panel ── */
   .tp-panel {
     background: var(--surface-container-lowest);
     border-radius: var(--radius-2xl);
     border: 1px solid rgba(208,195,200,0.22);
     box-shadow: 0 24px 64px rgba(112,87,101,0.22), 0 4px 16px rgba(112,87,101,0.1);
-    padding: 20px 16px 16px;
+    overflow: hidden;
     animation: tpIn 0.18s var(--ease-out) both;
   }
   @keyframes tpIn {
     from { opacity: 0; transform: translateY(-6px) scale(0.97); }
     to   { opacity: 1; transform: translateY(0)   scale(1); }
   }
+
+  /* ── Panel header ── */
+  .tp-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px 8px;
+  }
   .tp-panel-title {
-    font-family: var(--font-display); font-size: var(--text-headline-md);
-    font-weight: 500; color: var(--on-surface); text-align: center; margin-bottom: 20px;
+    font-family: var(--font-display); font-size: 16px;
+    font-weight: 700; color: var(--on-surface);
   }
-
-  /* Spinner row */
-  .tp-spinners {
-    display: flex; align-items: center; justify-content: center;
-    gap: 8px; margin-bottom: 20px;
-  }
-  .tp-sep {
-    font-family: var(--font-display); font-size: 2rem; font-weight: 300;
-    color: var(--on-surface-variant); padding: 0 2px; margin-top: 28px;
-    flex-shrink: 0;
-  }
-
-  /* Arrow buttons */
-  .tp-arrow-btn {
-    width: 48px; height: 40px; border-radius: var(--radius-lg);
-    border: none; cursor: pointer; display: flex;
-    align-items: center; justify-content: center;
+  .tp-panel-dots {
+    width: 30px; height: 30px; border-radius: 50%;
     background: var(--surface-container-high);
-    color: var(--on-surface-variant);
-    transition: all var(--transition-fast);
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    gap: 2px; flex-direction: row;
   }
-  .tp-arrow-btn:hover {
-    background: var(--primary-container);
-    color: var(--primary);
-    transform: scale(1.06);
-  }
-  .tp-arrow-btn:active {
-    transform: scale(0.94);
-    background: var(--primary);
-    color: var(--on-primary);
+  .tp-panel-dot {
+    width: 3px; height: 3px; border-radius: 50%;
+    background: var(--on-surface-variant);
   }
 
-  /* Spinner value track (prev / current / next) */
-  .tp-spinner-track {
-    display: flex; flex-direction: column; align-items: center;
+  /* ── Drum wrapper ── */
+  .tp-drum-wrap {
+    margin: 8px 16px;
     background: var(--surface-container);
-    border: 2px solid var(--primary-container);
     border-radius: var(--radius-xl);
-    padding: 4px 0; width: 64px; overflow: hidden;
-    gap: 0;
-  }
-  .tp-value {
-    font-family: var(--font-display); font-size: 2rem; font-weight: 700;
-    color: var(--primary); line-height: 1.1; padding: 4px 0;
-    width: 100%; text-align: center;
-    background: var(--primary-container);
-  }
-  .tp-ghost {
-    font-family: var(--font-display); font-size: 0.95rem; font-weight: 400;
-    color: var(--on-surface-variant); opacity: 0.5; line-height: 1;
-    padding: 5px 0; width: 100%; text-align: center;
+    overflow: hidden;
   }
 
-  /* AM/PM toggle */
-  .tp-ampm {
-    display: flex; gap: 8px; margin-bottom: 16px; padding: 3px;
-    background: var(--surface-container); border-radius: var(--radius-full);
+  /* ── Confirm ── */
+  .tp-confirm-row {
+    padding: 12px 16px 16px;
   }
-  .tp-ampm-btn {
-    flex: 1; padding: 9px 0; border-radius: var(--radius-full);
-    border: none; cursor: pointer; font-family: var(--font-body);
-    font-size: var(--text-label-md); font-weight: 700; letter-spacing: 0.04em;
-    transition: all var(--transition-spring);
-    background: none; color: var(--on-surface-variant);
-  }
-  .tp-ampm-btn.active {
-    background: var(--primary); color: var(--on-primary);
-    box-shadow: 0 4px 14px rgba(112,87,101,0.28);
-  }
-
-  /* Confirm */
   .tp-confirm {
-    width: 100%; padding: 13px; border-radius: var(--radius-full);
+    width: 100%; padding: 14px;
+    border-radius: var(--radius-full);
     background: var(--gradient-primary); color: white;
-    font-size: var(--text-label-md); font-weight: 700;
+    font-size: 15px; font-weight: 700;
     border: none; cursor: pointer;
     transition: all var(--transition-spring); letter-spacing: 0.02em;
   }
-  .tp-confirm:hover { opacity: 0.9; transform: translateY(-1px); }
+  .tp-confirm:hover  { opacity: 0.9; transform: translateY(-1px); }
   .tp-confirm:active { transform: scale(0.98); }
 `;
 
-// ─── Main TimePicker ──────────────────────────────────────────────────────────
+// ─── Main export ─────────────────────────────────────────────────────────────
 /**
- * TimePicker — 12-hour format with ▲▼ spinner buttons and AM/PM toggle
- * value:    "hh:mm AM" | "hh:mm PM"  (or 24h "HH:MM" — auto-detected)
- * onChange: ("hh:mm AM"|"hh:mm PM") => void
+ * TimePicker — drum scroll style matching iOS design.
+ * value:    "HH:MM" (24h) stored; displays as "h:mm AM/PM"
+ * onChange: ("HH:MM") => void
  */
 export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', id }) {
-  const parsed  = parseValue(value);
-  const [open,   setOpen]   = useState(false);
-  const [hour,   setHour]   = useState(parsed.hour12);
-  const [minute, setMinute] = useState(parsed.minute);
-  const [period, setPeriod] = useState(parsed.period);
-  const triggerRef = useRef(null);
+  const [open, setOpen]     = useState(false);
+  const [slot, setSlot]     = useState(() => valueToSlot(value));
+  const triggerRef          = useRef(null);
 
-  // Sync when external value changes
+  // Sync slot when external value changes
   useEffect(() => {
-    const p = parseValue(value);
-    setHour(p.hour12);
-    setMinute(p.minute);
-    setPeriod(p.period);
+    setSlot(valueToSlot(value));
   }, [value]);
 
   const handleConfirm = () => {
-    onChange(`${hour}:${minute} ${period}`);
+    onChange(slotTo24h(slot));
     setOpen(false);
   };
 
-  const displayLabel = value
-    ? (value.toUpperCase().includes('AM') || value.toUpperCase().includes('PM'))
-      ? value
-      : `${parsed.hour12}:${parsed.minute} ${parsed.period}`
-    : placeholder;
+  // Display label
+  const displayLabel = value ? valueToSlot(value) : placeholder;
+  const period       = value ? valueToSlot(value).split(' ')[1] : null;
 
   return (
     <>
@@ -328,32 +357,40 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
       >
         <Clock size={17} className="tp-icon" strokeWidth={1.75} />
         <span className={`tp-label${value ? ' has-value' : ''}`}>{displayLabel}</span>
-        {value && <span className="tp-period-badge">{parsed.period}</span>}
+        {period && <span className="tp-period-badge">{period}</span>}
       </button>
 
-      {/* Panel */}
+      {/* Popover */}
       {open && (
         <TimePopover triggerRef={triggerRef} onClose={() => setOpen(false)}>
           <div className="tp-panel">
-            <div className="tp-panel-title">Seleccionar hora</div>
 
-            {/* Spinners */}
-            <div className="tp-spinners">
-              <SpinnerColumn items={HOURS_12} value={hour}   onChange={setHour}   label="Hora" />
-              <span className="tp-sep">:</span>
-              <SpinnerColumn items={MINUTES}  value={minute} onChange={setMinute} label="Min" />
+            {/* Header */}
+            <div className="tp-panel-header">
+              <span className="tp-panel-title">Tiempo</span>
+              <button className="tp-panel-dots" type="button" aria-label="Opciones">
+                <span className="tp-panel-dot" />
+                <span className="tp-panel-dot" />
+                <span className="tp-panel-dot" />
+              </button>
             </div>
 
-            {/* AM / PM */}
-            <div className="tp-ampm">
-              <button type="button" className={`tp-ampm-btn${period === 'AM' ? ' active' : ''}`} onClick={() => setPeriod('AM')} id="tp-am">AM</button>
-              <button type="button" className={`tp-ampm-btn${period === 'PM' ? ' active' : ''}`} onClick={() => setPeriod('PM')} id="tp-pm">PM</button>
+            {/* Drum */}
+            <div className="tp-drum-wrap">
+              <DrumScroller
+                slots={SLOTS}
+                value={slot}
+                onChange={setSlot}
+              />
             </div>
 
             {/* Confirm */}
-            <button className="tp-confirm" type="button" onClick={handleConfirm} id="tp-confirm">
-              Confirmar — {hour}:{minute} {period}
-            </button>
+            <div className="tp-confirm-row">
+              <button className="tp-confirm" type="button" onClick={handleConfirm} id="tp-confirm">
+                Continuar — {slot}
+              </button>
+            </div>
+
           </div>
         </TimePopover>
       )}
