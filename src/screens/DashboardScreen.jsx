@@ -5,6 +5,7 @@ import { localToday } from '../lib/utils';
 import { Clock } from 'lucide-react';
 import PriorityBadge from '../components/PriorityBadge';
 import ChecklistConfirmModal from '../components/ChecklistConfirmModal';
+import HabitIcon from '../components/HabitIcon';
 import { useState } from 'react';
 
 function getGreeting() {
@@ -748,11 +749,10 @@ export default function DashboardScreen() {
                     background: `linear-gradient(135deg, ${habit.color}BB 0%, ${habit.color} 100%)`,
                   } : {}}
                 >
-                  <AppIcon
-                    name={habit.icon || 'star'}
+                  <HabitIcon
+                    id={habit.icon || 'meditation'}
                     size={20}
-                    color={habit.completedToday ? 'white' : 'var(--color-primary-dark)'}
-                    strokeWidth={1.75}
+                    color={habit.completedToday ? 'white' : habit.color || 'var(--primary)'}
                   />
                 </div>
                 <span className="habit-pill-label">{habit.name}</span>

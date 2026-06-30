@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Flame, CheckCircle2, Circle, Plus, Droplets, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import HabitIcon from '../components/HabitIcon';
 
 const DAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
@@ -10,17 +11,6 @@ const FREQ_LABEL = {
   weekdays: 'Lun – Vie',
   weekend:  'Fin de semana',
   custom:   'Personalizado',
-};
-
-/* Map icon id -> emoji (for backwards compat + new icons) */
-const ICON_EMOJI = {
-  meditation:'🌸', book:'📚', water:'💧', exercise:'🏋️', sleep:'🌙',
-  run:'🏃', gym:'🏋️', walk:'🚶', yoga:'🧘', stretch:'🤸', bike:'🚴',
-  journal:'📓', gratitude:'✨', breathe:'💨', no_phone:'📵', affirmation:'💬',
-  nap:'😴', early_rise:'🌅',
-  healthy_eat:'🥗', no_sugar:'🚫', vitamins:'💊',
-  deep_work:'🎯', planning:'📋', no_social:'🔇',
-  prayer:'🙏', connect:'💛', nature:'🌿',
 };
 
 export default function HabitsScreen() {
@@ -380,11 +370,14 @@ export default function HabitsScreen() {
                     className="hbt-card-icon"
                     style={{
                       background: habit.completedToday ? habit.color : `${habit.color}44`,
-                      fontSize: '22px',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   >
-                    {ICON_EMOJI[habit.icon] || '⭐'}
+                    <HabitIcon
+                      id={habit.icon}
+                      size={22}
+                      color={habit.completedToday ? '#fff' : habit.color}
+                    />
                   </div>
 
                   <div className="hbt-card-body">

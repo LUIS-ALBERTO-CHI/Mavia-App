@@ -1,47 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { ArrowLeft, Flame } from 'lucide-react';
-
-/* ─── Icon catalogue ─── */
-const HABIT_ICONS = [
-  // Ejercicio / Movimiento
-  { id: 'run',         label: 'Correr',        emoji: '🏃',  category: 'Ejercicio' },
-  { id: 'gym',         label: 'Gym',           emoji: '🏋️',  category: 'Ejercicio' },
-  { id: 'walk',        label: 'Caminar',       emoji: '🚶',  category: 'Ejercicio' },
-  { id: 'yoga',        label: 'Yoga',          emoji: '🧘',  category: 'Ejercicio' },
-  { id: 'stretch',     label: 'Estirar',       emoji: '🤸',  category: 'Ejercicio' },
-  { id: 'bike',        label: 'Bicicleta',     emoji: '🚴',  category: 'Ejercicio' },
-
-  // Mente / Bienestar mental
-  { id: 'meditation',  label: 'Meditar',       emoji: '🌸',  category: 'Mente' },
-  { id: 'journal',     label: 'Journaling',    emoji: '📓',  category: 'Mente' },
-  { id: 'gratitude',   label: 'Gratitud',      emoji: '✨',  category: 'Mente' },
-  { id: 'breathe',     label: 'Respirar',      emoji: '💨',  category: 'Mente' },
-  { id: 'no_phone',    label: 'Sin pantallas', emoji: '📵',  category: 'Mente' },
-  { id: 'affirmation', label: 'Afirmaciones',  emoji: '💬',  category: 'Mente' },
-
-  // Sueño / Descanso
-  { id: 'sleep',       label: 'Dormir 8h',     emoji: '🌙',  category: 'Sueño' },
-  { id: 'nap',         label: 'Siesta',        emoji: '😴',  category: 'Sueño' },
-  { id: 'early_rise',  label: 'Madrugar',      emoji: '🌅',  category: 'Sueño' },
-
-  // Nutrición / Agua
-  { id: 'water',       label: 'Agua',          emoji: '💧',  category: 'Nutrición' },
-  { id: 'healthy_eat', label: 'Comer sano',    emoji: '🥗',  category: 'Nutrición' },
-  { id: 'no_sugar',    label: 'Sin azúcar',    emoji: '🚫🍬', category: 'Nutrición' },
-  { id: 'vitamins',    label: 'Vitaminas',     emoji: '💊',  category: 'Nutrición' },
-
-  // Productividad
-  { id: 'deep_work',   label: 'Deep work',     emoji: '🎯',  category: 'Productividad' },
-  { id: 'book',        label: 'Leer',          emoji: '📚',  category: 'Productividad' },
-  { id: 'planning',    label: 'Planificar',    emoji: '📋',  category: 'Productividad' },
-  { id: 'no_social',   label: 'Sin redes',     emoji: '🔇',  category: 'Productividad' },
-
-  // Espiritual / Relaciones
-  { id: 'prayer',      label: 'Oración',       emoji: '🙏',  category: 'Espiritual' },
-  { id: 'connect',     label: 'Conectar',      emoji: '💛',  category: 'Espiritual' },
-  { id: 'nature',      label: 'Naturaleza',    emoji: '🌿',  category: 'Espiritual' },
-];
+import HabitIcon, { HABIT_CATALOGUE } from '../components/HabitIcon';
 
 const CATEGORIES = ['Ejercicio', 'Mente', 'Sueño', 'Nutrición', 'Productividad', 'Espiritual'];
 
@@ -115,7 +75,7 @@ export default function CreateHabitScreen() {
     }, 400);
   };
 
-  const filteredIcons = HABIT_ICONS.filter(h => h.category === activeCategory);
+  const filteredIcons = HABIT_CATALOGUE.filter(h => h.category === activeCategory);
 
   return (
     <>
@@ -360,7 +320,11 @@ export default function CreateHabitScreen() {
                 onClick={() => set('icon', h.id)}
                 id={`ch-icon-${h.id}`}
               >
-                <span className="ch-emoji">{h.emoji}</span>
+                <HabitIcon
+                  id={h.id}
+                  size={22}
+                  color={form.icon === h.id ? 'var(--primary)' : 'var(--on-surface-variant)'}
+                />
                 {h.label}
               </button>
             ))}
