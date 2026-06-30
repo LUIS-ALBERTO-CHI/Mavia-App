@@ -26,7 +26,10 @@ export default function HabitsScreen() {
 
   const handleToggle = (habit) => {
     dispatch({ type: 'TOGGLE_HABIT', id: habit.id });
-    if (!habit.completedToday) showToast(`¡${habit.name} completado!`, 'success');
+    if (!habit.completedToday) {
+      try { navigator.vibrate?.([30, 20, 60]); } catch {}  // #11 haptic
+      showToast(`${habit.name} completado`, 'success');
+    }
   };
 
   const handleToggleDay = (habit, dayIdx) => {

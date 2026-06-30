@@ -1,7 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
-import { Search, CheckCircle2, Calendar, BookOpen, Target, Clock, MapPin, TrendingUp, X, Dumbbell, Quote } from 'lucide-react';
+import { Search, CheckCircle2, Calendar, BookOpen, Target, Clock, MapPin, TrendingUp, X, Dumbbell, Quote, History } from 'lucide-react';
 import { formatTime12h } from '../lib/utils';
+
+const HISTORY_KEY = 'mavia_search_history';
+const MAX_HISTORY = 5;
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+}
+function saveHistory(items) {
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(items)); } catch {}
+}
 
 const CATEGORIES = [
   { id: 'tasks',   label: 'Tareas',    icon: CheckCircle2, color: 'var(--primary)',   bg: 'var(--primary-container)'   },
@@ -14,8 +24,27 @@ const CATEGORIES = [
 
 export default function SearchScreen() {
   const { state, navigate } = useApp();
-  const [query, setQuery] = useState('');
+  const [query, setQuery]         = useState('');
   const [activeCategory, setActiveCategory] = useState('tasks');
+  const [history, setHistory]     = useState(loadHistory);
+  const inputRef                  = useRef(null);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  const handleSearch = (q) => {
+    setQuery(q);
+    if (q.trim().length > 1) {
+      const updated = [q.trim(), ...history.filter(h => h !== q.trim())].slice(0, MAX_HISTORY);
+      setHistory(updated);
+      saveHistory(updated);
+    }
+  };
+
+  const removeHistory = (item) => {
+    const updated = history.filter(h => h !== item);
+    setHistory(updated);
+    saveHistory(updated);
+  };
 
   const q = query.toLowerCase().trim();
 
@@ -280,12 +309,12 @@ export default function SearchScreen() {
         <div className="srch-bar-wrap">
           <Search size={18} className="srch-bar-icon" />
           <input
+            ref={inputRef}
             className="srch-bar"
             type="text"
             placeholder="¿Qué estás buscando?"
             value={query}
-            onChange={e => setQuery(e.target.value)}
-            autoFocus
+            onChange={e => handleSearch(e.target.value)}
             id="search-input"
           />
           {query && (
@@ -294,6 +323,35 @@ export default function SearchScreen() {
             </button>
           )}
         </div>
+
+        {/* ── Search history (shown when query is empty) ── */}
+        {!query && history.length > 0 && (
+          <div style={{ marginBottom: 'var(--space-lg)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, color: 'var(--on-surface-variant)', fontSize: 12, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              <History size={13} strokeWidth={2} />
+              Recientes
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {history.map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', background: 'var(--surface-container)', borderRadius: 99, overflow: 'hidden' }}>
+                  <button
+                    onClick={() => setQuery(item)}
+                    style={{ background: 'none', border: 'none', padding: '6px 12px 6px 14px', fontSize: 13, fontFamily: 'var(--font-body)', color: 'var(--on-surface)', cursor: 'pointer', fontWeight: 500 }}
+                  >
+                    {item}
+                  </button>
+                  <button
+                    onClick={() => removeHistory(item)}
+                    style={{ background: 'none', border: 'none', padding: '6px 10px 6px 4px', cursor: 'pointer', color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center' }}
+                    aria-label={`Eliminar ${item}`}
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Category chips ── */}
         <div className="srch-cats">
@@ -317,15 +375,16 @@ export default function SearchScreen() {
         </div>
 
         {/* ── Idle state ── */}
-        {!q && (
-          <div className="srch-empty">
-            <div className="srch-empty-icon">
-              <Search size={38} color="var(--primary)" strokeWidth={1.25} />
-            </div>
-            <div className="srch-empty-title">¿Qué buscas?</div>
-            <p className="srch-empty-sub">
-            Escribe para buscar entre tus tareas, eventos, diario, hábitos, frases y objetivos.
-            </p>
+        {!q && history.length === 0 && (
+          <div className="empty-state" style={{ paddingTop: 'var(--space-xl)' }}>
+            <svg className="empty-state-illustration" viewBox="0 0 120 120" fill="none">
+              <circle cx="60" cy="55" r="32" stroke="var(--primary)" strokeWidth="4" strokeDasharray="6 4" opacity="0.4"/>
+              <circle cx="60" cy="55" r="20" fill="var(--primary-container)" />
+              <path d="M75 70 L90 85" stroke="var(--primary)" strokeWidth="5" strokeLinecap="round" opacity="0.5"/>
+              <circle cx="60" cy="55" r="8" fill="var(--primary)" opacity="0.6" />
+            </svg>
+            <p className="empty-state-title">Busca lo que necesitas</p>
+            <p className="empty-state-sub">Tareas, eventos, notas, hábitos y objetivos. Todo en un solo lugar.</p>
           </div>
         )}
 

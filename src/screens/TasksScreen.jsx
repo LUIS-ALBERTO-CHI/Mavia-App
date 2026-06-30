@@ -70,6 +70,9 @@ export default function TasksScreen() {
   const completed = filtered.filter(t => t.completed);
 
 
+  // #11 Haptic feedback helper
+  const haptic = (pattern = [40]) => { try { navigator.vibrate?.(pattern); } catch {} };
+
   const handleToggle = (id) => {
     const task = state.tasks.find(t => t.id === id);
     if (!task) return;
@@ -82,7 +85,8 @@ export default function TasksScreen() {
           pendingCount: pending.length,
           onConfirm: () => {
             dispatch({ type: 'TOGGLE_TASK', id });
-            showToast('¡Tarea completada! 🎉', 'success');
+            haptic([30, 20, 60]);  // #11 success pattern
+            showToast('¡Tarea completada!', 'success');
             setConfirmData(null);
           },
           onReview: () => {
@@ -96,7 +100,10 @@ export default function TasksScreen() {
     }
 
     dispatch({ type: 'TOGGLE_TASK', id });
-    if (!task.completed) showToast('¡Tarea completada! 🎉', 'success');
+    if (!task.completed) {
+      haptic([30, 20, 60]);  // #11 haptic
+      showToast('¡Tarea completada!', 'success');
+    }
   };
 
   const handleDelete = (id) => {
@@ -542,20 +549,18 @@ export default function TasksScreen() {
 
         {/* ── Empty state ── */}
         {filtered.length === 0 && (
-          <div className="ts-empty">
-            <div className="ts-empty-circle">
-              <LottieIcon name="flower" size={96} loop autoplay />
-            </div>
-            <div className="ts-empty-title">Todo en calma por aquí</div>
-            <p className="ts-empty-sub">
-              No tienes tareas pendientes en esta categoría.<br />Disfruta el momento.
-            </p>
-            <button
-              className="ts-empty-btn"
-              onClick={() => navigate('createTask')}
-              id="tasks-create-empty"
-            >
-              Crear Tarea
+          <div className="empty-state" style={{ animation: 'scaleIn 0.4s var(--ease-spring) both' }}>
+            <svg className="empty-state-illustration" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="60" cy="60" r="52" fill="var(--primary-container)" opacity="0.5" />
+              <path d="M38 55 L52 69 L82 39" stroke="var(--secondary)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="60" cy="28" r="6" fill="var(--primary-container)" />
+              <circle cx="88" cy="48" r="4" fill="var(--tertiary-container)" />
+              <circle cx="32" cy="80" r="5" fill="var(--secondary-container)" />
+            </svg>
+            <p className="empty-state-title">Todo en calma</p>
+            <p className="empty-state-sub">No hay tareas en esta categoría.<br />Disfruta el momento o crea una nueva.</p>
+            <button className="empty-state-cta" onClick={() => navigate('createTask')} id="tasks-create-empty">
+              Nueva tarea
             </button>
           </div>
         )}

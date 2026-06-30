@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { ArrowLeft, Calendar, Clock, Plus, X, UploadCloud, FileText, Bell } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -63,6 +63,8 @@ export default function CreateTaskScreen() {
   const [newCheck,  setNewCheck]  = useState('');
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
+  const [titleError, setTitleError] = useState(false);
+  const titleRef = useRef(null);
 
   const addCheckItem = () => {
     if (!newCheck.trim()) return;
@@ -74,7 +76,13 @@ export default function CreateTaskScreen() {
 
   const handleSave = (e) => {
     e.preventDefault();
-    if (!form.title.trim()) return;
+    if (!form.title.trim()) {
+      // #10 shake validation
+      setTitleError(true);
+      titleRef.current?.focus();
+      setTimeout(() => setTitleError(false), 600);
+      return;
+    }
     setSaving(true);
     // Include checklist in the saved task
     const taskData = { ...form, checklist };
@@ -409,8 +417,9 @@ export default function CreateTaskScreen() {
                 <div>
                   <label className="ct-field-label" htmlFor="ct-title">Título de la tarea</label>
                   <input
+                    ref={titleRef}
                     id="ct-title"
-                    className="ct-title-input"
+                    className={`ct-title-input${titleError ? ' input-shake' : ''}`}
                     placeholder="Ej. Estrategia de Marketing Q4"
                     value={form.title}
                     onChange={e => set('title', e.target.value)}

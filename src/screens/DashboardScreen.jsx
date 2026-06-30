@@ -2,10 +2,11 @@ import { useApp } from '../context/AppContext';
 import AppIcon from '../components/AppIcon';
 import LottieIcon from '../components/LottieIcon';
 import { localToday, formatTime12h } from '../lib/utils';
-import { Clock } from 'lucide-react';
+import { Clock, Zap } from 'lucide-react';
 import PriorityBadge from '../components/PriorityBadge';
 import ChecklistConfirmModal from '../components/ChecklistConfirmModal';
 import HabitIcon from '../components/HabitIcon';
+import FocusMode from '../components/FocusMode';
 import { useState } from 'react';
 
 function getGreeting() {
@@ -13,6 +14,25 @@ function getGreeting() {
   if (h < 12) return 'Buenos días';
   if (h < 18) return 'Buenas tardes';
   return 'Buenas noches';
+}
+
+function getMotivationalMessage(completedToday, totalToday, habitsDone, habitsTotal) {
+  const h = new Date().getHours();
+  const allTasksDone = totalToday > 0 && completedToday === totalToday;
+  const noTasks = totalToday === 0;
+  const allHabitsDone = habitsTotal > 0 && habitsDone === habitsTotal;
+
+  if (allTasksDone && allHabitsDone) return 'Hoy lo lograste todo. Eres increíble.';
+  if (allTasksDone) return 'Tareas completas. Ahora cuida tus hábitos.';
+  if (allHabitsDone) return 'Hábitos al 100%. Sigue con tus tareas.';
+  if (noTasks && h < 10) return 'Empieza el día con intención. ¿Qué quieres lograr?';
+  if (noTasks) return 'Tienes el día libre. Úsalo con propósito.';
+  if (completedToday === 0 && h > 16) return 'La tarde es tuya. Termina fuerte.';
+  if (completedToday === 0) return 'Cada gran logro empieza con el primer paso.';
+  const pct = Math.round((completedToday / totalToday) * 100);
+  if (pct >= 75) return `${pct}% logrado. Ya casi terminas, no pares.`;
+  if (pct >= 50) return `Mitad del camino. Mantén el ritmo.`;
+  return `${completedToday} de ${totalToday} listo. Sigue avanzando.`;
 }
 
 const CAT_DOTS = {
@@ -29,6 +49,7 @@ export default function DashboardScreen() {
   const { user, tasks, events, habits, phrases, darkMode } = state;
 
   const [confirmData, setConfirmData] = useState(null);
+  const [focusMode, setFocusMode]     = useState(false);
 
   const today = localToday();
   // Sort: Alta first, then Media, then Baja — within same priority, sort by time
@@ -153,6 +174,27 @@ export default function DashboardScreen() {
           font-weight: 500;
           letter-spacing: 0.02em;
         }
+
+        .dash-focus-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          background: linear-gradient(135deg, var(--primary) 0%, #9b6b8c 100%);
+          color: white;
+          border: none;
+          border-radius: 99px;
+          padding: 8px 14px;
+          font-size: 12px;
+          font-weight: 600;
+          font-family: var(--font-body);
+          cursor: pointer;
+          transition: transform var(--transition-spring), opacity var(--transition-fast);
+          box-shadow: 0 3px 12px rgba(112,87,101,0.3);
+          letter-spacing: 0.01em;
+          flex-shrink: 0;
+        }
+        .dash-focus-btn:hover { opacity: 0.9; transform: scale(1.04); }
+        .dash-focus-btn:active { transform: scale(0.96); }
 
         /* ---- Bento Grid ---- */
         .bento-grid {
@@ -519,6 +561,9 @@ export default function DashboardScreen() {
         }
       `}</style>
 
+      {/* #14 Focus Mode overlay */}
+      {focusMode && <FocusMode onClose={() => setFocusMode(false)} />}
+
       <div className="dash-content">
         {/* === GREETING === */}
         <section style={{ marginBottom: 'var(--space-xl)', animation: 'screenEnter 0.7s var(--ease-back) both' }}>
@@ -528,14 +573,24 @@ export default function DashboardScreen() {
                 {getGreeting()}, {user.firstName}
               </h2>
               <p className="dash-greeting-sub">
-                Hoy es un buen día para avanzar con propósito.
+                {getMotivationalMessage(completedToday, todayTasks.length, habits.filter(h => h.completedToday).length, habits.length)}
               </p>
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+            <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
               <div className="dash-tasks-badge">
                 <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--on-secondary-container)' }}>task_alt</span>
                 <span className="dash-tasks-badge-text">{pendingCount} Tareas hoy</span>
               </div>
+              <button
+                className="dash-focus-btn"
+                onClick={() => setFocusMode(true)}
+                id="dash-focus-mode"
+                title="Modo Enfoque"
+                aria-label="Activar modo enfoque"
+              >
+                <Zap size={14} strokeWidth={2.5} />
+                Enfocarme
+              </button>
             </div>
           </div>
 

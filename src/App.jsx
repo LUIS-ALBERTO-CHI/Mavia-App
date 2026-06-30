@@ -1,4 +1,4 @@
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState, useRef } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import './styles/design-system.css';
 
@@ -91,6 +91,16 @@ const MAIN_NAV = [
 // Screens that use the calendar FAB destination
 const CALENDAR_SCREENS = new Set(['calendar', 'events', 'createEvent', 'agenda']);
 
+// Screens that already have their own "Añadir" button — hide FAB to avoid confusion
+const SCREENS_WITH_OWN_ADD = new Set([
+  'habits', 'goals', 'journal', 'gratitude', 'createTask', 'createEvent',
+  'createHabit', 'createGoal', 'taskDetail', 'eventDetail', 'notifications',
+  'statistics', 'search', 'profile', 'settings', 'reminders',
+]);
+
+// Back-navigation screens (animate slide-back instead of slide-in)
+const DETAIL_SCREENS = new Set(['taskDetail', 'eventDetail', 'createTask', 'createEvent', 'createHabit', 'createGoal']);
+
 const SCREEN_TITLES = {
   dashboard: 'Mavia',
   agenda: 'Agenda del día',
@@ -128,8 +138,10 @@ function DesktopSidebar() {
       <div className="sidebar-brand">
         <div className="sidebar-brand-name">Mavia</div>
         <div className="sidebar-user">
-          <div className="sidebar-avatar">
-            {user.firstName?.[0] || 'A'}
+          <div className="sidebar-avatar" style={user.photoURL ? { overflow: 'hidden', padding: 0 } : {}}>
+            {user.photoURL
+              ? <img src={user.photoURL} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+              : (user.firstName?.[0] || 'A')}
           </div>
           <div>
             <div className="sidebar-user-name">{user.firstName || ''}</div>
@@ -312,15 +324,17 @@ function MobileBottomNav() {
         })}
       </nav>
 
-      {/* Floating action button — right side */}
-      <button
-        className="mobile-fab"
-        onClick={() => navigate(fabDest)}
-        id="bnav-fab"
-        aria-label="Crear"
-      >
-        <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>add</span>
-      </button>
+      {/* Floating action button — hidden on screens with their own add button */}
+      {!SCREENS_WITH_OWN_ADD.has(currentScreen) && (
+        <button
+          className="mobile-fab"
+          onClick={() => navigate(fabDest)}
+          id="bnav-fab"
+          aria-label="Crear"
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>add</span>
+        </button>
+      )}
     </div>
   );
 }
@@ -373,8 +387,19 @@ function Toast() {
    APP CONTENT
    ============================================ */
 function AppContent() {
-  const { state, navigate } = useApp();
+  const { state } = useApp();
   const { currentScreen, darkMode, authLoading } = state;
+  const prevScreenRef = useRef(currentScreen);
+  const [animClass, setAnimClass] = useState('screen-enter');
+
+  useEffect(() => {
+    const prev = prevScreenRef.current;
+    // Decide animation direction: detail screens slide in from right, back nav slides from left
+    const goingDeeper = DETAIL_SCREENS.has(currentScreen) && !DETAIL_SCREENS.has(prev);
+    const goingBack   = !DETAIL_SCREENS.has(currentScreen) && DETAIL_SCREENS.has(prev);
+    setAnimClass(goingBack ? 'screen-back' : 'screen-enter');
+    prevScreenRef.current = currentScreen;
+  }, [currentScreen]);
 
   // While Firebase checks the existing session, show splash
   if (authLoading) {
@@ -406,9 +431,11 @@ function AppContent() {
       {/* Mobile: fixed top bar */}
       <MobileTopBar />
 
-      {/* Main scrollable content */}
+      {/* Main scrollable content — keyed to trigger re-animation on screen change */}
       <main className="app-main">
-        <Screen />
+        <div key={currentScreen} className={animClass}>
+          <Screen />
+        </div>
       </main>
 
       {/* Mobile: bottom nav */}
