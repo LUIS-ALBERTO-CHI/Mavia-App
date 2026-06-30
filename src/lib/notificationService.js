@@ -175,17 +175,18 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
       if (fcmToken && !allTokens.includes(fcmToken)) allTokens.push(fcmToken);
 
       for (const tok of allTokens) {
-        // 15-minute warning
-        if (taskMs - 15 * 60 * 1000 > now) {
-          const warn15Dt   = new Date(taskMs - 15 * 60 * 1000);
-          const warn15Date = localDateStr(warn15Dt);
-          const warn15Time = `${String(warn15Dt.getHours()).padStart(2,'0')}:${String(warn15Dt.getMinutes()).padStart(2,'0')}`;
+        // Advance warning (user-configured offset)
+        const offsetMin = task.reminderOffset || 15;
+        if (taskMs - offsetMin * 60 * 1000 > now) {
+          const warnDt   = new Date(taskMs - offsetMin * 60 * 1000);
+          const warnDate = localDateStr(warnDt);
+          const warnTime = `${String(warnDt.getHours()).padStart(2,'0')}:${String(warnDt.getMinutes()).padStart(2,'0')}`;
           await createScheduledNotification({
             uid, fcmToken: tok,
-            title: `En 15 minutos: ${task.title}`,
+            title: `En ${offsetMin} minutos: ${task.title}`,
             body:  `Tu tarea comienza a las ${task.time}`,
-            scheduledDate: warn15Date,
-            scheduledTime: warn15Time,
+            scheduledDate: warnDate,
+            scheduledTime: warnTime,
             data: { taskId: task.id, type: 'task-warn' },
           });
         }
@@ -212,15 +213,16 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
   // This is the primary mechanism for on-device reminders and testing.
   const ids = [];
 
-  const warn15 = taskMs - 15 * 60 * 1000;
-  if (warn15 > now) {
+  const offsetMin = task.reminderOffset || 15;
+  const warnMs    = taskMs - offsetMin * 60 * 1000;
+  if (warnMs > now) {
     ids.push(setTimeout(() => {
       showNotification(
         'URGENTE',
-        `¡En 15 minutos: ${task.title}!\nComienza a las ${task.time}`,
+        `En ${offsetMin} min: ${task.title}\nComienza a las ${task.time}`,
         { tag: `task-warn-${task.id}` }
       );
-    }, warn15 - now));
+    }, warnMs - now));
   }
 
   if (taskMs > now) {

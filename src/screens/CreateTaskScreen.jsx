@@ -29,25 +29,27 @@ export default function CreateTaskScreen() {
 
   const [form, setForm] = useState(
     editTask ? {
-      title:       editTask.title || '',
-      description: editTask.description || '',
-      priority:    editTask.priority || 'media',
-      category:    editTask.category || 'Personal',
-      date:        editTask.date || today,
-      time:        editTask.time || '',
-      repeat:      editTask.repeat || 'No repetir',
-      reminder:    editTask.reminder || false,
-      color:       editTask.color || '#F8D7E8',
+      title:          editTask.title || '',
+      description:    editTask.description || '',
+      priority:       editTask.priority || 'media',
+      category:       editTask.category || 'Personal',
+      date:           editTask.date || today,
+      time:           editTask.time || '',
+      repeat:         editTask.repeat || 'No repetir',
+      reminder:       editTask.reminder || false,
+      reminderOffset: editTask.reminderOffset || 15,
+      color:          editTask.color || '#F8D7E8',
     } : {
-      title:       '',
-      description: '',
-      priority:    'media',
-      category:    'Personal',
-      date:        today,
-      time:        '',
-      repeat:      'No repetir',
-      reminder:    false,
-      color:       '#F8D7E8',
+      title:          '',
+      description:    '',
+      priority:       'media',
+      category:       'Personal',
+      date:           today,
+      time:           '',
+      repeat:         'No repetir',
+      reminder:       false,
+      reminderOffset: 15,
+      color:          '#F8D7E8',
     }
   );
 
@@ -514,6 +516,34 @@ export default function CreateTaskScreen() {
                 onCheckedChange={v => set('reminder', v)}
               />
             </div>
+
+            {/* Reminder offset pills — visible only when reminder is ON */}
+            {form.reminder && (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingLeft: '4px' }}>
+                {[5, 10, 15, 30, 60].map(min => (
+                  <button
+                    key={min}
+                    type="button"
+                    onClick={() => set('reminderOffset', min)}
+                    style={{
+                      padding: '5px 14px',
+                      borderRadius: '99px',
+                      border: `1.5px solid ${form.reminderOffset === min ? 'var(--tertiary)' : 'var(--outline-variant)'}`,
+                      background: form.reminderOffset === min ? 'rgba(242,226,177,0.3)' : 'none',
+                      color: form.reminderOffset === min ? 'var(--on-tertiary-container)' : 'var(--on-surface-variant)',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      fontFamily: 'var(--font-body)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                    }}
+                    id={`ct-offset-${min}`}
+                  >
+                    {min < 60 ? `${min} min` : '1 hora'}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Action buttons */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>

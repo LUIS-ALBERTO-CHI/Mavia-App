@@ -28,9 +28,10 @@ export default function TaskDetailScreen() {
   const taskId = screenParams?.taskId;
   const task   = tasks.find(t => t.id === taskId);
 
-  const [checklist, setChecklist] = useState(task?.checklist || []);
-  const [newCheck, setNewCheck]   = useState('');
-  const [notes, setNotes]         = useState('');
+  const [checklist, setChecklist]         = useState(task?.checklist || []);
+  const [newCheck, setNewCheck]           = useState('');
+  const [notes, setNotes]                 = useState('');
+  const [reminderChanging, setReminderChanging] = useState(false);
 
   // Helper: update local state + persist to Firestore immediately
   const saveChecklist = (updated) => {
@@ -678,11 +679,50 @@ export default function TaskDetailScreen() {
                   <div className="td-reminder-left">
                     <Bell size={20} color="var(--tertiary)" strokeWidth={1.5} />
                     <span className="td-reminder-label">
-                      {task.reminder ? '15 minutos antes' : 'Sin recordatorio'}
+                      {task.reminder
+                        ? `${task.reminderOffset || 15} minutos antes`
+                        : 'Sin recordatorio'}
                     </span>
                   </div>
-                  <button className="td-reminder-change">Cambiar</button>
+                  {task.reminder && (
+                    <button
+                      className="td-reminder-change"
+                      onClick={() => setReminderChanging(v => !v)}
+                    >Cambiar</button>
+                  )}
                 </div>
+
+                {/* Inline offset picker */}
+                {task.reminder && reminderChanging && (
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
+                    {[5, 10, 15, 30, 60].map(min => {
+                      const selected = (task.reminderOffset || 15) === min;
+                      return (
+                        <button
+                          key={min}
+                          onClick={() => {
+                            dispatch({ type: 'UPDATE_TASK', task: { ...task, reminderOffset: min } });
+                            setReminderChanging(false);
+                          }}
+                          style={{
+                            padding: '5px 14px',
+                            borderRadius: '99px',
+                            border: `1.5px solid ${selected ? 'var(--tertiary)' : 'var(--outline-variant)'}`,
+                            background: selected ? 'rgba(242,226,177,0.35)' : 'none',
+                            color: selected ? 'var(--on-tertiary-container)' : 'var(--on-surface-variant)',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            fontFamily: 'var(--font-body)',
+                            cursor: 'pointer',
+                          }}
+                          id={`td-offset-${min}`}
+                        >
+                          {min < 60 ? `${min} min` : '1 hora'}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </section>
 
             </div>
