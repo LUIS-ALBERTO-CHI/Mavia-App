@@ -20,7 +20,7 @@ export default function HabitsScreen() {
 
   const totalDone   = habits.filter(h => h.completedToday).length;
   const pct         = habits.length ? Math.round((totalDone / habits.length) * 100) : 0;
-  const maxStreak   = habits.length ? Math.max(...habits.map(h => h.streak)) : 0;
+  const maxStreak   = habits.length ? Math.max(...habits.map(h => Number(h.streak) || 0)) : 0;
   const todayDotIdx = (new Date().getDay() + 6) % 7; // Mon=0 … Sun=6
 
   const handleToggle = (habit) => {
@@ -384,7 +384,7 @@ export default function HabitsScreen() {
                     <div className="hbt-card-name">{habit.name}</div>
                     <div className="hbt-card-streak">
                       <Flame size={13} strokeWidth={2} />
-                      {habit.streak} días &nbsp;·&nbsp;
+                      {Number(habit.streak) || 0} días &nbsp;·&nbsp;
                       <span style={{ fontWeight: 400, opacity: 0.75 }}>
                         {FREQ_LABEL[habit.frequency] || 'Todos los días'}
                       </span>

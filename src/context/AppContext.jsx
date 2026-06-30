@@ -615,7 +615,8 @@ export function AppProvider({ children }) {
             const newCompleted = !h.completedToday;
             const weekData = [...(h.weekData || Array(7).fill(false))];
             weekData[todayIdx] = newCompleted;
-            await saveHabit(uid, { ...h, completedToday: newCompleted, streak: newCompleted ? h.streak + 1 : Math.max(0, h.streak - 1), weekData });
+            const safeStreak = Number(h.streak) || 0;
+            await saveHabit(uid, { ...h, completedToday: newCompleted, streak: newCompleted ? safeStreak + 1 : Math.max(0, safeStreak - 1), weekData });
           }
           break;
         }

@@ -2,7 +2,7 @@ import { useApp } from '../context/AppContext';
 import { Flame, CheckCircle2, Target, Headphones, TrendingUp, Award, BarChart2 } from 'lucide-react';
 import { Progress } from '../components/ui/progress';
 
-/* ── Stat KPI card ── */
+/* ── KPI card ── */
 function KpiCard({ icon: Icon, iconColor, iconBg, label, value, sub, wide }) {
   return (
     <div
@@ -29,7 +29,7 @@ function WeekChart({ data, labels, highlight }) {
   return (
     <div className="st-bar-chart">
       {data.map((v, i) => {
-        const pct = Math.round((v / max) * 100);
+        const pct   = Math.round((v / max) * 100);
         const isHigh = i === highlight;
         return (
           <div key={i} className="st-bar-col">
@@ -57,17 +57,18 @@ function WeekChart({ data, labels, highlight }) {
 /* ── Habit week dots ── */
 function HabitRow({ habit }) {
   const days = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+  const streak = habit.streak || 0;
   return (
     <div className="st-habit-row">
       <div className="st-habit-info">
         <span className="st-habit-name">{habit.name}</span>
         <span className="st-habit-streak">
           <Flame size={13} color="#E56B4E" strokeWidth={2} />
-          {habit.streak} días
+          {streak} días
         </span>
       </div>
       <div className="st-habit-dots">
-        {(habit.weekData || [false,false,false,false,false,false,false]).map((done, i) => (
+        {(habit.weekData || Array(7).fill(false)).map((done, i) => (
           <div
             key={i}
             className={`st-dot${done ? ' done' : ''}`}
@@ -81,28 +82,57 @@ function HabitRow({ habit }) {
 }
 
 const WEEK_LABELS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-const MOCK_WEEK   = [4, 6, 3, 8, 5, 2, 7];
 
-const CAT_BAR = {
-  Marketing:  'var(--secondary)',
-  Personal:   'var(--primary)',
-  Espiritual: 'var(--tertiary)',
-  Trabajo:    '#4a6fa5',
-};
+/* ── Compute tasks completed per weekday THIS week (Mon–Sun) ── */
+function getWeekTaskCounts(tasks) {
+  const now   = new Date();
+  const day   = now.getDay();           // 0=Sun … 6=Sat
+  const mon   = new Date(now);
+  mon.setDate(now.getDate() - ((day + 6) % 7)); // Monday of current week
+  mon.setHours(0, 0, 0, 0);
+
+  const counts = Array(7).fill(0);
+
+  tasks.forEach(t => {
+    if (!t.completed) return;
+    const d = t.dueDate || t.date || t.completedAt;
+    if (!d) return;
+    const dt = new Date(d);
+    dt.setHours(0, 0, 0, 0);
+    const diff = Math.round((dt - mon) / 86400000); // days from Monday
+    if (diff >= 0 && diff < 7) counts[diff]++;
+  });
+
+  return counts;
+}
 
 export default function StatisticsScreen() {
   const { state } = useApp();
   const { tasks, habits, goals, meditations } = state;
 
-  const totalTasks      = tasks.length;
-  const completedTasks  = tasks.filter(t => t.completed).length;
-  const completionRate  = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  const habitsDoneToday = habits.filter(h => h.completedToday).length;
-  const avgGoal         = goals.length ? Math.round(goals.reduce((a, g) => a + g.progress, 0) / goals.length) : 0;
-  const maxStreak       = habits.length ? Math.max(...habits.map(h => h.streak)) : 0;
-  const totalMedPlays   = meditations.reduce((a, m) => a + (m.plays || 0), 0);
+  // ── Tasks ──
+  const totalTasks     = tasks.length;
+  const completedTasks = tasks.filter(t => t.completed).length;
+  const completionRate = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-  const todayIdx = (new Date().getDay() + 6) % 7; // Mon=0
+  // ── Habits ──
+  const habitsDoneToday = habits.filter(h => h.completedToday).length;
+  // Guard: streak may be undefined if older Firestore docs lack the field
+  const maxStreak = habits.length
+    ? Math.max(...habits.map(h => Number(h.streak) || 0))
+    : 0;
+
+  // ── Goals ──
+  const avgGoal = goals.length
+    ? Math.round(goals.reduce((a, g) => a + (Number(g.progress) || 0), 0) / goals.length)
+    : 0;
+
+  // ── Meditations ──
+  const totalMedPlays = meditations.reduce((a, m) => a + (m.plays || 0), 0);
+
+  // ── Weekly chart data (real) ──
+  const weekCounts = getWeekTaskCounts(tasks);
+  const todayIdx   = (new Date().getDay() + 6) % 7; // Mon=0
 
   return (
     <>
@@ -164,51 +194,35 @@ export default function StatisticsScreen() {
           border: none;
         }
         @media (min-width: 640px) {
-          .st-kpi.wide {
-            grid-column: span 2;
-          }
+          .st-kpi.wide { grid-column: span 2; }
         }
 
         .st-kpi-icon {
-          width: 44px;
-          height: 44px;
+          width: 44px; height: 44px;
           border-radius: var(--radius-xl);
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
         }
-
         .st-kpi.wide .st-kpi-icon {
-          width: 60px;
-          height: 60px;
+          width: 60px; height: 60px;
           background: var(--surface-container-low) !important;
         }
-
         .st-kpi-body { flex: 1; }
-
         .st-kpi-val {
           font-family: var(--font-display);
-          font-size: 2.2rem;
-          font-weight: 500;
+          font-size: 2.2rem; font-weight: 500;
           color: var(--on-surface);
-          line-height: 1;
-          margin-bottom: 4px;
+          line-height: 1; margin-bottom: 4px;
         }
-
         .st-kpi.wide .st-kpi-val { font-size: 3rem; }
-
         .st-kpi-label {
-          font-size: var(--text-label-md);
-          font-weight: 600;
+          font-size: var(--text-label-md); font-weight: 600;
           color: var(--on-surface-variant);
         }
-
         .st-kpi-sub {
           font-size: var(--text-label-sm);
           color: var(--on-surface-variant);
-          margin-top: 3px;
-          opacity: 0.8;
+          margin-top: 3px; opacity: 0.8;
         }
 
         /* ── Section card ── */
@@ -220,157 +234,103 @@ export default function StatisticsScreen() {
           border: 1px solid rgba(208,195,200,0.12);
           box-shadow: 0 4px 20px rgba(112,87,101,0.04);
         }
-
         .st-section-head {
-          display: flex;
-          align-items: center;
-          gap: var(--space-md);
-          margin-bottom: var(--space-xl);
+          display: flex; align-items: center;
+          gap: var(--space-md); margin-bottom: var(--space-xl);
         }
         .st-section-icon {
-          width: 36px;
-          height: 36px;
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          width: 36px; height: 36px; border-radius: 10px;
+          display: flex; align-items: center; justify-content: center;
         }
         .st-section-title {
           font-family: var(--font-display);
-          font-size: var(--text-headline-md);
-          font-weight: 500;
+          font-size: var(--text-headline-md); font-weight: 500;
           color: var(--on-surface);
         }
 
         /* ── Bar chart ── */
         .st-bar-chart {
-          display: flex;
-          align-items: flex-end;
-          gap: var(--space-sm);
-          height: 120px;
+          display: flex; align-items: flex-end;
+          gap: var(--space-sm); height: 120px;
         }
-
         .st-bar-col {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 4px;
-          height: 100%;
+          flex: 1; display: flex; flex-direction: column;
+          align-items: center; gap: 4px; height: 100%;
         }
-
         .st-bar-val {
-          font-size: 9px;
-          font-weight: 700;
+          font-size: 9px; font-weight: 700;
           color: var(--on-surface-variant);
-          min-height: 12px;
-          line-height: 1;
+          min-height: 12px; line-height: 1;
         }
-
         .st-bar-track {
-          flex: 1;
-          width: 100%;
-          display: flex;
-          align-items: flex-end;
-          border-radius: 6px;
-          overflow: hidden;
+          flex: 1; width: 100%;
+          display: flex; align-items: flex-end;
+          border-radius: 6px; overflow: hidden;
         }
-
         .st-bar-fill {
-          width: 100%;
-          border-radius: 6px 6px 0 0;
-          transition: height 0.9s var(--ease-out);
-          min-height: 4px;
+          width: 100%; border-radius: 6px 6px 0 0;
+          transition: height 0.9s var(--ease-out); min-height: 4px;
         }
-
         .st-bar-day {
-          font-size: 10px;
-          font-weight: 700;
-          color: var(--on-surface-variant);
-          text-align: center;
+          font-size: 10px; font-weight: 700;
+          color: var(--on-surface-variant); text-align: center;
         }
 
-        /* ── Goals progress rows ── */
-        .st-goal-row {
-          margin-bottom: var(--space-lg);
-        }
+        /* ── Goals ── */
+        .st-goal-row { margin-bottom: var(--space-lg); }
         .st-goal-row:last-child { margin-bottom: 0; }
-
         .st-goal-meta {
-          display: flex;
-          justify-content: space-between;
-          align-items: baseline;
-          margin-bottom: 6px;
+          display: flex; justify-content: space-between;
+          align-items: baseline; margin-bottom: 6px;
         }
         .st-goal-name {
-          font-size: var(--text-label-md);
-          font-weight: 600;
-          color: var(--on-surface);
-          flex: 1;
+          font-size: var(--text-label-md); font-weight: 600;
+          color: var(--on-surface); flex: 1;
           margin-right: var(--space-md);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .st-goal-pct {
           font-family: var(--font-display);
-          font-size: var(--text-headline-md);
-          font-weight: 500;
-          color: var(--primary);
-          flex-shrink: 0;
+          font-size: var(--text-headline-md); font-weight: 500;
+          color: var(--primary); flex-shrink: 0;
         }
 
         /* ── Habit rows ── */
         .st-habit-row {
-          display: flex;
-          align-items: center;
+          display: flex; align-items: center;
           justify-content: space-between;
           padding: 10px 0;
           border-bottom: 1px solid rgba(208,195,200,0.15);
           gap: var(--space-md);
         }
         .st-habit-row:last-child { border-bottom: none; }
-
         .st-habit-info {
-          display: flex;
-          align-items: center;
-          gap: var(--space-sm);
-          min-width: 0;
+          display: flex; align-items: center;
+          gap: var(--space-sm); min-width: 0;
         }
         .st-habit-name {
-          font-size: var(--text-label-md);
-          font-weight: 600;
+          font-size: var(--text-label-md); font-weight: 600;
           color: var(--on-surface);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .st-habit-streak {
-          display: flex;
-          align-items: center;
-          gap: 3px;
-          font-size: var(--text-label-sm);
-          font-weight: 600;
-          color: var(--on-surface-variant);
-          flex-shrink: 0;
+          display: flex; align-items: center; gap: 3px;
+          font-size: var(--text-label-sm); font-weight: 600;
+          color: var(--on-surface-variant); flex-shrink: 0;
         }
-
-        .st-habit-dots {
-          display: flex;
-          gap: 5px;
-          flex-shrink: 0;
-        }
-
+        .st-habit-dots { display: flex; gap: 5px; flex-shrink: 0; }
         .st-dot {
-          width: 24px;
-          height: 24px;
-          border-radius: 7px;
+          width: 24px; height: 24px; border-radius: 7px;
           background: var(--surface-container);
           transition: all var(--transition-fast);
         }
+        .st-dot.done { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
 
-        .st-dot.done {
-          box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        /* ── Empty state ── */
+        .st-empty {
+          text-align: center; padding: 24px 0;
+          color: var(--on-surface-variant);
+          font-size: var(--text-body-md); opacity: 0.7;
         }
 
         @media (max-width: 480px) {
@@ -388,7 +348,7 @@ export default function StatisticsScreen() {
         {/* ── KPI Grid ── */}
         <div className="st-kpi-grid">
 
-          {/* Wide hero card */}
+          {/* Wide: tasks */}
           <KpiCard
             wide
             icon={CheckCircle2}
@@ -396,18 +356,24 @@ export default function StatisticsScreen() {
             iconBg="rgba(255,255,255,0.18)"
             value={`${completedTasks} / ${totalTasks}`}
             label="Tareas completadas"
-            sub={`${completionRate}% del total · Sigue así 🌸`}
+            sub={
+              totalTasks === 0
+                ? 'Aún no tienes tareas'
+                : `${completionRate}% del total · ${completionRate === 100 ? '¡Perfecto! 🌸' : 'Sigue así 💪'}`
+            }
           />
 
+          {/* Streak */}
           <KpiCard
             icon={Flame}
             iconColor="#E56B4E"
             iconBg="rgba(229,107,78,0.12)"
             value={maxStreak}
             label="Racha máxima"
-            sub="días seguidos"
+            sub={maxStreak === 1 ? 'día seguido' : 'días seguidos'}
           />
 
+          {/* Meditations */}
           <KpiCard
             icon={Headphones}
             iconColor="var(--primary)"
@@ -417,6 +383,7 @@ export default function StatisticsScreen() {
             sub="sesiones totales"
           />
 
+          {/* Habits today */}
           <KpiCard
             icon={CheckCircle2}
             iconColor="var(--secondary)"
@@ -426,6 +393,7 @@ export default function StatisticsScreen() {
             sub="completados"
           />
 
+          {/* Goals avg */}
           <KpiCard
             icon={Target}
             iconColor="var(--tertiary)"
@@ -437,15 +405,19 @@ export default function StatisticsScreen() {
 
         </div>
 
-        {/* ── Weekly bar chart ── */}
+        {/* ── Weekly bar chart (real data) ── */}
         <div className="st-section">
           <div className="st-section-head">
             <div className="st-section-icon" style={{ background: 'var(--primary-container)' }}>
               <BarChart2 size={18} color="var(--primary)" strokeWidth={1.75} />
             </div>
-            <span className="st-section-title">Tareas por día — esta semana</span>
+            <span className="st-section-title">Tareas completadas — esta semana</span>
           </div>
-          <WeekChart data={MOCK_WEEK} labels={WEEK_LABELS} highlight={todayIdx} />
+          {weekCounts.every(v => v === 0) ? (
+            <p className="st-empty">No hay tareas completadas esta semana</p>
+          ) : (
+            <WeekChart data={weekCounts} labels={WEEK_LABELS} highlight={todayIdx} />
+          )}
         </div>
 
         {/* ── Goals progress ── */}
@@ -456,22 +428,26 @@ export default function StatisticsScreen() {
             </div>
             <span className="st-section-title">Progreso de objetivos</span>
           </div>
-          {goals.map(g => (
-            <div key={g.id} className="st-goal-row">
-              <div className="st-goal-meta">
-                <span className="st-goal-name">{g.title}</span>
-                <span className="st-goal-pct">{g.progress}%</span>
+          {goals.length === 0 ? (
+            <p className="st-empty">Aún no tienes objetivos</p>
+          ) : (
+            goals.map(g => (
+              <div key={g.id} className="st-goal-row">
+                <div className="st-goal-meta">
+                  <span className="st-goal-name">{g.title}</span>
+                  <span className="st-goal-pct">{Number(g.progress) || 0}%</span>
+                </div>
+                <Progress
+                  value={Number(g.progress) || 0}
+                  color={
+                    g.category === 'Marketing'  ? 'secondary'  :
+                    g.category === 'Personal'   ? 'primary'    :
+                    g.category === 'Espiritual' ? 'tertiary'   : 'primary'
+                  }
+                />
               </div>
-              <Progress
-                value={g.progress}
-                color={
-                  g.category === 'Marketing'  ? 'secondary'  :
-                  g.category === 'Personal'   ? 'primary'    :
-                  g.category === 'Espiritual' ? 'tertiary'   : 'primary'
-                }
-              />
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         {/* ── Habits week grid ── */}
@@ -482,7 +458,11 @@ export default function StatisticsScreen() {
             </div>
             <span className="st-section-title">Hábitos — Semana actual</span>
           </div>
-          {habits.map(h => <HabitRow key={h.id} habit={h} />)}
+          {habits.length === 0 ? (
+            <p className="st-empty">Aún no tienes hábitos</p>
+          ) : (
+            habits.map(h => <HabitRow key={h.id} habit={h} />)
+          )}
         </div>
 
       </div>
