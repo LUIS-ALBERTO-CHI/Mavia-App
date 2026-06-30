@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import LottieIcon from '../components/LottieIcon';
 import { Search, Clock, MoreVertical, Check, AlertCircle, Minus, ChevronsDown } from 'lucide-react';
 import { localToday, localDateOffset } from '../lib/utils';
+import PriorityBadge from '../components/PriorityBadge';
 
 const FILTERS = ['Hoy', 'Mañana', 'Semana', 'Urgentes', 'Marketing', 'Personal', 'Espiritual'];
 
@@ -293,26 +294,6 @@ export default function TasksScreen() {
           flex-shrink: 0;
         }
 
-        /* Priority pills — icon + text style */
-        .ts-priority-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 3px 9px;
-          border-radius: 9999px;
-          font-size: var(--text-label-sm);
-          font-weight: 700;
-          flex-shrink: 0;
-        }
-        .ts-priority-pill .pip-icon {
-          font-size: 11px;
-          line-height: 1;
-          font-style: normal;
-        }
-        .ts-priority-alta  { background: rgba(186,26,26,0.10);  color: #ba1a1a; }
-        .ts-priority-media { background: rgba(120,100,60,0.10); color: #7a6234; }
-        .ts-priority-baja  { background: rgba(84,99,71,0.12);   color: var(--secondary); }
-
         /* Time pill */
         .ts-time {
           display: inline-flex;
@@ -555,25 +536,8 @@ function TaskCard({ task, onToggle, onDelete, onOpen }) {
               {task.category}
             </span>
           )}
-          {/* Priority pill: SVG icon + text */}
-          {task.priority === 'alta' && (
-            <span className="ts-priority-pill ts-priority-alta">
-              <AlertCircle size={11} strokeWidth={2.5} />
-              Alta
-            </span>
-          )}
-          {task.priority === 'media' && (
-            <span className="ts-priority-pill ts-priority-media">
-              <Minus size={11} strokeWidth={2.5} />
-              Media
-            </span>
-          )}
-          {task.priority === 'baja' && (
-            <span className="ts-priority-pill ts-priority-baja">
-              <ChevronsDown size={11} strokeWidth={2.5} />
-              Baja
-            </span>
-          )}
+          {/* Priority badge via shared component */}
+          {task.priority && <PriorityBadge priority={task.priority} />}
           {/* Time pill */}
           {(task.time || task.date) && (
             <span className="ts-time">

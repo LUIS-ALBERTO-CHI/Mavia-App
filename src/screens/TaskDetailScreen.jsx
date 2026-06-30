@@ -8,6 +8,7 @@ import {
 import { Button } from '../components/ui/button';
 import { Checkbox } from '../components/ui/checkbox';
 import { Progress } from '../components/ui/progress';
+import PriorityBadge from '../components/PriorityBadge';
 import { Badge } from '../components/ui/badge';
 
 const CAT_STYLE = {
@@ -555,15 +556,7 @@ export default function TaskDetailScreen() {
             )}
 
             {/* Priority badge */}
-            {task.priority === 'alta' && (
-              <span style={{ padding: '3px 10px', borderRadius: '99px', fontSize: 'var(--text-label-sm)', fontWeight: 700, background: 'rgba(186,26,26,0.1)', color: 'var(--error)' }}>Alta</span>
-            )}
-            {task.priority === 'media' && (
-              <span style={{ padding: '3px 10px', borderRadius: '99px', fontSize: 'var(--text-label-sm)', fontWeight: 700, background: 'rgba(242,226,177,0.3)', color: 'var(--on-tertiary-container)' }}>Media</span>
-            )}
-            {task.priority === 'baja' && (
-              <span style={{ padding: '3px 10px', borderRadius: '99px', fontSize: 'var(--text-label-sm)', fontWeight: 700, background: 'rgba(84,99,71,0.12)', color: 'var(--secondary)' }}>Baja</span>
-            )}
+            {task.priority && <PriorityBadge priority={task.priority} size="md" />}
 
             {/* Repeat badge */}
             {task.repeat && task.repeat !== 'No repetir' && (

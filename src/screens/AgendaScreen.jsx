@@ -1,4 +1,5 @@
 import { useApp } from '../context/AppContext';
+import PriorityBadge from '../components/PriorityBadge';
 
 const EVENT_COLORS = {
   reunión:   { bg: '#EDE7F6', text: '#6B3FA0' },
@@ -225,15 +226,7 @@ export default function AgendaScreen() {
                       ) : (
                         <>
                           <span>{item.category}</span>
-                          <span
-                            className="timeline-badge"
-                            style={{
-                              background: item.priority === 'alta' ? '#FFD6EC' : item.priority === 'media' ? '#FDF3DC' : '#E8F5E4',
-                              color: item.priority === 'alta' ? '#8E3F6D' : item.priority === 'media' ? '#8A5A00' : '#3D6B35',
-                            }}
-                          >
-                            {item.priority}
-                          </span>
+                          {item.priority && <PriorityBadge priority={item.priority} />}
                         </>
                       )}
                     </div>

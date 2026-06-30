@@ -2,7 +2,8 @@ import { useApp } from '../context/AppContext';
 import AppIcon from '../components/AppIcon';
 import LottieIcon from '../components/LottieIcon';
 import { localToday } from '../lib/utils';
-import { AlertCircle, Minus, ChevronsDown, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
+import PriorityBadge from '../components/PriorityBadge';
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -408,9 +409,6 @@ export default function DashboardScreen() {
           white-space: nowrap;
         }
         .ti-cat   { background: var(--surface-container-high); color: var(--on-surface-variant); }
-        .ti-alta  { background: rgba(186,26,26,0.10);  color: #ba1a1a; font-weight: 700; }
-        .ti-media { background: rgba(120,100,60,0.10); color: #7a6234; font-weight: 700; }
-        .ti-baja  { background: rgba(84,99,71,0.12);  color: var(--secondary); font-weight: 700; }
         .ti-time  { background: var(--surface-container-high); color: var(--on-surface-variant); }
         .ti-dot   { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 
@@ -680,10 +678,8 @@ export default function DashboardScreen() {
                               {task.category}
                             </span>
                           )}
-                          {/* Priority */}
-                          {task.priority === 'alta'  && <span className="ti-pill ti-alta"><AlertCircle size={10} strokeWidth={2.5} /> Alta</span>}
-                          {task.priority === 'media' && <span className="ti-pill ti-media"><Minus size={10} strokeWidth={2.5} /> Media</span>}
-                          {task.priority === 'baja'  && <span className="ti-pill ti-baja"><ChevronsDown size={10} strokeWidth={2.5} /> Baja</span>}
+                          {/* Priority via shared component */}
+                          {task.priority && <PriorityBadge priority={task.priority} />}
                           {/* Time */}
                           {(task.time || task.date) && (
                             <span className="ti-pill ti-time">
