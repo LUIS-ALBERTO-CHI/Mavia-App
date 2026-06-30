@@ -119,7 +119,7 @@ function DrumScroller({ slots, value, onChange }) {
 
   return (
     <div style={{ position: 'relative', height: DRUM_H, overflow: 'hidden' }}>
-      {/* Selection highlight pill — fixed in the center */}
+      {/* Selection highlight pill — BEHIND the text (z-index 0) */}
       <div style={{
         position: 'absolute',
         left: 12, right: 12,
@@ -128,20 +128,10 @@ function DrumScroller({ slots, value, onChange }) {
         background: 'var(--primary)',
         borderRadius: 14,
         pointerEvents: 'none',
-        zIndex: 1,
+        zIndex: 0,
       }} />
 
-      {/* Fade gradients top/bottom */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
-        background: `linear-gradient(to bottom,
-          var(--surface-container-lowest) 0%,
-          transparent ${100 * (PAD / DRUM_H)}%,
-          transparent ${100 * ((PAD + ITEM_H) / DRUM_H)}%,
-          var(--surface-container-lowest) 100%)`,
-      }} />
-
-      {/* Scrollable list */}
+      {/* Scrollable list — ABOVE the pill (z-index 1) */}
       <div
         ref={containerRef}
         onScroll={handleScroll}
@@ -152,7 +142,7 @@ function DrumScroller({ slots, value, onChange }) {
           paddingTop:    PAD,
           paddingBottom: PAD,
           position: 'relative',
-          zIndex: 0,
+          zIndex: 1,
         }}
       >
         {slots.map((slot, i) => {
@@ -187,6 +177,16 @@ function DrumScroller({ slots, value, onChange }) {
           );
         })}
       </div>
+
+      {/* Fade gradient — ON TOP (z-index 2), transparent in center, pointer-events:none */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
+        background: `linear-gradient(to bottom,
+          var(--surface-container-lowest) 0%,
+          transparent ${100 * (PAD / DRUM_H)}%,
+          transparent ${100 * ((PAD + ITEM_H) / DRUM_H)}%,
+          var(--surface-container-lowest) 100%)`,
+      }} />
     </div>
   );
 }
