@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import LottieIcon from '../components/LottieIcon';
-import { Search, Clock, MoreVertical, Check, AlertCircle, Minus, ChevronsDown } from 'lucide-react';
+import { Search, Clock, MoreVertical, Check, AlertCircle, Edit2, Trash2 } from 'lucide-react';
 import { localToday, localDateOffset } from '../lib/utils';
 import PriorityBadge from '../components/PriorityBadge';
 import ChecklistConfirmModal from '../components/ChecklistConfirmModal';
@@ -102,7 +102,11 @@ export default function TasksScreen() {
   const handleDelete = (id) => {
     dispatch({ type: 'DELETE_TASK', id });
     showToast('Tarea eliminada');
+    cancelReminder(id);
   };
+
+  // stub so no import error — cancelReminder is optional enhancement
+  const cancelReminder = (_id) => {};
 
   return (
     <>
@@ -348,17 +352,104 @@ export default function TasksScreen() {
           border: none;
           color: var(--outline-variant);
           cursor: pointer;
-          padding: 2px;
-          border-radius: 6px;
+          padding: 6px;
+          border-radius: 8px;
           display: flex;
           align-items: center;
-          opacity: 0;
-          transition: opacity var(--transition-fast);
+          opacity: 0.4;
+          transition: all var(--transition-fast);
           flex-shrink: 0;
+          position: relative;
         }
 
         .ts-card:hover .ts-more-btn { opacity: 1; }
-        .ts-more-btn:hover { color: var(--on-surface); }
+        .ts-more-btn:hover { color: var(--on-surface); background: var(--surface-container-high); }
+        .ts-more-btn.open { opacity: 1; color: var(--primary); background: var(--primary-container); }
+
+        /* Context menu dropdown */
+        .ts-ctx-menu {
+          position: absolute;
+          top: calc(100% + 4px);
+          right: 0;
+          background: var(--surface-container-lowest);
+          border: 1px solid rgba(208,195,200,0.25);
+          border-radius: 16px;
+          box-shadow: 0 8px 32px rgba(112,87,101,0.18), 0 2px 8px rgba(0,0,0,0.06);
+          z-index: 50;
+          overflow: hidden;
+          min-width: 160px;
+          animation: ctxIn 0.18s var(--ease-spring) both;
+        }
+
+        @keyframes ctxIn {
+          from { opacity: 0; transform: scale(0.92) translateY(-6px); }
+          to   { opacity: 1; transform: scale(1)   translateY(0); }
+        }
+
+        .ts-ctx-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 11px 16px;
+          font-size: 14px;
+          font-weight: 500;
+          font-family: var(--font-body);
+          color: var(--on-surface);
+          background: none;
+          border: none;
+          cursor: pointer;
+          width: 100%;
+          text-align: left;
+          transition: background var(--transition-fast);
+        }
+
+        .ts-ctx-item:hover { background: var(--surface-container); }
+        .ts-ctx-item.danger { color: var(--error); }
+        .ts-ctx-item.danger:hover { background: var(--error-container); }
+
+        .ts-ctx-divider {
+          height: 1px;
+          background: rgba(208,195,200,0.2);
+          margin: 2px 0;
+        }
+
+        /* Confirm row inside card */
+        .ts-del-confirm {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 16px;
+        }
+
+        .ts-del-confirm-label {
+          flex: 1;
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--error);
+          font-family: var(--font-body);
+        }
+
+        .ts-del-yes {
+          padding: 5px 14px;
+          background: var(--error);
+          color: white;
+          border: none;
+          border-radius: 99px;
+          font-size: 13px; font-weight: 700;
+          font-family: var(--font-body);
+          cursor: pointer;
+        }
+
+        .ts-del-no {
+          padding: 5px 14px;
+          background: var(--surface-container);
+          color: var(--on-surface-variant);
+          border: none;
+          border-radius: 99px;
+          font-size: 13px; font-weight: 600;
+          font-family: var(--font-body);
+          cursor: pointer;
+        }
 
         /* ---- Empty state ---- */
         .ts-empty {
@@ -482,6 +573,7 @@ export default function TasksScreen() {
                 onToggle={handleToggle}
                 onDelete={handleDelete}
                 onOpen={() => navigate('taskDetail', { taskId: task.id })}
+                onEdit={id => navigate('createTask', { taskId: id })}
               />
             ))}
           </div>
@@ -500,6 +592,7 @@ export default function TasksScreen() {
                 onToggle={handleToggle}
                 onDelete={handleDelete}
                 onOpen={() => navigate('taskDetail', { taskId: task.id })}
+                onEdit={id => navigate('createTask', { taskId: id })}
               />
             ))}
           </div>
@@ -518,6 +611,7 @@ export default function TasksScreen() {
                 onToggle={handleToggle}
                 onDelete={handleDelete}
                 onOpen={() => navigate('taskDetail', { taskId: task.id })}
+                onEdit={id => navigate('createTask', { taskId: id })}
               />
             ))}
           </div>
@@ -530,9 +624,25 @@ export default function TasksScreen() {
 }
 
 /* ─── Task Card Component ─── */
-function TaskCard({ task, onToggle, onDelete, onOpen }) {
-  const [completing, setCompleting] = useState(false);
+function TaskCard({ task, onToggle, onDelete, onOpen, onEdit }) {
+  const [completing, setCompleting]   = useState(false);
+  const [menuOpen,   setMenuOpen]     = useState(false);
+  const [confirming, setConfirming]   = useState(false);
+  const menuRef = useRef(null);
   const catStyle = CAT_STYLE[task.category] || { bg: 'rgba(208,195,200,0.2)', color: 'var(--on-surface-variant)', dot: 'var(--outline)' };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+        setConfirming(false);
+      }
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [menuOpen]);
 
   const handleCheck = (e) => {
     e.stopPropagation();
@@ -542,6 +652,29 @@ function TaskCard({ task, onToggle, onDelete, onOpen }) {
     } else {
       onToggle(task.id);
     }
+  };
+
+  const openMenu = (e) => {
+    e.stopPropagation();
+    setMenuOpen(v => !v);
+    setConfirming(false);
+  };
+
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    setConfirming(true);
+  };
+
+  const handleConfirmDelete = (e) => {
+    e.stopPropagation();
+    setMenuOpen(false);
+    setConfirming(false);
+    onDelete(task.id);
+  };
+
+  const handleCancelDelete = (e) => {
+    e.stopPropagation();
+    setConfirming(false);
   };
 
   return (
@@ -564,16 +697,13 @@ function TaskCard({ task, onToggle, onDelete, onOpen }) {
       <div className="ts-card-body">
         <div className="ts-card-title">{task.title}</div>
         <div className="ts-card-meta">
-          {/* Category pill: dot + name */}
           {task.category && (
             <span className="ts-cat-pill" style={{ background: catStyle.bg, color: catStyle.color }}>
               <span className="ts-cat-dot" style={{ background: catStyle.dot }} />
               {task.category}
             </span>
           )}
-          {/* Priority badge via shared component */}
           {task.priority && <PriorityBadge priority={task.priority} />}
-          {/* Time pill */}
           {(task.time || task.date) && (
             <span className="ts-time">
               <Clock size={12} strokeWidth={2} />
@@ -585,15 +715,51 @@ function TaskCard({ task, onToggle, onDelete, onOpen }) {
         </div>
       </div>
 
-      {/* More */}
-      <button
-        className="ts-more-btn"
-        onClick={e => { e.stopPropagation(); onDelete(task.id); }}
-        aria-label="Eliminar tarea"
-        id={`task-delete-${task.id}`}
-      >
-        <MoreVertical size={18} />
-      </button>
+      {/* ── More button + dropdown menu ── */}
+      <div style={{ position: 'relative', flexShrink: 0 }} ref={menuRef}>
+        <button
+          className={`ts-more-btn${menuOpen ? ' open' : ''}`}
+          onClick={openMenu}
+          aria-label="Opciones de tarea"
+          id={`task-more-${task.id}`}
+        >
+          <MoreVertical size={18} />
+        </button>
+
+        {menuOpen && (
+          <div className="ts-ctx-menu" onClick={e => e.stopPropagation()}>
+            {/* Edit */}
+            <button
+              className="ts-ctx-item"
+              onClick={e => { e.stopPropagation(); setMenuOpen(false); onEdit(task.id); }}
+              id={`task-menu-edit-${task.id}`}
+            >
+              <Edit2 size={15} strokeWidth={1.75} />
+              Editar
+            </button>
+
+            <div className="ts-ctx-divider" />
+
+            {/* Delete — shows confirm row first */}
+            {!confirming ? (
+              <button
+                className="ts-ctx-item danger"
+                onClick={handleDeleteClick}
+                id={`task-menu-delete-${task.id}`}
+              >
+                <Trash2 size={15} strokeWidth={1.75} />
+                Eliminar
+              </button>
+            ) : (
+              <div className="ts-del-confirm">
+                <span className="ts-del-confirm-label">¿Eliminar?</span>
+                <button className="ts-del-no" onClick={handleCancelDelete}>No</button>
+                <button className="ts-del-yes" onClick={handleConfirmDelete}>Sí</button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
