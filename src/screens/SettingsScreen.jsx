@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
 import { Switch } from '../components/ui/switch';
 import {
@@ -399,38 +400,52 @@ export default function SettingsScreen() {
           />
         </SettingGroup>
 
-        {/* #1 Change password modal */}
-        {showPwModal && (
+        {/* #1 Change password modal — rendered via Portal to escape transform stacking context */}
+        {showPwModal && createPortal(
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="pw-modal-title"
             style={{
-              position: 'fixed', inset: 0, zIndex: 9999,
-              background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(6px)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+              position: 'fixed',
+              inset: 0,
+              zIndex: 10000,
+              background: 'rgba(0,0,0,0.45)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '24px 16px',
             }}
             onClick={(e) => { if (e.target === e.currentTarget) setShowPwModal(false); }}
           >
             <div style={{
-              background: 'var(--surface)', borderRadius: 24, padding: '28px 24px',
-              width: '100%', maxWidth: 380,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+              background: 'var(--surface)',
+              borderRadius: 24,
+              padding: '28px 24px',
+              width: '100%',
+              maxWidth: 380,
+              boxShadow: '0 24px 72px rgba(0,0,0,0.28)',
               animation: 'slideUp 0.28s cubic-bezier(0.34,1.4,0.64,1) both',
               fontFamily: 'var(--font-body)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <h2 id="pw-modal-title" style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--on-surface)' }}>
+                <h2 id="pw-modal-title" style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--on-surface)', margin: 0 }}>
                   Cambiar contraseña
                 </h2>
-                <button onClick={() => setShowPwModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)', padding: 4, borderRadius: 8 }} aria-label="Cerrar">
-                  <X size={20} />
+                <button
+                  onClick={() => setShowPwModal(false)}
+                  style={{ background: 'var(--surface-container)', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)', padding: 6, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  aria-label="Cerrar"
+                >
+                  <X size={18} />
                 </button>
               </div>
 
               {[{ label: 'Contraseña actual', val: currentPw, setter: setCurrentPw, id: 'pw-current' },
-                { label: 'Nueva contraseña', val: newPw,     setter: setNewPw,     id: 'pw-new' },
-                { label: 'Confirmar nueva',  val: confirmPw,  setter: setConfirmPw,  id: 'pw-confirm' },
+                { label: 'Nueva contraseña',  val: newPw,     setter: setNewPw,     id: 'pw-new' },
+                { label: 'Confirmar nueva',   val: confirmPw, setter: setConfirmPw, id: 'pw-confirm' },
               ].map(({ label, val, setter, id }) => (
                 <div key={id} style={{ marginBottom: 14 }}>
                   <label htmlFor={id} style={{ fontSize: 12, fontWeight: 600, color: 'var(--on-surface-variant)', display: 'block', marginBottom: 6 }}>{label}</label>
@@ -441,19 +456,23 @@ export default function SettingsScreen() {
                       value={val}
                       onChange={e => setter(e.target.value)}
                       style={{
-                        width: '100%', padding: '10px 40px 10px 14px',
+                        width: '100%', padding: '11px 42px 11px 14px',
                         borderRadius: 12, border: '1.5px solid var(--outline-variant)',
                         background: 'var(--surface-container)', color: 'var(--on-surface)',
                         fontSize: 14, fontFamily: 'var(--font-body)',
                         boxSizing: 'border-box', outline: 'none',
+                        transition: 'border-color 0.15s ease',
                       }}
                       onFocus={e => e.target.style.borderColor = 'var(--primary)'}
-                      onBlur={e => e.target.style.borderColor = 'var(--outline-variant)'}
+                      onBlur={e  => e.target.style.borderColor = 'var(--outline-variant)'}
                     />
                     {id === 'pw-current' && (
-                      <button type="button" onClick={() => setShowPw(s => !s)}
-                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)', padding: 4 }}
-                        aria-label={showPw ? 'Ocultar' : 'Mostrar'}>
+                      <button
+                        type="button"
+                        onClick={() => setShowPw(s => !s)}
+                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)', padding: 4, display: 'flex' }}
+                        aria-label={showPw ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      >
                         {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     )}
@@ -461,7 +480,11 @@ export default function SettingsScreen() {
                 </div>
               ))}
 
-              {pwError && <p style={{ fontSize: 12, color: 'var(--error)', marginBottom: 14, lineHeight: 1.4 }}>{pwError}</p>}
+              {pwError && (
+                <p style={{ fontSize: 12, color: 'var(--error)', marginBottom: 14, lineHeight: 1.5, background: 'var(--error-container)', padding: '8px 12px', borderRadius: 10 }}>
+                  {pwError}
+                </p>
+              )}
 
               <button
                 onClick={handleChangePassword}
@@ -475,12 +498,14 @@ export default function SettingsScreen() {
                   cursor: pwLoading ? 'not-allowed' : 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   transition: 'opacity 0.15s ease',
+                  marginTop: 4,
                 }}
               >
-                {pwLoading ? 'Actualizando...' : <><Check size={15} strokeWidth={3}/> Guardar contraseña</>}
+                {pwLoading ? 'Actualizando...' : <><Check size={15} strokeWidth={3} /> Guardar contraseña</>}
               </button>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         <div className="stg-footer">Mavia v1.0.0 · Hecho con amor para ti 🌸</div>
