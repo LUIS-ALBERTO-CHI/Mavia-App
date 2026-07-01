@@ -4,7 +4,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 import { getMessaging, isSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
@@ -24,10 +24,15 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 auth.languageCode = 'es';
 
-// Firestore — simple setup without custom cache.
-// We no longer use onSnapshot() so there are no WebChannel CORS errors.
-// Data reads/writes use standard REST calls which work correctly.
-export const db = getFirestore(app);
+// Firestore — with offline persistence via IndexedDB.
+// persistentLocalCache: caches all reads/writes locally so the app works
+// fully offline. Writes made offline are queued and synced automatically
+// when the connection is restored.
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
+});
 
 
 // Google provider

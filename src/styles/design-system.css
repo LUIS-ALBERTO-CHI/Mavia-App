@@ -1350,6 +1350,11 @@ a { text-decoration: none; color: inherit; }
   to   { width: 160px; height: 160px; opacity: 0; transform: translate(-75px, -75px); }
 }
 
+@keyframes connPulse {
+  0%, 100% { opacity: 1; transform: scale(1);    }
+  50%       { opacity: 0.55; transform: scale(1.4); }
+}
+
 @keyframes drawerIn {
   from { transform: translateX(-100%); }
   to   { transform: translateX(0); }

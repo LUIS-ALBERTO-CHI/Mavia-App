@@ -43,6 +43,7 @@ import NotFoundScreen from './screens/NotFoundScreen';
 
 // Components
 import ErrorBoundary from './components/ErrorBoundary';
+import OfflineBanner from './components/OfflineBanner';
 
 /* ============================================
    CONSTANTS
@@ -129,12 +130,49 @@ const SCREEN_TITLES = {
 };
 
 /* ============================================
+   CONNECTION STATUS HOOK
+   ============================================ */
+function useOnlineStatus() {
+  const [online, setOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const on  = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener('online',  on);
+    window.addEventListener('offline', off);
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+  }, []);
+  return online;
+}
+
+/* Connection dot — green or amber, pulses when offline */
+function ConnDot() {
+  const online = useOnlineStatus();
+  return (
+    <span
+      title={online ? 'Online' : 'Sin conexión'}
+      style={{
+        display: 'inline-block',
+        width: 7, height: 7,
+        borderRadius: '50%',
+        background: online ? '#4ade80' : '#fb923c',
+        flexShrink: 0,
+        boxShadow: online
+          ? '0 0 0 2px rgba(74,222,128,0.25)'
+          : '0 0 0 2px rgba(251,146,60,0.3)',
+        animation: online ? 'none' : 'connPulse 1.4s ease-in-out infinite',
+      }}
+    />
+  );
+}
+
+/* ============================================
    DESKTOP SIDEBAR
    ============================================ */
 function DesktopSidebar() {
   const { state, navigate, dispatch } = useApp();
   const { currentScreen, user, notifications } = state;
   const unread = notifications.filter(n => !n.read).length;
+  const online = useOnlineStatus();
 
   return (
     <aside className="desktop-sidebar">
@@ -149,8 +187,9 @@ function DesktopSidebar() {
           </div>
           <div>
             <div className="sidebar-user-name">{user.firstName || ''}</div>
-            <div className="sidebar-user-sub" style={{ display:'flex', alignItems:'center', gap:'4px' }}>
-              Hoy con propósito
+            <div className="sidebar-user-sub" style={{ display:'flex', alignItems:'center', gap:'5px' }}>
+              <ConnDot />
+              <span>{online ? 'Online' : 'Sin conexión'}</span>
             </div>
           </div>
         </div>
@@ -449,6 +488,8 @@ function AppContent() {
 
       <Toast />
 
+      {/* Offline/online status banner — floats above everything via Portal */}
+      <OfflineBanner />
 
     </div>
   );
