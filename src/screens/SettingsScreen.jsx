@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { Switch } from '../components/ui/switch';
 import {
   Bell, Calendar, Brain, Repeat2, Moon, Globe, Clock,
-  RefreshCw, Download, Lock, ShieldCheck, LogOut, ChevronRight,
-  Settings
+  RefreshCw, Download, Upload, Lock, ShieldCheck, LogOut,
+  ChevronRight, Settings, Eye, EyeOff, X, Check
 } from 'lucide-react';
+import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 
 function SettingRow({ icon: Icon, iconBg, iconColor = 'var(--on-surface-variant)', label, sub, right, onClick, id, danger }) {
   return (
@@ -43,6 +44,68 @@ export default function SettingsScreen() {
   const [permStatus, setPermStatus] = useState(() =>
     'Notification' in window ? Notification.permission : 'unsupported'
   );
+
+  // #1 Change password modal
+  const [showPwModal, setShowPwModal]   = useState(false);
+  const [currentPw,   setCurrentPw]     = useState('');
+  const [newPw,       setNewPw]         = useState('');
+  const [confirmPw,   setConfirmPw]     = useState('');
+  const [showPw,      setShowPw]        = useState(false);
+  const [pwLoading,   setPwLoading]     = useState(false);
+  const [pwError,     setPwError]       = useState('');
+
+  const handleChangePassword = async () => {
+    if (!newPw || newPw.length < 6) { setPwError('La nueva contraseña debe tener al menos 6 caracteres.'); return; }
+    if (newPw !== confirmPw)         { setPwError('Las contraseñas no coinciden.'); return; }
+    setPwLoading(true); setPwError('');
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) throw new Error('No hay sesión activa');
+      const cred = EmailAuthProvider.credential(user.email, currentPw);
+      await reauthenticateWithCredential(user, cred);
+      await updatePassword(user, newPw);
+      showToast('Contraseña actualizada', 'success');
+      setShowPwModal(false);
+      setCurrentPw(''); setNewPw(''); setConfirmPw('');
+    } catch (err) {
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setPwError('Contraseña actual incorrecta.');
+      } else if (err.code === 'auth/weak-password') {
+        setPwError('La contraseña es demasiado débil.');
+      } else {
+        setPwError(err.message || 'Error al actualizar la contraseña.');
+      }
+    } finally {
+      setPwLoading(false);
+    }
+  };
+
+  // #7 JSON import
+  const fileInputRef = useRef(null);
+  const handleImport = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!data.version) throw new Error('Formato inválido');
+        // Restore each collection if present
+        if (data.tasks)            dispatch({ type: 'IMPORT_TASKS',   tasks:   data.tasks });
+        if (data.events)           dispatch({ type: 'IMPORT_EVENTS',  events:  data.events });
+        if (data.goals)            dispatch({ type: 'IMPORT_GOALS',   goals:   data.goals });
+        if (data.habits)           dispatch({ type: 'IMPORT_HABITS',  habits:  data.habits });
+        if (data.journalEntries)   dispatch({ type: 'IMPORT_JOURNAL', entries: data.journalEntries });
+        if (data.gratitudeEntries) dispatch({ type: 'IMPORT_GRATITUDE', entries: data.gratitudeEntries });
+        showToast('Datos importados correctamente', 'success');
+      } catch {
+        showToast('Archivo inválido o corrupto', 'error');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
 
   const handleRequestPermission = async () => {
     if (!('Notification' in window)) return;
@@ -282,20 +345,30 @@ export default function SettingsScreen() {
         {/* ── Datos ── */}
         <SettingGroup title="Datos y sincronización">
           <SettingRow
-            icon={RefreshCw} iconBg="var(--secondary-container)" iconColor="var(--secondary)"
-            label="Sincronizar datos"
-            sub="Última sync: hace 2 minutos"
-            onClick={() => showToast('Sincronizando...', 'success')}
-            id="set-sync"
+            icon={Download} iconBg="var(--secondary-container)" iconColor="var(--secondary)"
+            label="Exportar datos"
+            sub="Descarga tu información en JSON"
+            onClick={handleExport}
+            id="set-export"
             right={<ChevronRight size={16} />}
           />
           <SettingRow
-            icon={Download} iconBg="var(--tertiary-container)" iconColor="var(--tertiary)"
-            label="Exportar datos"
-            sub="Descarga tu información en JSON"
-            onClick={() => showToast('Datos exportados', 'success')}
-            id="set-export"
+            icon={Upload} iconBg="var(--tertiary-container)" iconColor="var(--tertiary)"
+            label="Importar datos"
+            sub="Restaura desde un backup JSON"
+            onClick={() => fileInputRef.current?.click()}
+            id="set-import"
             right={<ChevronRight size={16} />}
+          />
+          {/* Hidden file input for import */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            style={{ display: 'none' }}
+            onChange={handleImport}
+            id="set-import-file"
+            aria-label="Seleccionar archivo de backup"
           />
         </SettingGroup>
 
@@ -303,17 +376,17 @@ export default function SettingsScreen() {
         <SettingGroup title="Privacidad y seguridad">
           <SettingRow
             icon={Lock} iconBg="var(--primary-container)" iconColor="var(--primary)"
-            label="Política de privacidad"
-            onClick={() => showToast('Abriendo política...')}
-            id="set-privacy"
+            label="Cambiar contraseña"
+            sub="Actualiza tu contraseña de acceso"
+            onClick={() => setShowPwModal(true)}
+            id="set-change-pw"
             right={<ChevronRight size={16} />}
           />
           <SettingRow
             icon={ShieldCheck} iconBg="var(--secondary-container)" iconColor="var(--secondary)"
-            label="Seguridad de la cuenta"
-            sub="Contraseña y autenticación"
-            onClick={() => {}}
-            id="set-security"
+            label="Política de privacidad"
+            onClick={() => showToast('Abriendo política...')}
+            id="set-privacy"
             right={<ChevronRight size={16} />}
           />
           <SettingRow
@@ -325,6 +398,90 @@ export default function SettingsScreen() {
             right={<ChevronRight size={16} color="var(--error)" />}
           />
         </SettingGroup>
+
+        {/* #1 Change password modal */}
+        {showPwModal && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pw-modal-title"
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9999,
+              background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(6px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+            }}
+            onClick={(e) => { if (e.target === e.currentTarget) setShowPwModal(false); }}
+          >
+            <div style={{
+              background: 'var(--surface)', borderRadius: 24, padding: '28px 24px',
+              width: '100%', maxWidth: 380,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+              animation: 'slideUp 0.28s cubic-bezier(0.34,1.4,0.64,1) both',
+              fontFamily: 'var(--font-body)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <h2 id="pw-modal-title" style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--on-surface)' }}>
+                  Cambiar contraseña
+                </h2>
+                <button onClick={() => setShowPwModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)', padding: 4, borderRadius: 8 }} aria-label="Cerrar">
+                  <X size={20} />
+                </button>
+              </div>
+
+              {[{ label: 'Contraseña actual', val: currentPw, setter: setCurrentPw, id: 'pw-current' },
+                { label: 'Nueva contraseña', val: newPw,     setter: setNewPw,     id: 'pw-new' },
+                { label: 'Confirmar nueva',  val: confirmPw,  setter: setConfirmPw,  id: 'pw-confirm' },
+              ].map(({ label, val, setter, id }) => (
+                <div key={id} style={{ marginBottom: 14 }}>
+                  <label htmlFor={id} style={{ fontSize: 12, fontWeight: 600, color: 'var(--on-surface-variant)', display: 'block', marginBottom: 6 }}>{label}</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      id={id}
+                      type={showPw ? 'text' : 'password'}
+                      value={val}
+                      onChange={e => setter(e.target.value)}
+                      style={{
+                        width: '100%', padding: '10px 40px 10px 14px',
+                        borderRadius: 12, border: '1.5px solid var(--outline-variant)',
+                        background: 'var(--surface-container)', color: 'var(--on-surface)',
+                        fontSize: 14, fontFamily: 'var(--font-body)',
+                        boxSizing: 'border-box', outline: 'none',
+                      }}
+                      onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                      onBlur={e => e.target.style.borderColor = 'var(--outline-variant)'}
+                    />
+                    {id === 'pw-current' && (
+                      <button type="button" onClick={() => setShowPw(s => !s)}
+                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-variant)', padding: 4 }}
+                        aria-label={showPw ? 'Ocultar' : 'Mostrar'}>
+                        {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {pwError && <p style={{ fontSize: 12, color: 'var(--error)', marginBottom: 14, lineHeight: 1.4 }}>{pwError}</p>}
+
+              <button
+                onClick={handleChangePassword}
+                disabled={pwLoading}
+                id="pw-submit"
+                style={{
+                  width: '100%', padding: '13px',
+                  background: pwLoading ? 'var(--outline-variant)' : 'var(--primary)',
+                  color: 'white', border: 'none', borderRadius: 99,
+                  fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-body)',
+                  cursor: pwLoading ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  transition: 'opacity 0.15s ease',
+                }}
+              >
+                {pwLoading ? 'Actualizando...' : <><Check size={15} strokeWidth={3}/> Guardar contraseña</>}
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="stg-footer">Mavia v1.0.0 · Hecho con amor para ti 🌸</div>
 

@@ -209,6 +209,38 @@ function reducer(state, action) {
       return { ...state, tasks };
     }
 
+    /* ── Import (from JSON backup) ── */
+    case 'IMPORT_TASKS': {
+      const existing = new Set(state.tasks.map(t => t.id));
+      const merged   = [...state.tasks, ...action.tasks.filter(t => !existing.has(t.id))];
+      return { ...state, tasks: merged };
+    }
+    case 'IMPORT_EVENTS': {
+      const existing = new Set(state.events.map(e => e.id));
+      const merged   = [...state.events, ...action.events.filter(e => !existing.has(e.id))];
+      return { ...state, events: merged };
+    }
+    case 'IMPORT_GOALS': {
+      const existing = new Set(state.goals.map(g => g.id));
+      const merged   = [...state.goals, ...action.goals.filter(g => !existing.has(g.id))];
+      return { ...state, goals: merged };
+    }
+    case 'IMPORT_HABITS': {
+      const existing = new Set(state.habits.map(h => h.id));
+      const merged   = [...state.habits, ...action.habits.filter(h => !existing.has(h.id))];
+      return { ...state, habits: merged };
+    }
+    case 'IMPORT_JOURNAL': {
+      const existing = new Set(state.journalEntries.map(e => e.id));
+      const merged   = [...state.journalEntries, ...action.entries.filter(e => !existing.has(e.id))];
+      return { ...state, journalEntries: merged };
+    }
+    case 'IMPORT_GRATITUDE': {
+      const existing = new Set(state.gratitudeEntries.map(e => e.id));
+      const merged   = [...state.gratitudeEntries, ...action.entries.filter(e => !existing.has(e.id))];
+      return { ...state, gratitudeEntries: merged };
+    }
+
     /* ── Habits ── */
     case 'ADD_HABIT':
       return { ...state, habits: [...state.habits, {
@@ -457,6 +489,18 @@ export function AppProvider({ children }) {
                       }).format(new Date()),
                     };
                     dispatch({ type: 'ADD_NOTIFICATION', notification: notif });
+                    // #2 Also show a native browser notification so user sees it even on other tab
+                    if (Notification.permission === 'granted') {
+                      const n = new Notification(notif.title, {
+                        body:  notif.text,
+                        icon:  '/pwa-192x192.png',
+                        badge: '/favicon.ico',
+                        tag:   `mavia-fg-${notif.id}`,
+                        silent: false,
+                      });
+                      setTimeout(() => n.close(), 8000);
+                      n.onclick = () => { window.focus(); n.close(); };
+                    }
                   });
                 });
               });

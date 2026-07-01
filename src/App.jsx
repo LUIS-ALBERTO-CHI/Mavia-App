@@ -39,6 +39,10 @@ import ProfileScreen from './screens/ProfileScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import StatisticsScreen from './screens/StatisticsScreen';
 import SearchScreen from './screens/SearchScreen';
+import NotFoundScreen from './screens/NotFoundScreen';
+
+// Components
+import ErrorBoundary from './components/ErrorBoundary';
 
 /* ============================================
    CONSTANTS
@@ -411,7 +415,7 @@ function AppContent() {
   }
 
   const isAuth = AUTH_SCREENS.has(currentScreen);
-  const Screen = SCREEN_MAP[currentScreen] || DashboardScreen;
+  const Screen = SCREEN_MAP[currentScreen] ?? NotFoundScreen;
 
   // Auth screens: full screen, no chrome
   if (isAuth) {
@@ -434,7 +438,9 @@ function AppContent() {
       {/* Main scrollable content — keyed to trigger re-animation on screen change */}
       <main className="app-main">
         <div key={currentScreen} className={animClass}>
-          <Screen />
+          <ErrorBoundary onReset={() => state.navigate?.('dashboard')}>
+            <Screen />
+          </ErrorBoundary>
         </div>
       </main>
 

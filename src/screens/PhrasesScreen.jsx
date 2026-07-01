@@ -1,17 +1,50 @@
 import { useApp } from '../context/AppContext';
-import { Share2, Sparkles, Quote, ChevronLeft, ChevronRight, Bookmark } from 'lucide-react';
+import { Share2, Sparkles, Quote, RefreshCw, Bookmark } from 'lucide-react';
 import { useState } from 'react';
-import { Button } from '../components/ui/button';
+import { SYSTEM_PHRASES } from '../context/AppContext';
+
+/* Deterministic daily index: same date always picks same phrase */
+function dailyPhraseIndex(phrases, dateStr) {
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = (hash * 31 + dateStr.charCodeAt(i)) >>> 0;
+  }
+  return hash % phrases.length;
+}
 
 export default function PhrasesScreen() {
   const { state, showToast } = useApp();
-  const today  = new Date().toISOString().split('T')[0];
-  const phrase = state.phrases.find(p => p.date === today) || state.phrases[0];
-  const past   = state.phrases.filter(p => p.date !== today).slice(0, 6);
+  const phrases = SYSTEM_PHRASES;
+  const today   = new Date().toLocaleDateString('en-CA');
+
+  // Daily phrase derived from date hash (stable — won't change mid-day)
+  const todayIdx   = dailyPhraseIndex(phrases, today);
+  const [extraIdx, setExtraIdx] = useState(null);
+  const phraseIdx  = extraIdx ?? todayIdx;
+  const phrase     = phrases[phraseIdx];
+
+  // Past phrases: show previous 5 days
+  const pastPhrases = Array.from({ length: 5 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (i + 1));
+    const ds  = d.toLocaleDateString('en-CA');
+    const idx = dailyPhraseIndex(phrases, ds);
+    return { ...phrases[idx], dateStr: ds, dateDisplay: d };
+  });
+
   const [saved, setSaved] = useState(false);
 
+  const handleNewPhrase = () => {
+    let next = Math.floor(Math.random() * phrases.length);
+    while (next === phraseIdx && phrases.length > 1) {
+      next = Math.floor(Math.random() * phrases.length);
+    }
+    setExtraIdx(next);
+    setSaved(false);
+  };
+
   const handleShare = () => {
-    const text = `"${phrase.text}" — Mavia`;
+    const text = `“${phrase.text}” — Mavia`;
     if (navigator.share) {
       navigator.share({ text, title: 'Frase del día en Mavia' });
     } else {
@@ -235,13 +268,13 @@ export default function PhrasesScreen() {
         {/* Main phrase */}
         {phrase && (
           <div className="phr-main">
-            <span className="phr-quote-mark">"</span>
+            <span className="phr-quote-mark">“</span>
 
             <div className="phr-main-icon">
               <Sparkles size={26} color="white" strokeWidth={1.5} />
             </div>
 
-            <p className="phr-main-text">"{phrase.text}"</p>
+            <p className="phr-main-text">“{phrase.text}”</p>
             <p className="phr-main-author">— {phrase.author}</p>
 
             <div className="phr-main-actions">
@@ -249,31 +282,34 @@ export default function PhrasesScreen() {
                 <Share2 size={15} strokeWidth={2} />
                 Compartir
               </button>
-              <button className={`phr-action-btn ghost`} onClick={handleSave} id="phrase-save">
+              <button className="phr-action-btn ghost" onClick={handleSave} id="phrase-save">
                 <Bookmark size={15} strokeWidth={2} fill={saved ? 'white' : 'none'} />
                 {saved ? 'Guardada' : 'Guardar'}
+              </button>
+              <button className="phr-action-btn ghost" onClick={handleNewPhrase} id="phrase-next" title="Nueva frase">
+                <RefreshCw size={15} strokeWidth={2} />
               </button>
             </div>
           </div>
         )}
 
         {/* Past phrases */}
-        {past.length > 0 && (
+        {pastPhrases.length > 0 && (
           <>
             <div className="phr-section-head">
               <span className="phr-section-title">Frases anteriores</span>
               <div className="phr-section-line" />
             </div>
             <div className="phr-past-grid">
-              {past.map(p => (
-                <div key={p.id} className="phr-past-card">
+              {pastPhrases.map((p, i) => (
+                <div key={i} className="phr-past-card">
                   <div className="phr-past-icon">
                     <Quote size={16} color="var(--primary)" strokeWidth={1.75} />
                   </div>
                   <div className="phr-past-body">
-                    <p className="phr-past-text">"{p.text}"</p>
+                    <p className="phr-past-text">“{p.text}”</p>
                     <p className="phr-past-date">
-                      {new Date(p.date + 'T00:00:00').toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'short' })
+                      {p.dateDisplay.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'short' })
                         .replace(/^\w/, c => c.toUpperCase())}
                     </p>
                   </div>

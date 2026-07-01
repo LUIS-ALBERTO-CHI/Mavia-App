@@ -209,8 +209,10 @@ const MedIcon = ({ name, color }) => {
    ─ Phase 2 (on click): swap to iframe (youtube-nocookie.com = lighter, fewer trackers)
    This eliminates the ~300 KB YouTube player SDK from initial load.
 ───────────────────────────────────────────────────────────── */
-function YoutubeModal({ video, onClose }) {
+function YoutubeModal({ video, sessionSecs = 0, onClose }) {
   const [activated, setActivated] = useState(false);
+  const mm = String(Math.floor(sessionSecs / 60)).padStart(2, '0');
+  const ss = String(sessionSecs % 60).padStart(2, '0');
 
   // Inject preconnect hints only once (they speed up the iframe load when activated)
   useEffect(() => {
@@ -247,7 +249,19 @@ function YoutubeModal({ video, onClose }) {
         <div className="yt-modal-header">
           <div>
             <div className="yt-modal-title">{video.title}</div>
-            <div className="yt-modal-sub">{video.instructor} · {video.duration} min</div>
+            <div className="yt-modal-sub">
+              {video.instructor} · {video.duration} min
+              {sessionSecs > 0 && (
+                <span style={{
+                  marginLeft: 10, padding: '2px 10px',
+                  background: 'var(--secondary-container)',
+                  color: 'var(--on-secondary-container)',
+                  borderRadius: 99, fontSize: 11, fontWeight: 700,
+                }}>
+                  {mm}:{ss}
+                </span>
+              )}
+            </div>
           </div>
           <button className="yt-close" onClick={onClose} id="yt-close" aria-label="Cerrar">
             <X size={20} strokeWidth={2} />
@@ -318,7 +332,28 @@ export default function MeditationScreen() {
   const [breathePhase,  setBreathePhase]  = useState(0);
   const [breatheCount,  setBreatheCount]  = useState(0);
   const [phaseTime,     setPhaseTime]     = useState(0);
+  // #3 Session timer for meditation
+  const [sessionSecs,   setSessionSecs]  = useState(0);
+  const sessionRef  = useRef(null);
   const intervalRef = useRef(null);
+
+  // Start / stop session timer when video opens/closes
+  const openVideo = (video) => {
+    setPlaying(video);
+    setSessionSecs(0);
+    sessionRef.current = setInterval(() => setSessionSecs(s => s + 1), 1000);
+  };
+  const closeVideo = () => {
+    clearInterval(sessionRef.current);
+    const mins = Math.floor(sessionSecs / 60);
+    if (mins >= 1) {
+      const prev = parseInt(localStorage.getItem('mavia_med_total_mins') || '0', 10);
+      localStorage.setItem('mavia_med_total_mins', String(prev + mins));
+    }
+    setPlaying(null);
+    setSessionSecs(0);
+  };
+
 
   const filtered = catFilter === 'Todas'
     ? LIBRARY
@@ -768,8 +803,8 @@ export default function MeditationScreen() {
         }
       `}</style>
 
-      {/* YouTube modal */}
-      {playing && <YoutubeModal video={playing} onClose={() => setPlaying(null)} />}
+      {/* YouTube modal with session timer */}
+      {playing && <YoutubeModal video={playing} sessionSecs={sessionSecs} onClose={closeVideo} />}
 
       <div className="med-screen">
         <h1 className="med-hero-title">Bienestar</h1>
@@ -846,7 +881,7 @@ export default function MeditationScreen() {
 
                   <button
                     className="med-play-btn"
-                    onClick={e => { e.stopPropagation(); setPlaying(med); }}
+                    onClick={e => { e.stopPropagation(); openVideo(med); }}
                     id={`med-play-${med.id}`}
                     aria-label={`Reproducir ${med.title}`}
                   >
