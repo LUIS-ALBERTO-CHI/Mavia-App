@@ -45,6 +45,7 @@ export default defineConfig({
     workbox: {
       globDirectory: 'dist',
       navigateFallback: '/',
+      maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MB — needed after i18n bundle growth
       runtimeCaching: [
         {
           urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
