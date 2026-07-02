@@ -1,4 +1,6 @@
 import { useContext, useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
+
 import { AppProvider, useApp } from './context/AppContext';
 import './styles/design-system.css';
 
@@ -268,19 +270,23 @@ function DesktopSidebar() {
 function MobileTopBar() {
   const { state, navigate } = useApp();
   const { currentScreen, notifications } = state;
-  const unread = notifications.filter(n => !n.read).length;
-  const isHome = currentScreen === 'dashboard';
-  const title = SCREEN_TITLES[currentScreen] || 'Mavia';
+  const unread  = notifications.filter(n => !n.read).length;
+  const isHome  = currentScreen === 'dashboard';
+  const title   = SCREEN_TITLES[currentScreen] || 'Mavia';
 
   return (
     <header className="mobile-topbar">
-      {isHome ? (
-        <span className="topbar-brand">Mavia</span>
-      ) : (
-        <span className="topbar-brand" style={{ fontSize: 'var(--text-headline-md)', fontFamily: 'var(--font-body)' }}>
-          {title}
-        </span>
-      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {isHome ? (
+          <span className="topbar-brand">Mavia</span>
+        ) : (
+          <span className="topbar-brand" style={{ fontSize: 'var(--text-headline-md)', fontFamily: 'var(--font-body)' }}>
+            {title}
+          </span>
+        )}
+        {/* #1 Online dot visible en mobile */}
+        <ConnDot />
+      </div>
       <div className="topbar-actions">
         <button
           className="topbar-icon-btn"
@@ -319,9 +325,20 @@ function MobileTopBar() {
 /* ============================================
    MOBILE BOTTOM NAV
    ============================================ */
+const MORE_ITEMS = [
+  { id: 'habits',     label: 'Hábitos',      icon: 'self_care'   },
+  { id: 'goals',      label: 'Objetivos',    icon: 'flag'        },
+  { id: 'journal',    label: 'Diario',       icon: 'book_2'      },
+  { id: 'gratitude',  label: 'Gratitud',     icon: 'favorite'    },
+  { id: 'reminders',  label: 'Recordatorios',icon: 'alarm'       },
+  { id: 'phrases',    label: 'Frases',       icon: 'format_quote'},
+  { id: 'statistics', label: 'Estadísticas', icon: 'bar_chart'   },
+];
+
 function MobileBottomNav() {
   const { state, navigate } = useApp();
   const { currentScreen } = state;
+  const [showMore, setShowMore] = useState(false);
 
   /* Mirror MAIN_NAV exactly so mobile matches desktop */
   const BOTTOM_NAV = [
@@ -341,44 +358,154 @@ function MobileBottomNav() {
     profile:   ['profile', 'settings', 'notifications', 'statistics', 'search'],
   };
 
+  const MORE_SCREEN_IDS = MORE_ITEMS.map(i => i.id);
+  const isMoreActive = MORE_SCREEN_IDS.includes(currentScreen);
+
   const activeTab = Object.entries(TAB_GROUPS)
     .find(([, screens]) => screens.includes(currentScreen))?.[0] || 'dashboard';
 
   const fabDest = CALENDAR_SCREENS.has(currentScreen) ? 'createEvent' : 'createTask';
 
-  return (
-    <div className="mobile-bottom-nav-wrapper">
-      <nav className="mobile-bottom-nav" role="navigation" aria-label="Navegación principal">
-        {BOTTOM_NAV.map(item => {
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              className={`bottom-nav-item${isActive ? ' active' : ''}`}
-              onClick={() => navigate(item.id)}
-              id={`bnav-${item.id}`}
-              aria-label={item.label}
-              aria-current={isActive ? 'page' : undefined}
-            >
-              <span className="material-symbols-outlined nav-icon">{item.icon}</span>
-              <span className="bottom-nav-label">{item.label}</span>
-            </button>
-          );
-        })}
-      </nav>
+  const handleMoreNav = (id) => {
+    setShowMore(false);
+    navigate(id);
+  };
 
-      {/* Floating action button — hidden on screens with their own add button */}
-      {!SCREENS_WITH_OWN_ADD.has(currentScreen) && (
-        <button
-          className="mobile-fab"
-          onClick={() => navigate(fabDest)}
-          id="bnav-fab"
-          aria-label="Crear"
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>add</span>
-        </button>
+  return (
+    <>
+      <div className="mobile-bottom-nav-wrapper">
+        <nav className="mobile-bottom-nav" role="navigation" aria-label="Navegación principal">
+          {BOTTOM_NAV.map(item => {
+            const isActive = activeTab === item.id && !isMoreActive;
+            return (
+              <button
+                key={item.id}
+                className={`bottom-nav-item${isActive ? ' active' : ''}`}
+                onClick={() => { setShowMore(false); navigate(item.id); }}
+                id={`bnav-${item.id}`}
+                aria-label={item.label}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <span className="material-symbols-outlined nav-icon">{item.icon}</span>
+                <span className="bottom-nav-label">{item.label}</span>
+              </button>
+            );
+          })}
+
+          {/* Más tab */}
+          <button
+            className={`bottom-nav-item${isMoreActive || showMore ? ' active' : ''}`}
+            onClick={() => setShowMore(s => !s)}
+            id="bnav-more"
+            aria-label="Más opciones"
+            aria-expanded={showMore}
+          >
+            <span className="material-symbols-outlined nav-icon">grid_view</span>
+            <span className="bottom-nav-label">Más</span>
+          </button>
+        </nav>
+
+        {/* Floating action button */}
+        {!SCREENS_WITH_OWN_ADD.has(currentScreen) && (
+          <button
+            className="mobile-fab"
+            onClick={() => navigate(fabDest)}
+            id="bnav-fab"
+            aria-label="Crear"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>add</span>
+          </button>
+        )}
+      </div>
+
+      {/* Más drawer — portal to escape stacking context */}
+      {showMore && createPortal(
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setShowMore(false)}
+            style={{
+              position: 'fixed', inset: 0,
+              zIndex: 9990,
+              background: 'rgba(0,0,0,0.35)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+            }}
+          />
+          {/* Sheet */}
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Más secciones"
+            style={{
+              position: 'fixed',
+              bottom: 0, left: 0, right: 0,
+              zIndex: 9991,
+              background: 'var(--surface)',
+              borderRadius: '24px 24px 0 0',
+              padding: '0 0 calc(env(safe-area-inset-bottom,0px) + 80px)',
+              animation: 'slideUp 0.28s cubic-bezier(0.34,1.56,0.64,1) both',
+              boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
+            }}
+          >
+            {/* Handle */}
+            <div style={{ width: 36, height: 4, borderRadius: 99, background: 'var(--outline-variant)', margin: '12px auto 20px' }} />
+
+            {/* Title */}
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--on-surface)', margin: '0 0 16px 24px' }}>Más secciones</p>
+
+            {/* Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: 4,
+              padding: '0 12px',
+            }}>
+              {MORE_ITEMS.map(item => {
+                const isAct = currentScreen === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleMoreNav(item.id)}
+                    id={`more-${item.id}`}
+                    aria-label={item.label}
+                    style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      gap: 6, padding: '14px 8px',
+                      background: isAct ? 'var(--primary-container)' : 'transparent',
+                      border: 'none', borderRadius: 16,
+                      cursor: 'pointer',
+                      transition: 'background 0.15s ease',
+                    }}
+                  >
+                    <div style={{
+                      width: 48, height: 48,
+                      borderRadius: 16,
+                      background: isAct ? 'var(--primary)' : 'var(--surface-container)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <span
+                        className="material-symbols-outlined"
+                        style={{ fontSize: 22, color: isAct ? 'var(--on-primary)' : 'var(--on-surface-variant)' }}
+                      >
+                        {item.icon}
+                      </span>
+                    </div>
+                    <span style={
+                      { fontSize: 11, fontWeight: 600, color: isAct ? 'var(--primary)' : 'var(--on-surface-variant)',
+                        fontFamily: 'var(--font-body)', textAlign: 'center', lineHeight: 1.2 }
+                    }>
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
 
