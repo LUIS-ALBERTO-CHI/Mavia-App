@@ -58,11 +58,14 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // ─── #10 Offline cache strategy ──────────────────────────────────────────────
-// Cache-first for static assets; Network-first for navigation (app shell)
-const CACHE_NAME    = 'mavia-shell-v1';
+// Navigation: Network-first → fallback to /index.html (app shell)
+// Images/fonts: Cache-first (they're content-hashed by Vite, safe to cache)
+// JS/CSS bundles: NEVER cache in SW — Vite already content-hashes them
+//   so the browser's HTTP cache handles them correctly without SW interference.
+const CACHE_NAME    = 'mavia-shell-v3';   // bump version to purge old caches
 const SHELL_ASSETS  = ['/', '/index.html', '/pwa-192x192.png', '/pwa-512x512.png', '/manifest.webmanifest'];
 
-// On install: pre-cache the app shell
+// On install: pre-cache only the app shell HTML/icons
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(SHELL_ASSETS))
@@ -70,17 +73,20 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// On activate: delete old caches
+// On activate: delete ALL old caches so stale JS never lingers
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => {
+        console.log('[Mavia SW] Deleting old cache:', k);
+        return caches.delete(k);
+      }))
     )
   );
   self.clients.claim();
 });
 
-// Fetch: network-first for navigation, cache-first for static assets
+// Fetch strategy
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -88,7 +94,7 @@ self.addEventListener('fetch', (event) => {
   // Only intercept same-origin requests
   if (url.origin !== self.location.origin) return;
 
-  // Navigation requests (HTML pages): network-first, fall back to cached index.html
+  // Navigation (HTML): network-first, fallback to cached index.html for SPA routing
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request).catch(() =>
@@ -98,14 +104,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets (JS, CSS, fonts, images): cache-first
-  if (request.destination === 'script' || request.destination === 'style'
-    || request.destination === 'font' || request.destination === 'image') {
+  // JS and CSS: SKIP — Vite content-hashes these, let browser HTTP cache handle them.
+  // Caching them in SW causes stale-app bugs after deploys.
+  if (request.destination === 'script' || request.destination === 'style') {
+    return; // fall through to default browser fetch
+  }
+
+  // Images and fonts: cache-first (safe — content-addressed or rarely change)
+  if (request.destination === 'font' || request.destination === 'image') {
     event.respondWith(
       caches.match(request).then(cached => {
         if (cached) return cached;
         return fetch(request).then(response => {
-          // Don't cache non-successful responses
           if (!response || response.status !== 200 || response.type === 'opaque') return response;
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
@@ -115,3 +125,4 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
+
