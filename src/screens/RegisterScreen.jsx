@@ -86,7 +86,7 @@ export default function RegisterScreen() {
 
       // Dispatch LOGIN — onAuthStateChanged will also fire and load the data
       dispatchLogin(user);
-      showToast(`Bienvenida, ${firstName} 🌸`, 'success');
+      showToast(`Bienvenida, ${firstName}`, 'success');
     } catch (err) {
       showToast(parseFirebaseError(err.code), 'error');
     } finally {
@@ -113,7 +113,7 @@ export default function RegisterScreen() {
         dispatch({ type: 'LOGIN_GOOGLE', user: userData });
       } else {
         dispatch({ type: 'LOGIN', user: userData });
-        showToast(`Bienvenida 🌸`, 'success');
+        showToast('Bienvenida', 'success');
       }
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {

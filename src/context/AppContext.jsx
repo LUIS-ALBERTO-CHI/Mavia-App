@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+﻿import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { localToday } from '../lib/utils';
 import { onAuthChange } from '../lib/authService';
 import { loadUserData, saveTask, deleteTask, saveHabit, saveEvent, deleteEvent,
@@ -47,7 +47,7 @@ export const SYSTEM_MEDITATIONS = [
 ];
 
 export const SYSTEM_PHRASES = [
-  { id: 'p1', text: 'La calma es tu superpoder. Úsala todos los días.',          author: 'Mavia', emoji: '🌸' },
+  { id: 'p1', text: 'La calma es tu superpoder. Úsala todos los días.',          author: 'Mavia', emoji: '' },
   { id: 'p2', text: 'Pequeños pasos consistentes crean grandes cambios.',        author: 'Mavia', emoji: '🌿' },
   { id: 'p3', text: 'Tu mente merece el mismo cuidado que tu cuerpo.',           author: 'Mavia', emoji: '💜' },
   { id: 'p4', text: 'Eres más fuerte de lo que imaginas.',                       author: 'Mavia', emoji: '✨' },

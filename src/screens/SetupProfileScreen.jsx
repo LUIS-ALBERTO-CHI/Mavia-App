@@ -14,7 +14,7 @@ export default function SetupProfileScreen() {
     if (!trimmed) { showToast('Escribe tu nombre', 'error'); return; }
     const firstName = trimmed.split(' ')[0];
     dispatch({ type: 'COMPLETE_SETUP', user: { name: trimmed, firstName } });
-    showToast(`¡Bienvenida, ${firstName}! 🌸`, 'success');
+    showToast(`¡Bienvenida, ${firstName}!`, 'success');
   };
 
   const handleSkip = () => {

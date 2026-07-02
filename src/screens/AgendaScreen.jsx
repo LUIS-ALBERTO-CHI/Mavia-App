@@ -1,4 +1,4 @@
-import { useApp } from '../context/AppContext';
+﻿import { useApp } from '../context/AppContext';
 import PriorityBadge from '../components/PriorityBadge';
 import { formatTime12h } from '../lib/utils';
 
@@ -180,9 +180,9 @@ export default function AgendaScreen() {
 
         {allItems.length === 0 ? (
           <div className="empty-agenda">
-            <div className="empty-agenda-emoji">🌸</div>
+            <div className="empty-agenda-emoji"></div>
             <div className="empty-agenda-title">Día libre</div>
-            <p className="empty-agenda-sub">Hoy tienes un espacio para respirar 🌸 No hay eventos ni tareas programadas.</p>
+            <p className="empty-agenda-sub">Hoy tienes un espacio para respirar No hay eventos ni tareas programadas.</p>
             <button className="btn btn-primary" onClick={() => navigate('createTask')} id="agenda-create">
               + Agregar tarea
             </button>
@@ -238,7 +238,7 @@ export default function AgendaScreen() {
                         onClick={(e) => {
                           e.stopPropagation();
                           dispatch({ type: 'TOGGLE_TASK', id: item.id });
-                          showToast('¡Tarea completada! 🎉', 'success');
+                          showToast('¡Tarea completada!', 'success');
                         }}
                         id={`agenda-complete-${item.id}`}
                       >

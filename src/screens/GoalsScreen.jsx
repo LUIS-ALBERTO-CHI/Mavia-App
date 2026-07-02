@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Target, Calendar, CheckCircle2, Circle, TrendingUp, Plus, Edit2, Trash2 } from 'lucide-react';
 import { Progress } from '../components/ui/progress';
@@ -479,7 +479,7 @@ export default function GoalsScreen() {
                       onChange={e => {
                         const val = Number(e.target.value);
                         dispatch({ type: 'UPDATE_GOAL_PROGRESS', id: goal.id, progress: val });
-                        if (val === 100) showToast('¡Objetivo completado! 🎉');
+                        if (val === 100) showToast('¡Objetivo completado!');
                       }}
                       id={`gls-slider-${goal.id}`}
                       aria-label={`Progreso de ${goal.title}`}

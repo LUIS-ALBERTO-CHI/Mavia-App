@@ -1,4 +1,4 @@
-import { useApp } from '../context/AppContext';
+﻿import { useApp } from '../context/AppContext';
 import AppIcon from '../components/AppIcon';
 import LottieIcon from '../components/LottieIcon';
 import { localToday, formatTime12h } from '../lib/utils';
@@ -90,7 +90,7 @@ export default function DashboardScreen() {
           pendingCount: pending.length,
           onConfirm: () => {
             dispatch({ type: 'TOGGLE_TASK', id: taskId });
-            showToast('¡Tarea completada! 🎉', 'success');
+            showToast('¡Tarea completada!', 'success');
             setConfirmData(null);
           },
           onReview: () => {
@@ -104,7 +104,7 @@ export default function DashboardScreen() {
     }
 
     dispatch({ type: 'TOGGLE_TASK', id: taskId });
-    if (!task.completed) showToast('¡Tarea completada! 🎉', 'success');
+    if (!task.completed) showToast('¡Tarea completada!', 'success');
   };
 
   return (

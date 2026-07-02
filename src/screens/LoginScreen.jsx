@@ -51,7 +51,7 @@ export default function LoginScreen() {
     try {
       const user = await loginWithEmail({ email: form.email.trim(), password: form.password });
       dispatchLogin(user);
-      showToast('Bienvenida de nuevo 🌸', 'success');
+      showToast('Bienvenida de nuevo', 'success');
     } catch (err) {
       showToast(parseFirebaseError(err.code), 'error');
     } finally {
@@ -79,7 +79,7 @@ export default function LoginScreen() {
         dispatch({ type: 'LOGIN_GOOGLE', user: userData });
       } else {
         dispatch({ type: 'LOGIN', user: userData });
-        showToast('Bienvenida de nuevo 🌸', 'success');
+        showToast('Bienvenida de nuevo', 'success');
       }
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
@@ -97,7 +97,7 @@ export default function LoginScreen() {
     }
     try {
       await forgotPassword(form.email.trim());
-      showToast('Revisa tu correo 📧 — te enviamos un enlace', 'success');
+      showToast('Revisa tu correo — te enviamos un enlace', 'success');
     } catch (err) {
       showToast(parseFirebaseError(err.code), 'error');
     }

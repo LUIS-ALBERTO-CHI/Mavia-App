@@ -185,12 +185,22 @@ export default function HabitsScreen() {
           margin-bottom: 3px;
         }
         .hbt-card-streak {
-          display: flex;
+          display: inline-flex;
           align-items: center;
           gap: 4px;
           font-size: var(--text-label-md);
           font-weight: 600;
           color: #E56B4E;
+          white-space: nowrap;
+        }
+        .hbt-card-freq {
+          font-size: var(--text-label-sm);
+          color: var(--on-surface-variant);
+          opacity: 0.7;
+          margin-top: 1px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .hbt-toggle-btn {
@@ -388,10 +398,10 @@ export default function HabitsScreen() {
                     <div className="hbt-card-name">{habit.name}</div>
                     <div className="hbt-card-streak">
                       <Flame size={13} strokeWidth={2} />
-                      {Number(habit.streak) || 0} días &nbsp;·&nbsp;
-                      <span style={{ fontWeight: 400, opacity: 0.75 }}>
-                        {FREQ_LABEL[habit.frequency] || 'Todos los días'}
-                      </span>
+                      {Number(habit.streak) || 0} días
+                    </div>
+                    <div className="hbt-card-freq">
+                      {FREQ_LABEL[habit.frequency] || 'Todos los días'}
                     </div>
                   </div>
 

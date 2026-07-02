@@ -74,7 +74,7 @@ export default function ProfileScreen() {
       await logout(); // Firebase Auth sign out
     } catch (e) { /* ignore */ }
     dispatch({ type: 'LOGOUT' });
-    showToast('Hasta pronto 👋');
+    showToast('Hasta pronto');
   };
 
   /* Avatar: initials or photo */

@@ -112,7 +112,7 @@ export default function SettingsScreen() {
     if (!('Notification' in window)) return;
     const result = await Notification.requestPermission();
     setPermStatus(result);
-    if (result === 'granted') showToast('✅ Notificaciones activadas', 'success');
+    if (result === 'granted') showToast('Notificaciones activadas', 'success');
     else showToast('Notificaciones bloqueadas en el navegador', 'error');
   };
 
@@ -275,8 +275,8 @@ export default function SettingsScreen() {
             label="Notificaciones del sistema"
             id="set-notif-perm"
             sub={
-              permStatus === 'granted'  ? 'Activadas ✅' :
-              permStatus === 'denied'   ? 'Bloqueadas en el navegador ❌' :
+              permStatus === 'granted'     ? 'Activadas' :
+              permStatus === 'denied'      ? 'Bloqueadas en el navegador' :
               permStatus === 'unsupported' ? 'No soportado en este navegador' :
               'Permiso no solicitado'
             }
