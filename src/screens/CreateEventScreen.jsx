@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { DatePicker } from '../components/ui/date-picker';
 import { TimePicker } from '../components/ui/time-picker';
+import { Switch } from '../components/ui/switch';
 
 import { localToday } from '../lib/utils';
 
@@ -17,7 +18,12 @@ const CATEGORIES = [
   { id: 'Espiritual', color: '#695e37', bg: 'rgba(105,94,55,0.1)',  border: 'rgba(105,94,55,0.3)' },
 ];
 
-const REMINDER_OPTIONS = ['15 minutos antes', '30 minutos antes', '1 hora antes', '1 día antes'];
+const REMINDER_OPTIONS = [
+  { label: '15 min antes', value: '15 minutos antes' },
+  { label: '30 min antes', value: '30 minutos antes' },
+  { label: '1 hora antes', value: '1 hora antes'     },
+  { label: '1 día antes',  value: '1 día antes'      },
+];
 
 export default function CreateEventScreen() {
   const { dispatch, navigate, goBack, showToast, state } = useApp();
@@ -371,7 +377,6 @@ export default function CreateEventScreen() {
           align-items: center;
           justify-content: space-between;
           gap: var(--space-md);
-          flex-wrap: wrap;
         }
 
         .ce-reminder-left {
@@ -404,55 +409,30 @@ export default function CreateEventScreen() {
           margin-top: 1px;
         }
 
-        .ce-reminder-right {
+        /* Reminder pills (match CreateTaskScreen) */
+        .ce-reminder-pills {
           display: flex;
-          align-items: center;
-          gap: var(--space-md);
+          gap: 8px;
+          flex-wrap: wrap;
+          padding-left: 4px;
+          margin-top: 2px;
         }
-
-        /* Toggle */
-        .ce-toggle {
-          position: relative;
-          width: 44px;
-          height: 24px;
-          cursor: pointer;
-        }
-
-        .ce-toggle input { opacity: 0; width: 0; height: 0; }
-
-        .ce-toggle-track {
-          position: absolute;
-          inset: 0;
-          border-radius: 9999px;
-          transition: background var(--transition-fast);
-        }
-
-        .ce-toggle input:checked ~ .ce-toggle-track { background: var(--secondary); }
-        .ce-toggle input:not(:checked) ~ .ce-toggle-track { background: var(--surface-container-highest); }
-
-        .ce-toggle-thumb {
-          position: absolute;
-          top: 2px;
-          left: 2px;
-          width: 20px;
-          height: 20px;
-          border-radius: 50%;
-          background: var(--surface-container-low);
-          transition: transform var(--transition-spring);
-          box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-        }
-
-        .ce-toggle input:checked ~ .ce-toggle-thumb { transform: translateX(20px); }
-
-        .ce-select {
-          background: transparent;
-          border: none;
-          font-size: var(--text-label-md);
-          font-weight: 700;
-          color: var(--primary);
-          cursor: pointer;
-          outline: none;
+        .ce-pill {
+          padding: 5px 14px;
+          border-radius: 99px;
+          font-size: 13px;
+          font-weight: 600;
           font-family: var(--font-body);
+          cursor: pointer;
+          transition: all 0.15s;
+          border: 1.5px solid var(--outline-variant);
+          background: none;
+          color: var(--on-surface-variant);
+        }
+        .ce-pill.active {
+          border-color: var(--secondary);
+          background: rgba(84,99,71,0.12);
+          color: var(--secondary);
         }
 
         /* ---- Action buttons ---- */
@@ -688,35 +668,36 @@ export default function CreateEventScreen() {
                   <Bell size={18} />
                 </div>
                 <div>
-                  <div className="ce-reminder-label">Recordatorios automáticos</div>
-                  <div className="ce-reminder-sub">Notificar {form.reminder.toLowerCase()}</div>
+                  <div className="ce-reminder-label">Recordatorio</div>
+                  <div className="ce-reminder-sub">
+                    {form.reminderOn ? `Notificar ${form.reminder.toLowerCase()}` : 'Desactivado'}
+                  </div>
                 </div>
               </div>
-              <div className="ce-reminder-right">
-                {/* Toggle */}
-                <label className="ce-toggle" htmlFor="ce-reminder-toggle" aria-label="Activar recordatorio">
-                  <input
-                    type="checkbox"
-                    id="ce-reminder-toggle"
-                    checked={form.reminderOn}
-                    onChange={e => set('reminderOn', e.target.checked)}
-                  />
-                  <div className="ce-toggle-track" />
-                  <div className="ce-toggle-thumb" />
-                </label>
-                {/* Dropdown */}
-                <select
-                  className="ce-select"
-                  value={form.reminder}
-                  onChange={e => set('reminder', e.target.value)}
-                  id="ce-reminder-select"
-                >
-                  {REMINDER_OPTIONS.map(opt => (
-                    <option key={opt}>{opt}</option>
-                  ))}
-                </select>
-              </div>
+              {/* Switch — same component as CreateTaskScreen */}
+              <Switch
+                id="ce-reminder-toggle"
+                checked={form.reminderOn}
+                onCheckedChange={v => set('reminderOn', v)}
+              />
             </div>
+
+            {/* Pills — only when ON */}
+            {form.reminderOn && (
+              <div className="ce-reminder-pills" style={{ marginTop: 'var(--space-md)' }}>
+                {REMINDER_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`ce-pill${form.reminder === opt.value ? ' active' : ''}`}
+                    onClick={() => set('reminder', opt.value)}
+                    id={`ce-reminder-${opt.value.replace(/ /g, '-')}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* ── Action buttons ── */}
