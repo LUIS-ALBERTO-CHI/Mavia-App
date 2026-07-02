@@ -265,9 +265,150 @@ function DesktopSidebar() {
 }
 
 /* ============================================
+   MOBILE SIDE DRAWER  (hamburger → slide-from-left)
+   ============================================ */
+const DRAWER_ITEMS = [
+  { id: 'habits',     label: 'Hábitos',       icon: 'self_care',    section: 'Bienestar'    },
+  { id: 'goals',      label: 'Objetivos',     icon: 'flag',         section: 'Bienestar'    },
+  { id: 'journal',    label: 'Diario',        icon: 'book_2',       section: 'Bienestar'    },
+  { id: 'gratitude',  label: 'Gratitud',      icon: 'favorite',     section: 'Bienestar'    },
+  { id: 'phrases',    label: 'Frases',        icon: 'format_quote', section: 'Bienestar'    },
+  { id: 'reminders',  label: 'Recordatorios', icon: 'alarm',        section: 'Tareas'       },
+  { id: 'events',     label: 'Eventos',       icon: 'event',        section: 'Calendario'   },
+  { id: 'statistics', label: 'Estadísticas',  icon: 'bar_chart',    section: 'General'      },
+  { id: 'search',     label: 'Buscar',        icon: 'search',       section: 'General'      },
+];
+
+function MobileSideDrawer({ open, onClose }) {
+  const { state, navigate } = useApp();
+  const { currentScreen, user } = state;
+  const online = useOnlineStatus();
+
+  const go = (id) => { onClose(); navigate(id); };
+
+  // Group items by section
+  const sections = {};
+  DRAWER_ITEMS.forEach(item => {
+    if (!sections[item.section]) sections[item.section] = [];
+    sections[item.section].push(item);
+  });
+
+  if (!open) return null;
+
+  return createPortal(
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 9990,
+          background: 'rgba(0,0,0,0.4)',
+          backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)',
+        }}
+      />
+
+      {/* Drawer panel */}
+      <nav
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menú de secciones"
+        style={{
+          position: 'fixed',
+          top: 0, left: 0, bottom: 0,
+          width: 'min(80vw, 300px)',
+          zIndex: 9991,
+          background: 'var(--surface)',
+          display: 'flex', flexDirection: 'column',
+          animation: 'drawerIn 0.28s cubic-bezier(0.25,1,0.5,1) both',
+          boxShadow: '4px 0 40px rgba(0,0,0,0.2)',
+          overflowY: 'auto',
+        }}
+      >
+        {/* User header */}
+        <div style={{
+          padding: '52px 20px 20px',
+          background: 'var(--gradient-primary)',
+          flexShrink: 0,
+        }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 22, fontWeight: 700, color: 'white',
+            marginBottom: 12,
+            overflow: user.photoURL ? 'hidden' : 'visible',
+            padding: 0,
+          }}>
+            {user.photoURL
+              ? <img src={user.photoURL} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', borderRadius:'50%' }} />
+              : (user.firstName?.[0] || 'A')
+            }
+          </div>
+          <div style={{ color:'white', fontWeight:700, fontSize:16, fontFamily:'var(--font-display)', lineHeight:1.2 }}>
+            {user.firstName || 'Mavia'}
+          </div>
+          <div style={{ color:'rgba(255,255,255,0.75)', fontSize:12, marginTop:4, display:'flex', alignItems:'center', gap:6 }}>
+            <ConnDot />
+            <span style={{ color:'rgba(255,255,255,0.8)' }}>{online ? 'Online' : 'Sin conexión'}</span>
+          </div>
+        </div>
+
+        {/* Sections */}
+        <div style={{ flex: 1, padding: '12px 0 24px' }}>
+          {Object.entries(sections).map(([sectionName, items]) => (
+            <div key={sectionName}>
+              <p style={{
+                fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: 'var(--on-surface-variant)',
+                opacity: 0.6, margin: '16px 20px 6px',
+              }}>{sectionName}</p>
+              {items.map(item => {
+                const isAct = currentScreen === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => go(item.id)}
+                    id={`drawer-${item.id}`}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 14,
+                      padding: '11px 20px',
+                      background: isAct ? 'var(--primary-container)' : 'none',
+                      border: 'none', cursor: 'pointer',
+                      borderRadius: isAct ? '0 99px 99px 0' : 0,
+                      marginRight: 12,
+                      textAlign: 'left',
+                      transition: 'background 0.15s ease',
+                    }}
+                  >
+                    <span
+                      className="material-symbols-outlined"
+                      style={{ fontSize: 21, color: isAct ? 'var(--primary)' : 'var(--on-surface-variant)', flexShrink: 0 }}
+                    >
+                      {item.icon}
+                    </span>
+                    <span style={{
+                      fontSize: 14, fontWeight: isAct ? 700 : 500,
+                      color: isAct ? 'var(--primary)' : 'var(--on-surface)',
+                      fontFamily: 'var(--font-body)',
+                    }}>
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </nav>
+    </>,
+    document.body
+  );
+}
+
+/* ============================================
    MOBILE TOP BAR
    ============================================ */
-function MobileTopBar() {
+function MobileTopBar({ onMenuOpen }) {
   const { state, navigate } = useApp();
   const { currentScreen, notifications } = state;
   const unread  = notifications.filter(n => !n.read).length;
@@ -277,6 +418,17 @@ function MobileTopBar() {
   return (
     <header className="mobile-topbar">
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Hamburger — opens side drawer */}
+        <button
+          className="topbar-icon-btn"
+          onClick={onMenuOpen}
+          id="topbar-menu"
+          aria-label="Abrir menú"
+          style={{ marginLeft: -6 }}
+        >
+          <span className="material-symbols-outlined">menu</span>
+        </button>
+
         {isHome ? (
           <span className="topbar-brand">Mavia</span>
         ) : (
@@ -284,7 +436,6 @@ function MobileTopBar() {
             {title}
           </span>
         )}
-        {/* #1 Online dot visible en mobile */}
         <ConnDot />
       </div>
       <div className="topbar-actions">
@@ -314,198 +465,68 @@ function MobileTopBar() {
             }} />
           )}
         </button>
-        <button className="topbar-icon-btn" onClick={() => navigate('settings')} id="topbar-settings" aria-label="Ajustes">
-          <span className="material-symbols-outlined">settings</span>
-        </button>
       </div>
     </header>
   );
 }
 
 /* ============================================
-   MOBILE BOTTOM NAV
+   MOBILE BOTTOM NAV  — clean 5 tabs
    ============================================ */
-const MORE_ITEMS = [
-  { id: 'habits',     label: 'Hábitos',      icon: 'self_care'   },
-  { id: 'goals',      label: 'Objetivos',    icon: 'flag'        },
-  { id: 'journal',    label: 'Diario',       icon: 'book_2'      },
-  { id: 'gratitude',  label: 'Gratitud',     icon: 'favorite'    },
-  { id: 'reminders',  label: 'Recordatorios',icon: 'alarm'       },
-  { id: 'phrases',    label: 'Frases',       icon: 'format_quote'},
-  { id: 'statistics', label: 'Estadísticas', icon: 'bar_chart'   },
-];
-
 function MobileBottomNav() {
   const { state, navigate } = useApp();
   const { currentScreen } = state;
-  const [showMore, setShowMore] = useState(false);
 
-  /* Mirror MAIN_NAV exactly so mobile matches desktop */
   const BOTTOM_NAV = [
-    { id: 'dashboard', label: 'Inicio',     icon: 'dashboard'          },
+    { id: 'dashboard', label: 'Inicio',     icon: 'home'               },
     { id: 'calendar',  label: 'Calendario', icon: 'calendar_today'      },
     { id: 'tasks',     label: 'Tareas',     icon: 'check_circle'        },
     { id: 'wellness',  label: 'Bienestar',  icon: 'energy_savings_leaf' },
     { id: 'profile',   label: 'Perfil',     icon: 'person'              },
   ];
 
-  // Map sub-screens to their parent tab
   const TAB_GROUPS = {
     dashboard: ['dashboard', 'agenda'],
     calendar:  ['calendar', 'createEvent', 'events', 'eventDetail'],
     tasks:     ['tasks', 'createTask', 'taskDetail', 'reminders'],
-    wellness:  ['wellness', 'meditation', 'habits', 'createHabit', 'goals', 'createGoal', 'journal', 'gratitude', 'phrases'],
+    wellness:  ['wellness', 'meditation', 'habits', 'createHabit', 'goals',
+                'createGoal', 'journal', 'gratitude', 'phrases'],
     profile:   ['profile', 'settings', 'notifications', 'statistics', 'search'],
   };
-
-  const MORE_SCREEN_IDS = MORE_ITEMS.map(i => i.id);
-  const isMoreActive = MORE_SCREEN_IDS.includes(currentScreen);
 
   const activeTab = Object.entries(TAB_GROUPS)
     .find(([, screens]) => screens.includes(currentScreen))?.[0] || 'dashboard';
 
   const fabDest = CALENDAR_SCREENS.has(currentScreen) ? 'createEvent' : 'createTask';
 
-  const handleMoreNav = (id) => {
-    setShowMore(false);
-    navigate(id);
-  };
-
   return (
-    <>
-      <div className="mobile-bottom-nav-wrapper">
-        <nav className="mobile-bottom-nav" role="navigation" aria-label="Navegación principal">
-          {BOTTOM_NAV.map(item => {
-            const isActive = activeTab === item.id && !isMoreActive;
-            return (
-              <button
-                key={item.id}
-                className={`bottom-nav-item${isActive ? ' active' : ''}`}
-                onClick={() => { setShowMore(false); navigate(item.id); }}
-                id={`bnav-${item.id}`}
-                aria-label={item.label}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                <span className="material-symbols-outlined nav-icon">{item.icon}</span>
-                <span className="bottom-nav-label">{item.label}</span>
-              </button>
-            );
-          })}
+    <div className="mobile-bottom-nav-wrapper">
+      <nav className="mobile-bottom-nav" role="navigation" aria-label="Navegación principal">
+        {BOTTOM_NAV.map(item => {
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              className={`bottom-nav-item${isActive ? ' active' : ''}`}
+              onClick={() => navigate(item.id)}
+              id={`bnav-${item.id}`}
+              aria-label={item.label}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <span className="material-symbols-outlined nav-icon">{item.icon}</span>
+              <span className="bottom-nav-label">{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
-          {/* Más tab */}
-          <button
-            className={`bottom-nav-item${isMoreActive || showMore ? ' active' : ''}`}
-            onClick={() => setShowMore(s => !s)}
-            id="bnav-more"
-            aria-label="Más opciones"
-            aria-expanded={showMore}
-          >
-            <span className="material-symbols-outlined nav-icon">grid_view</span>
-            <span className="bottom-nav-label">Más</span>
-          </button>
-        </nav>
-
-        {/* Floating action button */}
-        {!SCREENS_WITH_OWN_ADD.has(currentScreen) && (
-          <button
-            className="mobile-fab"
-            onClick={() => navigate(fabDest)}
-            id="bnav-fab"
-            aria-label="Crear"
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>add</span>
-          </button>
-        )}
-      </div>
-
-      {/* Más drawer — portal to escape stacking context */}
-      {showMore && createPortal(
-        <>
-          {/* Backdrop */}
-          <div
-            onClick={() => setShowMore(false)}
-            style={{
-              position: 'fixed', inset: 0,
-              zIndex: 9990,
-              background: 'rgba(0,0,0,0.35)',
-              backdropFilter: 'blur(4px)',
-              WebkitBackdropFilter: 'blur(4px)',
-            }}
-          />
-          {/* Sheet */}
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Más secciones"
-            style={{
-              position: 'fixed',
-              bottom: 0, left: 0, right: 0,
-              zIndex: 9991,
-              background: 'var(--surface)',
-              borderRadius: '24px 24px 0 0',
-              padding: '0 0 calc(env(safe-area-inset-bottom,0px) + 80px)',
-              animation: 'slideUp 0.28s cubic-bezier(0.34,1.56,0.64,1) both',
-              boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
-            }}
-          >
-            {/* Handle */}
-            <div style={{ width: 36, height: 4, borderRadius: 99, background: 'var(--outline-variant)', margin: '12px auto 20px' }} />
-
-            {/* Title */}
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--on-surface)', margin: '0 0 16px 24px' }}>Más secciones</p>
-
-            {/* Grid */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: 4,
-              padding: '0 12px',
-            }}>
-              {MORE_ITEMS.map(item => {
-                const isAct = currentScreen === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleMoreNav(item.id)}
-                    id={`more-${item.id}`}
-                    aria-label={item.label}
-                    style={{
-                      display: 'flex', flexDirection: 'column', alignItems: 'center',
-                      gap: 6, padding: '14px 8px',
-                      background: isAct ? 'var(--primary-container)' : 'transparent',
-                      border: 'none', borderRadius: 16,
-                      cursor: 'pointer',
-                      transition: 'background 0.15s ease',
-                    }}
-                  >
-                    <div style={{
-                      width: 48, height: 48,
-                      borderRadius: 16,
-                      background: isAct ? 'var(--primary)' : 'var(--surface-container)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <span
-                        className="material-symbols-outlined"
-                        style={{ fontSize: 22, color: isAct ? 'var(--on-primary)' : 'var(--on-surface-variant)' }}
-                      >
-                        {item.icon}
-                      </span>
-                    </div>
-                    <span style={
-                      { fontSize: 11, fontWeight: 600, color: isAct ? 'var(--primary)' : 'var(--on-surface-variant)',
-                        fontFamily: 'var(--font-body)', textAlign: 'center', lineHeight: 1.2 }
-                    }>
-                      {item.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </>,
-        document.body
+      {/* FAB */}
+      {!SCREENS_WITH_OWN_ADD.has(currentScreen) && (
+        <button className="mobile-fab" onClick={() => navigate(fabDest)} id="bnav-fab" aria-label="Crear">
+          <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>add</span>
+        </button>
       )}
-    </>
+    </div>
   );
 }
 
@@ -561,14 +582,15 @@ function AppContent() {
   const { currentScreen, darkMode, authLoading } = state;
   const prevScreenRef = useRef(currentScreen);
   const [animClass, setAnimClass] = useState('screen-enter');
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     const prev = prevScreenRef.current;
-    // Decide animation direction: detail screens slide in from right, back nav slides from left
-    const goingDeeper = DETAIL_SCREENS.has(currentScreen) && !DETAIL_SCREENS.has(prev);
-    const goingBack   = !DETAIL_SCREENS.has(currentScreen) && DETAIL_SCREENS.has(prev);
+    const goingBack = !DETAIL_SCREENS.has(currentScreen) && DETAIL_SCREENS.has(prev);
     setAnimClass(goingBack ? 'screen-back' : 'screen-enter');
     prevScreenRef.current = currentScreen;
+    // Close drawer on screen change
+    setDrawerOpen(false);
   }, [currentScreen]);
 
   // While Firebase checks the existing session, show splash
@@ -598,8 +620,11 @@ function AppContent() {
       {/* Desktop: fixed sidebar */}
       <DesktopSidebar />
 
-      {/* Mobile: fixed top bar */}
-      <MobileTopBar />
+      {/* Mobile: fixed top bar with hamburger */}
+      <MobileTopBar onMenuOpen={() => setDrawerOpen(true)} />
+
+      {/* Mobile: side drawer (hamburger menu) */}
+      <MobileSideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* Main scrollable content — keyed to trigger re-animation on screen change */}
       <main className="app-main">
