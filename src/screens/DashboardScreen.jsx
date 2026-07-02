@@ -74,7 +74,7 @@ export default function DashboardScreen() {
   const todayTasks     = sortByTime(tasks.filter(t => t.date === today));
   const completedToday = todayTasks.filter(t => t.completed).length;
   const pendingCount   = todayTasks.filter(t => !t.completed).length;
-  const todayEvents    = events.filter(e => e.date === today).sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const todayEvents    = events.filter(e => e.date === today).sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
   const todayPhrase    = phrases[new Date().getDay() % phrases.length];
 
   const handleToggle = (taskId, e) => {

@@ -95,11 +95,11 @@ function getWeekTaskCounts(tasks) {
 
   tasks.forEach(t => {
     if (!t.completed) return;
-    const d = t.dueDate || t.date || t.completedAt;
+    const d = t.date;   // 'date' is the only date field in the task model
     if (!d) return;
-    const dt = new Date(d);
+    const dt = new Date(d + 'T00:00:00');
     dt.setHours(0, 0, 0, 0);
-    const diff = Math.round((dt - mon) / 86400000); // days from Monday
+    const diff = Math.round((dt - mon) / 86400000);
     if (diff >= 0 && diff < 7) counts[diff]++;
   });
 

@@ -281,11 +281,13 @@ function reducer(state, action) {
     }
 
     case 'DAILY_RESET_HABITS': {
-      // Called on app load: if lastCompletedDate !== today (local), reset completedToday
+      // Called on app load: if lastCompletedDate !== today (local), reset completedToday AND streak
       const todayStr = new Date().toLocaleDateString('en-CA');
       const habits = state.habits.map(h => {
-        if (h.lastCompletedDate === todayStr) return h; // already completed today, keep
-        return { ...h, completedToday: false };
+        if (h.lastCompletedDate === todayStr) return h; // completed today — keep everything
+        // Not completed today: reset daily flag AND set streak to 0
+        // (streak only counts if user completes the habit again today)
+        return { ...h, completedToday: false, streak: 0 };
       });
       return { ...state, habits };
     }

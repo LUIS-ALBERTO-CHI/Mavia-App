@@ -41,7 +41,7 @@ export default function GoalsScreen() {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const avgProgress = goals.length
-    ? Math.round(goals.reduce((a, g) => a + g.progress, 0) / goals.length)
+    ? Math.round(goals.reduce((a, g) => a + (Number(g.progress) || 0), 0) / goals.length)
     : 0;
 
   const completed = goals.filter(g => g.progress >= 100).length;
@@ -490,18 +490,20 @@ export default function GoalsScreen() {
                   <div className="gls-card-meta">
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <TrendingUp size={14} strokeWidth={2} />
-                      {goal.completedTasks} de {goal.tasks.length} tareas
+                      {goal.completedTasks ?? 0} de {(goal.tasks ?? []).length} tareas
                     </span>
                     <span className="gls-deadline">
                       <Calendar size={13} strokeWidth={2} />
-                      {new Date(goal.deadline).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {goal.deadline
+                        ? new Date(goal.deadline + 'T00:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : 'Sin fecha'}
                     </span>
                   </div>
 
                   {/* Task list */}
                   <div className="gls-tasks">
-                    {goal.tasks.map((t, i) => {
-                      const done = i < goal.completedTasks;
+                    {(goal.tasks ?? []).map((t, i) => {
+                      const done = i < (goal.completedTasks ?? 0);
                       return (
                         <div key={i} className={`gls-task${done ? ' done' : ''}`}>
                           {done
