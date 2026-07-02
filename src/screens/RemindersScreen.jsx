@@ -44,15 +44,15 @@ export default function RemindersScreen() {
   const todayStr    = localToday();
   const tomorrowStr = localDateOffset(1);
 
-  // All tasks with reminder flag
-  const all = state.tasks.filter(t => t.reminder);
+  // All tasks with reminder flag that are NOT yet completed
+  const all = state.tasks.filter(t => t.reminder && !t.completed);
 
   // Filter by chip
   const byChip = (() => {
     switch (activeFilter) {
       case 'Hoy':      return all.filter(t => t.date === todayStr);
       case 'Próximos': return all.filter(t => t.date > todayStr);
-      case 'Vencidos': return all.filter(t => t.date < todayStr && !t.completed);
+      case 'Vencidos': return all.filter(t => t.date < todayStr);  // completed already excluded in `all`
       default:         return all;
     }
   })();
