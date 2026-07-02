@@ -47,9 +47,20 @@ const D_PAD     = D_ITEM_H * Math.floor(D_VISIBLE / 2);
 /**
  * For the drum: converts HH:MM → nearest 5-min slot string "h:mm AM/PM".
  * Used to position the drum, NOT for display on the trigger.
+ * @param {string|null} v        - current value (HH:MM 24h)
+ * @param {string|null} defTime  - default HH:MM to use when v is empty (optional)
  */
-function valueToSlot(v) {
+function valueToSlot(v, defTime) {
   if (!v || typeof v !== 'string') {
+    // Use provided default, or fall back to current time
+    const base = defTime || null;
+    if (base) {
+      const [bh, bm] = base.split(':').map(Number);
+      const mSnapped = Math.min(55, Math.round((bm || 0) / 5) * 5);
+      const ap  = bh >= 12 ? 'PM' : 'AM';
+      const h12 = bh % 12 || 12;
+      return `${h12}:${String(mSnapped).padStart(2, '0')} ${ap}`;
+    }
     const now = new Date();
     const h   = now.getHours();
     const m   = Math.round(now.getMinutes() / 5) * 5 % 60;
@@ -666,11 +677,13 @@ const TP_STYLES = `
 // ─── Main export ─────────────────────────────────────────────────────────────
 /**
  * TimePicker — drum scroll style matching iOS design.
- * value:    "HH:MM" (24h) stored; displays as "h:mm AM/PM"
- * onChange: ("HH:MM") => void
- * minTime:  "HH:MM" (24h) — slots before this time will be disabled/greyed (use for today)
+ * value:       "HH:MM" (24h) stored; displays as "h:mm AM/PM"
+ * onChange:    ("HH:MM") => void
+ * minTime:     "HH:MM" (24h) — slots before this are filtered (use for today)
+ * defaultTime: "HH:MM" (24h) — initial drum position when value is empty
+ *              Pass "08:00" for future dates, next-slot for today.
  */
-export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', id, minTime }) {
+export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', id, minTime, defaultTime }) {
   const [open, setOpen]               = useState(false);
   const [showCustom, setShowCustom]   = useState(false);
   const triggerRef                    = useRef(null);
@@ -681,9 +694,9 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
     ? SLOTS.filter(s => hhmm2min(slotTo24h(s)) >= minMin)
     : SLOTS;
 
-  // Pick initial slot: if value is set and valid, use it; else pick first available
+  // Pick initial slot: if value is set and valid, use it; else use defaultTime or current time
   const getInitialSlot = () => {
-    const preferred = valueToSlot(value);
+    const preferred = valueToSlot(value, defaultTime);
     if (!minTime) return preferred;
     // If preferred slot is before minTime, jump to first available
     if (hhmm2min(slotTo24h(preferred)) < minMin) {
@@ -694,12 +707,12 @@ export function TimePicker({ value, onChange, placeholder = 'Seleccionar hora', 
 
   const [slot, setSlot] = useState(getInitialSlot);
 
-  // Sync slot when external value changes
+  // Sync slot when external value or defaultTime changes
   useEffect(() => {
     const s = getInitialSlot();
     setSlot(s);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, minTime]);
+  }, [value, minTime, defaultTime]);
 
   // Confirm the selected time from the drum
   const handleConfirm = () => {
