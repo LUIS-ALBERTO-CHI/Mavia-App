@@ -268,25 +268,28 @@ function DesktopSidebar() {
    MOBILE SIDE DRAWER  (hamburger → slide-from-left)
    ============================================ */
 const DRAWER_ITEMS = [
-  { id: 'habits',     label: 'Hábitos',       icon: 'self_care',    section: 'Bienestar'    },
-  { id: 'goals',      label: 'Objetivos',     icon: 'flag',         section: 'Bienestar'    },
-  { id: 'journal',    label: 'Diario',        icon: 'book_2',       section: 'Bienestar'    },
-  { id: 'gratitude',  label: 'Gratitud',      icon: 'favorite',     section: 'Bienestar'    },
-  { id: 'phrases',    label: 'Frases',        icon: 'format_quote', section: 'Bienestar'    },
-  { id: 'reminders',  label: 'Recordatorios', icon: 'alarm',        section: 'Tareas'       },
-  { id: 'events',     label: 'Eventos',       icon: 'event',        section: 'Calendario'   },
-  { id: 'statistics', label: 'Estadísticas',  icon: 'bar_chart',    section: 'General'      },
-  { id: 'search',     label: 'Buscar',        icon: 'search',       section: 'General'      },
+  { id: 'habits',     label: 'Hábitos',       icon: 'self_care',    section: 'Bienestar',  color: '#546347' },
+  { id: 'goals',      label: 'Objetivos',     icon: 'flag',         section: 'Bienestar',  color: '#695e37' },
+  { id: 'journal',    label: 'Diario',        icon: 'book_2',       section: 'Bienestar',  color: '#705765' },
+  { id: 'gratitude',  label: 'Gratitud',      icon: 'favorite',     section: 'Bienestar',  color: '#8c5f7a' },
+  { id: 'phrases',    label: 'Frases',        icon: 'format_quote', section: 'Bienestar',  color: '#546347' },
+  { id: 'reminders',  label: 'Recordatorios', icon: 'alarm',        section: 'Tareas',     color: '#705765' },
+  { id: 'events',     label: 'Eventos',       icon: 'event',        section: 'Calendario', color: '#695e37' },
+  { id: 'statistics', label: 'Estadísticas',  icon: 'bar_chart',    section: 'General',    color: '#546347' },
+  { id: 'search',     label: 'Buscar',        icon: 'search',       section: 'General',    color: '#705765' },
 ];
 
+const SECTION_ORDER = ['Bienestar', 'Tareas', 'Calendario', 'General'];
+
 function MobileSideDrawer({ open, onClose }) {
-  const { state, navigate } = useApp();
+  const { state, navigate, dispatch } = useApp();
   const { currentScreen, user } = state;
   const online = useOnlineStatus();
 
   const go = (id) => { onClose(); navigate(id); };
+  const handleLogout = () => { onClose(); dispatch({ type: 'LOGOUT' }); };
 
-  // Group items by section
+  // Group items by section preserving SECTION_ORDER
   const sections = {};
   DRAWER_ITEMS.forEach(item => {
     if (!sections[item.section]) sections[item.section] = [];
@@ -295,6 +298,9 @@ function MobileSideDrawer({ open, onClose }) {
 
   if (!open) return null;
 
+  const initials = [user.firstName, user.lastName]
+    .filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'M';
+
   return createPortal(
     <>
       {/* Backdrop */}
@@ -302,108 +308,257 @@ function MobileSideDrawer({ open, onClose }) {
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0, zIndex: 9990,
-          background: 'rgba(0,0,0,0.4)',
-          backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)',
+          background: 'rgba(18,12,16,0.5)',
+          backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+          animation: 'fadeIn 0.2s ease both',
         }}
       />
 
       {/* Drawer panel */}
-      <nav
+      <div
         role="dialog"
         aria-modal="true"
         aria-label="Menú de secciones"
         style={{
           position: 'fixed',
           top: 0, left: 0, bottom: 0,
-          width: 'min(80vw, 300px)',
+          width: 'min(82vw, 310px)',
           zIndex: 9991,
           background: 'var(--surface)',
           display: 'flex', flexDirection: 'column',
-          animation: 'drawerIn 0.28s cubic-bezier(0.25,1,0.5,1) both',
-          boxShadow: '4px 0 40px rgba(0,0,0,0.2)',
+          animation: 'drawerIn 0.3s cubic-bezier(0.22,1,0.36,1) both',
+          boxShadow: '8px 0 48px rgba(18,12,16,0.22)',
           overflowY: 'auto',
+          overflowX: 'hidden',
         }}
       >
-        {/* User header */}
+        {/* ── Header ── */}
         <div style={{
-          padding: '52px 20px 20px',
-          background: 'var(--gradient-primary)',
+          position: 'relative',
+          padding: '56px 22px 24px',
+          background: 'linear-gradient(160deg, #705765 0%, #57404d 55%, #3d2d38 100%)',
           flexShrink: 0,
+          overflow: 'hidden',
         }}>
+          {/* Decorative blobs */}
           <div style={{
-            width: 52, height: 52, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.2)',
+            position: 'absolute', top: -40, right: -40,
+            width: 130, height: 130, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.06)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: -20, left: 60,
+            width: 90, height: 90, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.04)',
+            pointerEvents: 'none',
+          }} />
+
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            aria-label="Cerrar menú"
+            style={{
+              position: 'absolute', top: 14, right: 14,
+              width: 32, height: 32, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.12)',
+              border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'rgba(255,255,255,0.8)',
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>close</span>
+          </button>
+
+          {/* Avatar */}
+          <div style={{
+            width: 64, height: 64, borderRadius: '50%',
+            border: '2.5px solid rgba(255,255,255,0.35)',
+            boxShadow: '0 0 0 5px rgba(255,255,255,0.08)',
+            overflow: 'hidden',
+            marginBottom: 14,
+            background: 'rgba(255,255,255,0.15)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 22, fontWeight: 700, color: 'white',
-            marginBottom: 12,
-            overflow: user.photoURL ? 'hidden' : 'visible',
-            padding: 0,
+            fontSize: 24, fontWeight: 700,
+            color: 'white',
+            fontFamily: 'var(--font-display)',
           }}>
             {user.photoURL
-              ? <img src={user.photoURL} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', borderRadius:'50%' }} />
-              : (user.firstName?.[0] || 'A')
+              ? <img src={user.photoURL} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+              : initials
             }
           </div>
-          <div style={{ color:'white', fontWeight:700, fontSize:16, fontFamily:'var(--font-display)', lineHeight:1.2 }}>
-            {user.firstName || 'Mavia'}
+
+          {/* Name */}
+          <div style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 20, fontWeight: 400,
+            color: 'white', lineHeight: 1.25,
+            letterSpacing: '-0.01em',
+            marginBottom: 2,
+          }}>
+            {user.firstName} {user.lastName || ''}
           </div>
-          <div style={{ color:'rgba(255,255,255,0.75)', fontSize:12, marginTop:4, display:'flex', alignItems:'center', gap:6 }}>
+
+          {/* Email */}
+          {user.email && (
+            <div style={{
+              fontSize: 12, color: 'rgba(255,255,255,0.6)',
+              marginBottom: 10,
+              fontFamily: 'var(--font-body)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {user.email}
+            </div>
+          )}
+
+          {/* Online badge */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 99,
+            padding: '3px 10px',
+          }}>
             <ConnDot />
-            <span style={{ color:'rgba(255,255,255,0.8)' }}>{online ? 'Online' : 'Sin conexión'}</span>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontWeight: 600, fontFamily: 'var(--font-body)' }}>
+              {online ? 'Online' : 'Sin conexión'}
+            </span>
           </div>
         </div>
 
-        {/* Sections */}
-        <div style={{ flex: 1, padding: '12px 0 24px' }}>
-          {Object.entries(sections).map(([sectionName, items]) => (
+        {/* ── Nav sections ── */}
+        <nav style={{ flex: 1, padding: '8px 0 12px', overflowY: 'auto' }}>
+          {SECTION_ORDER.filter(s => sections[s]).map((sectionName, sIdx) => (
             <div key={sectionName}>
-              <p style={{
-                fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
-                textTransform: 'uppercase', color: 'var(--on-surface-variant)',
-                opacity: 0.6, margin: '16px 20px 6px',
-              }}>{sectionName}</p>
-              {items.map(item => {
+              {/* Section label */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                margin: sIdx === 0 ? '14px 16px 6px' : '18px 16px 6px',
+              }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 800, letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: 'var(--on-surface-variant)', opacity: 0.55,
+                  fontFamily: 'var(--font-body)',
+                }}>{sectionName}</span>
+                <div style={{ flex: 1, height: 1, background: 'var(--outline-variant)', opacity: 0.5 }} />
+              </div>
+
+              {/* Items */}
+              {sections[sectionName].map(item => {
                 const isAct = currentScreen === item.id;
                 return (
                   <button
                     key={item.id}
                     onClick={() => go(item.id)}
                     id={`drawer-${item.id}`}
+                    aria-current={isAct ? 'page' : undefined}
                     style={{
-                      width: '100%', display: 'flex', alignItems: 'center', gap: 14,
-                      padding: '11px 20px',
-                      background: isAct ? 'var(--primary-container)' : 'none',
+                      width: '100%',
+                      display: 'flex', alignItems: 'center', gap: 13,
+                      padding: '8px 16px 8px 14px',
+                      margin: '1px 0',
+                      background: isAct
+                        ? 'linear-gradient(90deg, var(--primary-container), transparent)'
+                        : 'transparent',
                       border: 'none', cursor: 'pointer',
-                      borderRadius: isAct ? '0 99px 99px 0' : 0,
-                      marginRight: 12,
+                      borderLeft: isAct ? `3px solid ${item.color}` : '3px solid transparent',
                       textAlign: 'left',
-                      transition: 'background 0.15s ease',
+                      transition: 'background 0.15s ease, border-color 0.15s ease',
                     }}
                   >
-                    <span
-                      className="material-symbols-outlined"
-                      style={{ fontSize: 21, color: isAct ? 'var(--primary)' : 'var(--on-surface-variant)', flexShrink: 0 }}
-                    >
-                      {item.icon}
-                    </span>
+                    {/* Icon pill */}
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 12,
+                      background: isAct ? item.color : 'var(--surface-container)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                      transition: 'background 0.15s ease',
+                      boxShadow: isAct ? `0 3px 10px ${item.color}40` : 'none',
+                    }}>
+                      <span
+                        className="material-symbols-outlined"
+                        style={{
+                          fontSize: 19,
+                          color: isAct ? 'white' : 'var(--on-surface-variant)',
+                        }}
+                      >
+                        {item.icon}
+                      </span>
+                    </div>
+
                     <span style={{
-                      fontSize: 14, fontWeight: isAct ? 700 : 500,
-                      color: isAct ? 'var(--primary)' : 'var(--on-surface)',
+                      fontSize: 14,
+                      fontWeight: isAct ? 700 : 500,
+                      color: isAct ? item.color : 'var(--on-surface)',
                       fontFamily: 'var(--font-body)',
+                      letterSpacing: isAct ? '-0.01em' : 0,
                     }}>
                       {item.label}
                     </span>
+
+                    {isAct && (
+                      <span className="material-symbols-outlined" style={{
+                        fontSize: 16, color: item.color, marginLeft: 'auto', opacity: 0.7,
+                      }}>chevron_right</span>
+                    )}
                   </button>
                 );
               })}
             </div>
           ))}
+        </nav>
+
+        {/* ── Footer ── */}
+        <div style={{
+          borderTop: '1px solid var(--outline-variant)',
+          padding: '12px 14px calc(env(safe-area-inset-bottom,0px) + 16px)',
+          display: 'flex', gap: 8,
+          flexShrink: 0,
+        }}>
+          <button
+            onClick={() => go('settings')}
+            id="drawer-settings"
+            style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              padding: '10px 8px',
+              background: 'var(--surface-container)',
+              border: 'none', borderRadius: 14, cursor: 'pointer',
+              color: 'var(--on-surface-variant)',
+              fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 600,
+              transition: 'background 0.15s ease',
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>settings</span>
+            Ajustes
+          </button>
+
+          <button
+            onClick={handleLogout}
+            id="drawer-logout"
+            style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              padding: '10px 8px',
+              background: 'var(--error-container, #fce8e8)',
+              border: 'none', borderRadius: 14, cursor: 'pointer',
+              color: 'var(--error, #c0392b)',
+              fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 600,
+              transition: 'background 0.15s ease',
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>logout</span>
+            Salir
+          </button>
         </div>
-      </nav>
+      </div>
     </>,
     document.body
   );
 }
+
+
+
 
 /* ============================================
    MOBILE TOP BAR
