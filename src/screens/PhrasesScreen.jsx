@@ -1,4 +1,5 @@
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { Share2, Sparkles, Quote, RefreshCw, Bookmark } from 'lucide-react';
 import { useState } from 'react';
 import { SYSTEM_PHRASES } from '../context/AppContext';
@@ -14,6 +15,7 @@ function dailyPhraseIndex(phrases, dateStr) {
 
 export default function PhrasesScreen() {
   const { state, showToast } = useApp();
+  const { t } = useTranslation();
   const phrases = SYSTEM_PHRASES;
   const today   = new Date().toLocaleDateString('en-CA');
 

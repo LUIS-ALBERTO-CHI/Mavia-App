@@ -83,6 +83,7 @@ const defaultState = {
   screenParams:      null,
   screenHistory:     [],
   darkMode:          false,
+  language:          'es',  // 'es' | 'en' | 'fr'
   sideDrawerOpen:    false,
   activeFilter:      'Hoy',
   toast:             null,
@@ -190,6 +191,7 @@ function reducer(state, action) {
     case 'TOGGLE_DRAWER':   return { ...state, sideDrawerOpen: !state.sideDrawerOpen };
     case 'CLOSE_DRAWER':    return { ...state, sideDrawerOpen: false };
     case 'TOGGLE_DARK_MODE':return { ...state, darkMode: !state.darkMode };
+    case 'SET_LANGUAGE':    return { ...state, language: action.language || 'es' };
     case 'SET_FILTER':      return { ...state, activeFilter: action.filter };
     case 'SHOW_TOAST':      return { ...state, toast: { message: action.message, type: action.toastType || 'default' } };
     case 'HIDE_TOAST':      return { ...state, toast: null };
@@ -474,6 +476,7 @@ export function AppProvider({ children }) {
           data: {
             ...data,
             darkMode: settings?.darkMode ?? false,
+            language: settings?.language ?? 'es',
           },
         });
 
@@ -988,6 +991,10 @@ export function AppProvider({ children }) {
 
         case 'TOGGLE_DARK_MODE':
           await saveSettings(uid, { darkMode: !state.darkMode });
+          break;
+
+        case 'SET_LANGUAGE':
+          await saveSettings(uid, { language: enrichedAction.language });
           break;
 
         default:

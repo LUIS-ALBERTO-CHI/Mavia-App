@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import {
   Edit2, Moon, Globe, Bell, Shield, HelpCircle,
   LogOut, ChevronRight, Check, X, TrendingUp, Flame, Camera

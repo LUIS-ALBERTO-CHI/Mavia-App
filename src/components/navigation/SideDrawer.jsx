@@ -1,4 +1,5 @@
 import { useApp } from '../../context/AppContext';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const DRAWER_SECTIONS = [
   {
@@ -32,8 +33,39 @@ const DRAWER_SECTIONS = [
 
 export default function SideDrawer() {
   const { state, dispatch, navigate } = useApp();
+  const { t } = useTranslation();
   const { sideDrawerOpen, user, currentScreen, notifications } = state;
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const DRAWER_SECTIONS = [
+    {
+      title: t('drawer.management'),
+      items: [
+        { id: 'reminders', label: t('drawer.reminders'), emoji: '🔔' },
+        { id: 'events',    label: t('drawer.events'),    emoji: '📅' },
+        { id: 'goals',     label: t('drawer.goals'),     emoji: '🎯' },
+        { id: 'habits',    label: t('drawer.habits'),    emoji: '✅' },
+      ],
+    },
+    {
+      title: t('drawer.wellbeing'),
+      items: [
+        { id: 'journal',   label: t('drawer.journal'),   emoji: '📓' },
+        { id: 'gratitude', label: t('drawer.gratitude'), emoji: '🙏' },
+        { id: 'phrases',   label: t('drawer.phrases'),   emoji: '✨' },
+        { id: 'wellness',  label: t('drawer.meditation'),emoji: '🧘' },
+      ],
+    },
+    {
+      title: t('drawer.analytics'),
+      items: [
+        { id: 'statistics',    label: t('drawer.statistics'),    emoji: '📊' },
+        { id: 'search',        label: t('drawer.search'),        emoji: '🔍' },
+        { id: 'notifications', label: t('drawer.notifications'), emoji: '🔔' },
+        { id: 'agenda',        label: t('drawer.agenda'),        emoji: '🗓️' },
+      ],
+    },
+  ];
 
   const handleNavigate = (screen) => {
     navigate(screen);
@@ -284,7 +316,7 @@ export default function SideDrawer() {
                 onClick={() => handleNavigate('settings')}
               >
                 <span className="drawer-item-emoji">⚙️</span>
-                <span className="drawer-item-label">Configuración</span>
+                <span className="drawer-item-label">{t('drawer.settings')}</span>
               </button>
             </div>
           </aside>

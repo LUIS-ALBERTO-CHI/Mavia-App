@@ -1,4 +1,5 @@
-﻿import { useApp } from '../context/AppContext';
+import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import AppIcon from '../components/AppIcon';
 import LottieIcon from '../components/LottieIcon';
 import { localToday, formatTime12h } from '../lib/utils';
@@ -9,11 +10,11 @@ import HabitIcon from '../components/HabitIcon';
 import FocusMode from '../components/FocusMode';
 import { useState } from 'react';
 
-function getGreeting() {
+function getGreeting(t) {
   const h = new Date().getHours();
-  if (h < 12) return 'Buenos días';
-  if (h < 18) return 'Buenas tardes';
-  return 'Buenas noches';
+  if (h < 12) return t('auth.goodMorning');
+  if (h < 18) return t('auth.goodAfternoon');
+  return t('auth.goodEvening');
 }
 
 function getMotivationalMessage(completedToday, totalToday, habitsDone, habitsTotal) {
@@ -46,6 +47,7 @@ const CAT_DOTS = {
 
 export default function DashboardScreen() {
   const { state, navigate, dispatch, showToast } = useApp();
+  const { t } = useTranslation();
   const { user, tasks, events, habits, phrases, darkMode } = state;
 
   const [confirmData, setConfirmData] = useState(null);
@@ -570,7 +572,7 @@ export default function DashboardScreen() {
           <div className="dash-greeting-row">
             <div>
               <h2 className="dash-greeting-h">
-                {getGreeting()}, {user.firstName}
+                {getGreeting(t)}, {user.firstName}
               </h2>
               <p className="dash-greeting-sub">
                 {getMotivationalMessage(completedToday, todayTasks.length, habits.filter(h => h.completedToday).length, habits.length)}
@@ -579,7 +581,7 @@ export default function DashboardScreen() {
             <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
               <div className="dash-tasks-badge">
                 <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--on-secondary-container)' }}>task_alt</span>
-                <span className="dash-tasks-badge-text">{pendingCount} Tareas hoy</span>
+                <span className="dash-tasks-badge-text">{pendingCount} {t('dashboard.tasksToday')}</span>
               </div>
               <button
                 className="dash-focus-btn"

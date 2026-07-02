@@ -1,4 +1,5 @@
 ﻿import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import PriorityBadge from '../components/PriorityBadge';
 import { formatTime12h } from '../lib/utils';
 

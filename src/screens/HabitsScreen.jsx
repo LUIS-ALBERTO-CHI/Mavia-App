@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { Flame, CheckCircle2, Circle, Plus, Droplets, Trash2, Edit2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import HabitIcon from '../components/HabitIcon';

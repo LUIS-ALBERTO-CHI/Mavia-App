@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import LottieIcon from '../components/LottieIcon';
 import { ChevronLeft, ChevronRight, Plus, Video, MapPin, Check, Calendar, AlignJustify,
          Sun, Moon, Star, Clock } from 'lucide-react';
@@ -54,6 +55,7 @@ function fmt12(t) { return formatTime12h(t, 'Todo el día'); }
 /* ─────────────────────────────────────────────── */
 export default function CalendarScreen() {
   const { state, navigate, dispatch } = useApp();
+  const { t } = useTranslation();
   const now = new Date();
 
   const [viewYear,    setViewYear]    = useState(now.getFullYear());

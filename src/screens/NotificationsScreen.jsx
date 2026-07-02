@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { Bell, CheckCheck, Dumbbell, Target, Calendar, Award, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 

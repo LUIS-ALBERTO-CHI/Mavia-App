@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import {
   CalendarPlus, Clock, Tag, MapPin, Video,
   Link2, AlignLeft, Bell, ChevronDown, X, Check, Leaf
@@ -27,6 +28,7 @@ const REMINDER_OPTIONS = [
 
 export default function CreateEventScreen() {
   const { dispatch, navigate, goBack, showToast, state } = useApp();
+  const { t } = useTranslation();
 
   // Edit mode: pre-fill if navigated with an eventId
   const editId    = state.screenParams?.eventId;

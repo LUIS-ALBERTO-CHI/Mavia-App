@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { Search, CheckCircle2, Calendar, BookOpen, Target, Clock, MapPin, TrendingUp, X, Dumbbell, Quote, History } from 'lucide-react';
 import { formatTime12h } from '../lib/utils';
 
@@ -24,6 +25,7 @@ const CATEGORIES = [
 
 export default function SearchScreen() {
   const { state, navigate } = useApp();
+  const { t } = useTranslation();
   const [query, setQuery]         = useState('');
   const [activeCategory, setActiveCategory] = useState('tasks');
   const [history, setHistory]     = useState(loadHistory);

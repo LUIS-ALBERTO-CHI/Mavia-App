@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
+import { LANGUAGES } from '../lib/i18n';
 import { Switch } from '../components/ui/switch';
 import {
   Bell, Calendar, Brain, Repeat2, Moon, Globe, Clock,
@@ -42,6 +44,7 @@ function SettingGroup({ title, children }) {
 
 export default function SettingsScreen() {
   const { state, dispatch, showToast } = useApp();
+  const { t, lang, setLang } = useTranslation();
   const [permStatus, setPermStatus] = useState(() =>
     'Notification' in window ? Notification.permission : 'unsupported'
   );
@@ -259,6 +262,33 @@ export default function SettingsScreen() {
           font-size: var(--text-label-sm);
           color: var(--outline);
         }
+        /* ── Language pills ── */
+        .stg-lang-pills {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        .stg-lang-pill {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 14px;
+          border-radius: 99px;
+          font-size: 13px;
+          font-weight: 600;
+          font-family: var(--font-body);
+          cursor: pointer;
+          transition: all 0.15s;
+          border: 1.5px solid var(--outline-variant);
+          background: none;
+          color: var(--on-surface-variant);
+        }
+        .stg-lang-pill.active {
+          border-color: var(--primary);
+          background: var(--primary-container);
+          color: var(--primary);
+        }
+        .stg-lang-pill .flag { font-size: 16px; }
       `}</style>
 
       <div className="stg-screen">
@@ -331,9 +361,24 @@ export default function SettingsScreen() {
           />
           <SettingRow
             icon={Globe} iconBg="var(--surface-container)"
-            label="Idioma"
+            label={t('settings.language')}
+            sub={t('settings.languageLabel')}
             id="set-lang"
-            right={<><span>Español</span><ChevronRight size={16} /></>}
+            right={
+              <div className="stg-lang-pills">
+                {LANGUAGES.map(l => (
+                  <button
+                    key={l.code}
+                    className={`stg-lang-pill${lang === l.code ? ' active' : ''}`}
+                    onClick={() => setLang(l.code)}
+                    id={`set-lang-${l.code}`}
+                  >
+                    <span className="flag">{l.flag}</span>
+                    {l.label}
+                  </button>
+                ))}
+              </div>
+            }
           />
           <SettingRow
             icon={Clock} iconBg="var(--surface-container)"

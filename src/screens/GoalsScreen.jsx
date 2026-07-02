@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { Target, Calendar, CheckCircle2, Circle, TrendingUp, Plus, Edit2, Trash2 } from 'lucide-react';
 import { Progress } from '../components/ui/progress';
 import { Badge } from '../components/ui/badge';
@@ -36,6 +37,7 @@ function CircleProgress({ value, size = 80 }) {
 
 export default function GoalsScreen() {
   const { state, navigate, dispatch, showToast } = useApp();
+  const { t } = useTranslation();
   const { goals } = state;
   const [filter, setFilter] = useState('Todos');
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);

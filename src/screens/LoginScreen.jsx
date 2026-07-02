@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { loginWithEmail, loginWithGoogle, forgotPassword, parseFirebaseError } from '../lib/authService';
 
 /* ---- Google SVG (official brand) ---- */
@@ -18,6 +19,7 @@ function GoogleIcon() {
 
 export default function LoginScreen() {
   const { dispatch, navigate, state, showToast } = useApp();
+  const { t } = useTranslation();
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -45,13 +47,13 @@ export default function LoginScreen() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.email || !form.password) {
-      showToast('Ingresa tu correo y contraseña', 'error'); return;
+      showToast(t('auth.fillFields'), 'error'); return;
     }
     setLoading(true);
     try {
       const user = await loginWithEmail({ email: form.email.trim(), password: form.password });
       dispatchLogin(user);
-      showToast('Bienvenida de nuevo', 'success');
+      showToast(t('auth.welcomeBack'), 'success');
     } catch (err) {
       showToast(parseFirebaseError(err.code), 'error');
     } finally {
@@ -79,7 +81,7 @@ export default function LoginScreen() {
         dispatch({ type: 'LOGIN_GOOGLE', user: userData });
       } else {
         dispatch({ type: 'LOGIN', user: userData });
-        showToast('Bienvenida de nuevo', 'success');
+        showToast(t('auth.welcomeBack'), 'success');
       }
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
@@ -93,11 +95,11 @@ export default function LoginScreen() {
   // Forgot password
   const handleForgot = async () => {
     if (!form.email) {
-      showToast('Escribe tu correo primero', 'error'); return;
+      showToast(t('toasts.writeFirstName'), 'error'); return;
     }
     try {
       await forgotPassword(form.email.trim());
-      showToast('Revisa tu correo — te enviamos un enlace', 'success');
+      showToast(t('auth.emailSent'), 'success');
     } catch (err) {
       showToast(parseFirebaseError(err.code), 'error');
     }
@@ -419,7 +421,7 @@ export default function LoginScreen() {
 
           {/* Card */}
           <div className="auth-card">
-            <h2 className="auth-card-title">Iniciar sesión</h2>
+            <h2 className="auth-card-title">{t('auth.login')}</h2>
 
             {/* Social */}
             <button
@@ -431,7 +433,7 @@ export default function LoginScreen() {
               style={googleLoading ? { opacity: 0.7 } : {}}
             >
               <GoogleIcon />
-              <span>{googleLoading ? 'Conectando...' : 'Continuar con Google'}</span>
+              <span>{googleLoading ? t('common.loading') : t('auth.continueGoogle')}</span>
             </button>
 
             {/* Divider */}
@@ -449,7 +451,7 @@ export default function LoginScreen() {
                   className={`auth-label${focused === 'email' ? ' focused' : ''}`}
                   htmlFor="login-email"
                 >
-                  Correo electrónico
+                  {t('auth.email')}
                 </label>
                 <div className="auth-input-wrap">
                   <span className={`auth-input-icon${focused === 'email' ? ' focused' : ''}`}>
@@ -475,7 +477,7 @@ export default function LoginScreen() {
                   className={`auth-label${focused === 'password' ? ' focused' : ''}`}
                   htmlFor="login-password"
                 >
-                  Contraseña
+                  {t('auth.password')}
                 </label>
                 <div className="auth-input-wrap">
                   <span className={`auth-input-icon${focused === 'password' ? ' focused' : ''}`}>
@@ -507,7 +509,7 @@ export default function LoginScreen() {
 
               {/* Forgot */}
               <a className="auth-forgot" onClick={handleForgot} id="login-forgot" role="button" tabIndex={0}>
-                ¿Olvidaste tu contraseña?
+                {t('auth.forgotPassword')}
               </a>
 
               {/* CTA */}
@@ -522,15 +524,15 @@ export default function LoginScreen() {
                       <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
                     </svg>
                   </span>
-                ) : 'Iniciar sesión'}
+                ) : t('auth.login')}
               </button>
             </form>
 
             {/* Footer */}
             <div className="auth-footer">
               <p>
-                ¿No tienes una cuenta?
-                <a onClick={() => navigate('register')} id="login-to-reg">Crear cuenta</a>
+                {t('auth.noAccount')}
+                <a onClick={() => navigate('register')} id="login-to-reg">{t('auth.register')}</a>
               </p>
             </div>
           </div>

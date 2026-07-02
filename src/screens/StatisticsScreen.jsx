@@ -1,4 +1,5 @@
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { Flame, CheckCircle2, Target, Headphones, TrendingUp, Award, BarChart2 } from 'lucide-react';
 import { Progress } from '../components/ui/progress';
 
@@ -108,6 +109,7 @@ function getWeekTaskCounts(tasks) {
 
 export default function StatisticsScreen() {
   const { state } = useApp();
+  const { t } = useTranslation();
   const { tasks, habits, goals, meditations, user } = state;
 
   // App usage streak

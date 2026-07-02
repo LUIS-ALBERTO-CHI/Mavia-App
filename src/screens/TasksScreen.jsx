@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import LottieIcon from '../components/LottieIcon';
 import { Search, Clock, MoreVertical, Check, AlertCircle, Edit2, Trash2 } from 'lucide-react';
 import { localToday, localDateOffset } from '../lib/utils';

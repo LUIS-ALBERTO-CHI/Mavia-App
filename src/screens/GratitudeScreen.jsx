@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { Heart, Plus, X, Leaf, Calendar } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -18,6 +19,7 @@ function formatDate(dateStr) {
 
 export default function GratitudeScreen() {
   const { state, dispatch, showToast } = useApp();
+  const { t } = useTranslation();
   const { gratitudeEntries } = state;
 
   const todayEntry = gratitudeEntries.find(e => e.date === today);

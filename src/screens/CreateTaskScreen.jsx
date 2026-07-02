@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { ArrowLeft, Calendar, Clock, Plus, X, UploadCloud, FileText, Bell } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input, Textarea } from '../components/ui/input';
@@ -21,6 +22,7 @@ const today = localToday();
 
 export default function CreateTaskScreen() {
   const { state, dispatch, goBack, navigate, showToast } = useApp();
+  const { t } = useTranslation();
 
   // Edit mode: if navigated with a taskId param, pre-load that task
   const taskId   = state.screenParams?.taskId || null;

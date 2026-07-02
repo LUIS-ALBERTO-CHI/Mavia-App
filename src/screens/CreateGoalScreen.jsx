@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { ArrowLeft, Target, Calendar, Plus, X, Edit2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -14,6 +15,7 @@ const today = new Date().toISOString().split('T')[0];
 
 export default function CreateGoalScreen() {
   const { dispatch, goBack, showToast, state } = useApp();
+  const { t } = useTranslation();
 
   // ── Edit mode: pre-fill if navigated with a goalId ──
   const editId   = state.screenParams?.goalId;

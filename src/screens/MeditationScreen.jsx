@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import {
   Heart, Play, Pause, Square, Clock, Headphones, Wind,
   Sparkles, Moon, X, ExternalLink,

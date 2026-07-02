@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { SEED_DATA } from '../context/AppContext';
 import { registerWithEmail, loginWithGoogle, parseFirebaseError } from '../lib/authService';
 import { seedInitialData } from '../lib/firestoreService';
@@ -20,6 +21,7 @@ function GoogleIcon() {
 
 export default function RegisterScreen() {
   const { dispatch, navigate, showToast } = useApp();
+  const { t } = useTranslation();
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -62,10 +64,10 @@ export default function RegisterScreen() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.email || !form.password) {
-      showToast('Completa todos los campos', 'error'); return;
+      showToast(t('auth.fillFields'), 'error'); return;
     }
     if (form.password.length < 6) {
-      showToast('La contraseña debe tener al menos 6 caracteres', 'error'); return;
+      showToast(t('auth.passwordMin'), 'error'); return;
     }
     setLoading(true);
     try {
@@ -86,7 +88,7 @@ export default function RegisterScreen() {
 
       // Dispatch LOGIN — onAuthStateChanged will also fire and load the data
       dispatchLogin(user);
-      showToast(`Bienvenida, ${firstName}`, 'success');
+      showToast(`${t('auth.welcome')} ${firstName}`, 'success');
     } catch (err) {
       showToast(parseFirebaseError(err.code), 'error');
     } finally {
@@ -113,7 +115,7 @@ export default function RegisterScreen() {
         dispatch({ type: 'LOGIN_GOOGLE', user: userData });
       } else {
         dispatch({ type: 'LOGIN', user: userData });
-        showToast('Bienvenida', 'success');
+        showToast(t('auth.welcomeBack'), 'success');
       }
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
@@ -449,7 +451,7 @@ export default function RegisterScreen() {
 
           {/* Card */}
           <div className="auth-card">
-            <h2 className="auth-card-title">Crear cuenta</h2>
+            <h2 className="auth-card-title">{t('auth.register')}</h2>
 
             {/* Social buttons */}
             <button
@@ -461,7 +463,7 @@ export default function RegisterScreen() {
               style={googleLoading ? { opacity: 0.7 } : {}}
             >
               <GoogleIcon />
-              <span>{googleLoading ? 'Conectando...' : 'Continuar con Google'}</span>
+              <span>{googleLoading ? t('common.loading') : t('auth.continueGoogle')}</span>
             </button>
 
 
@@ -480,7 +482,7 @@ export default function RegisterScreen() {
                   className={`auth-label${focused === 'name' ? ' focused' : ''}`}
                   htmlFor="reg-name"
                 >
-                  Nombre completo
+                  {t('auth.name')}
                 </label>
                 <div className="auth-input-wrap">
                   <span className={`auth-input-icon${focused === 'name' ? ' focused' : ''}`}>
@@ -506,7 +508,7 @@ export default function RegisterScreen() {
                   className={`auth-label${focused === 'email' ? ' focused' : ''}`}
                   htmlFor="reg-email"
                 >
-                  Correo electrónico
+                  {t('auth.email')}
                 </label>
                 <div className="auth-input-wrap">
                   <span className={`auth-input-icon${focused === 'email' ? ' focused' : ''}`}>
@@ -532,7 +534,7 @@ export default function RegisterScreen() {
                   className={`auth-label${focused === 'password' ? ' focused' : ''}`}
                   htmlFor="reg-password"
                 >
-                  Contraseña
+                  {t('auth.password')}
                 </label>
                 <div className="auth-input-wrap">
                   <span className={`auth-input-icon${focused === 'password' ? ' focused' : ''}`}>
@@ -574,15 +576,15 @@ export default function RegisterScreen() {
                       <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
                     </svg>
                   </span>
-                ) : 'Crear mi cuenta'}
+                ) : t('auth.register')}
               </button>
             </form>
 
             {/* Footer link */}
             <div className="auth-footer">
               <p>
-                ¿Ya tienes una cuenta?
-                <a onClick={() => navigate('login')} id="reg-to-login">Iniciar sesión</a>
+                {t('auth.haveAccount')}
+                <a onClick={() => navigate('login')} id="reg-to-login">{t('auth.login')}</a>
               </p>
             </div>
           </div>

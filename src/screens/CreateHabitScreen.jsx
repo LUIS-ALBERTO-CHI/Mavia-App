@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { ArrowLeft, Flame, Edit2 } from 'lucide-react';
 import HabitIcon, { HABIT_CATALOGUE } from '../components/HabitIcon';
 
@@ -24,6 +25,7 @@ const DAYS_SHORT = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
 export default function CreateHabitScreen() {
   const { dispatch, goBack, showToast, state } = useApp();
+  const { t } = useTranslation();
 
   // ── Edit mode: pre-fill if navigated with a habitId ──
   const editId   = state.screenParams?.habitId;
