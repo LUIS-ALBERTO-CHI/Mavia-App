@@ -294,21 +294,21 @@ export default function SettingsScreen() {
       <div className="stg-screen">
 
         {/* Hero */}
-        <h1 className="stg-hero-title">Configuración</h1>
+        <h1 className="stg-hero-title">{t('settings.title')}</h1>
         <p className="stg-hero-sub">Personaliza Mavia a tu gusto.</p>
 
         {/* ── Notificaciones ── */}
-        <SettingGroup title="Notificaciones">
+        <SettingGroup title={t('settings.notifications')}>
           {/* Permission status row */}
           <SettingRow
             icon={Bell} iconBg="var(--primary-container)" iconColor="var(--primary)"
-            label="Notificaciones del sistema"
+            label={t('settings.systemNotif')}
             id="set-notif-perm"
             sub={
-              permStatus === 'granted'     ? 'Activadas' :
-              permStatus === 'denied'      ? 'Bloqueadas en el navegador' :
-              permStatus === 'unsupported' ? 'No soportado en este navegador' :
-              'Permiso no solicitado'
+              permStatus === 'granted'     ? t('settings.notifOn') :
+              permStatus === 'denied'      ? t('settings.notifBlocked') :
+              permStatus === 'unsupported' ? t('settings.notifUnsup') :
+              t('settings.notifPending')
             }
             right={
               permStatus !== 'granted' && permStatus !== 'unsupported' ? (
@@ -322,40 +322,40 @@ export default function SettingsScreen() {
                   }}
                   id="btn-enable-notif"
                 >
-                  Activar
+                  {t('settings.enableNotif')}
                 </button>
               ) : null
             }
           />
           <SettingRow
             icon={Calendar} iconBg="var(--secondary-container)" iconColor="var(--secondary)"
-            label="Recordatorios de tareas"
+            label={t('settings.taskNotif')}
             sub="15 min antes y al momento"
             id="set-task-notif"
             right={<Switch checked={notifTasks && permStatus === 'granted'} onCheckedChange={setNotifTasks} id="sw-tasks" disabled={permStatus !== 'granted'} />}
           />
           <SettingRow
             icon={Repeat2} iconBg="rgba(74,111,165,0.12)" iconColor="#4a6fa5"
-            label="Recordatorio de hábitos"
-            sub="Todos los días a las 8:00 PM"
+            label={t('settings.habitNotif')}
+            sub="8:00 PM"
             id="set-habit-notif"
             right={<Switch checked={notifHabits && permStatus === 'granted'} onCheckedChange={setNotifHabits} id="sw-habits" disabled={permStatus !== 'granted'} />}
           />
           <SettingRow
             icon={Bell} iconBg="var(--tertiary-container)" iconColor="var(--tertiary)"
-            label="Eventos del día"
-            sub="30 minutos antes de cada evento"
+            label={t('settings.eventNotif')}
+            sub="30 min"
             id="set-ev-notif"
             right={<Switch checked={notifEvents && permStatus === 'granted'} onCheckedChange={setNotifEvents} id="sw-events" disabled={permStatus !== 'granted'} />}
           />
         </SettingGroup>
 
         {/* ── Apariencia ── */}
-        <SettingGroup title="Apariencia">
+        <SettingGroup title={t('settings.appearance')}>
           <SettingRow
             icon={Moon} iconBg="var(--secondary-container)" iconColor="var(--secondary)"
-            label="Modo oscuro"
-            sub={state.darkMode ? 'Activado' : 'Desactivado'}
+            label={t('settings.darkMode')}
+            sub={state.darkMode ? t('settings.darkModeOn') : t('settings.darkModeOff')}
             id="set-dark"
             right={<Switch checked={state.darkMode} onCheckedChange={() => dispatch({ type: 'TOGGLE_DARK_MODE' })} id="sw-dark" />}
           />
@@ -382,26 +382,26 @@ export default function SettingsScreen() {
           />
           <SettingRow
             icon={Clock} iconBg="var(--surface-container)"
-            label="Zona horaria"
+            label={t('common.time')}
             id="set-tz"
             right={<><span>Ciudad de México</span><ChevronRight size={16} /></>}
           />
         </SettingGroup>
 
         {/* ── Datos ── */}
-        <SettingGroup title="Datos y sincronización">
+        <SettingGroup title={t('settings.data')}>
           <SettingRow
             icon={Download} iconBg="var(--secondary-container)" iconColor="var(--secondary)"
-            label="Exportar datos"
-            sub="Descarga tu información en JSON"
+            label={t('settings.exportData')}
+            sub={t('settings.exportDesc')}
             onClick={handleExport}
             id="set-export"
             right={<ChevronRight size={16} />}
           />
           <SettingRow
             icon={Upload} iconBg="var(--tertiary-container)" iconColor="var(--tertiary)"
-            label="Importar datos"
-            sub="Restaura desde un backup JSON"
+            label={t('settings.importData')}
+            sub={t('settings.importDesc')}
             onClick={() => fileInputRef.current?.click()}
             id="set-import"
             right={<ChevronRight size={16} />}
@@ -419,10 +419,10 @@ export default function SettingsScreen() {
         </SettingGroup>
 
         {/* ── Privacidad ── */}
-        <SettingGroup title="Privacidad y seguridad">
+        <SettingGroup title={t('settings.legal')}>
           <SettingRow
             icon={Lock} iconBg="var(--primary-container)" iconColor="var(--primary)"
-            label="Cambiar contraseña"
+            label={t('settings.changePassword')}
             sub="Actualiza tu contraseña de acceso"
             onClick={() => setShowPwModal(true)}
             id="set-change-pw"
@@ -430,14 +430,14 @@ export default function SettingsScreen() {
           />
           <SettingRow
             icon={ShieldCheck} iconBg="var(--secondary-container)" iconColor="var(--secondary)"
-            label="Política de privacidad"
+            label={t('settings.privacy')}
             onClick={() => showToast('Abriendo política...')}
             id="set-privacy"
             right={<ChevronRight size={16} />}
           />
           <SettingRow
             icon={LogOut} iconBg="var(--error-container)" iconColor="var(--error)"
-            label="Cerrar sesión"
+            label={t('profile.logout')}
             id="set-logout"
             danger
             onClick={() => dispatch({ type: 'SET_AUTHENTICATED', value: false })}
@@ -477,7 +477,7 @@ export default function SettingsScreen() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                 <h2 id="pw-modal-title" style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--on-surface)', margin: 0 }}>
-                  Cambiar contraseña
+                  {t('settings.changePassword')}
                 </h2>
                 <button
                   onClick={() => setShowPwModal(false)}
@@ -488,9 +488,9 @@ export default function SettingsScreen() {
                 </button>
               </div>
 
-              {[{ label: 'Contraseña actual', val: currentPw, setter: setCurrentPw, id: 'pw-current' },
-                { label: 'Nueva contraseña',  val: newPw,     setter: setNewPw,     id: 'pw-new' },
-                { label: 'Confirmar nueva',   val: confirmPw, setter: setConfirmPw, id: 'pw-confirm' },
+              {[{ label: t('settings.currentPw'), val: currentPw, setter: setCurrentPw, id: 'pw-current' },
+                { label: t('settings.newPw'),     val: newPw,     setter: setNewPw,     id: 'pw-new' },
+                { label: t('settings.confirmPw'), val: confirmPw, setter: setConfirmPw, id: 'pw-confirm' },
               ].map(({ label, val, setter, id }) => (
                 <div key={id} style={{ marginBottom: 14 }}>
                   <label htmlFor={id} style={{ fontSize: 12, fontWeight: 600, color: 'var(--on-surface-variant)', display: 'block', marginBottom: 6 }}>{label}</label>
@@ -546,7 +546,7 @@ export default function SettingsScreen() {
                   marginTop: 4,
                 }}
               >
-                {pwLoading ? 'Actualizando...' : <><Check size={15} strokeWidth={3} /> Guardar contraseña</>}
+                {pwLoading ? t('common.saving') : <><Check size={15} strokeWidth={3} /> {t('settings.changePassword')}</>}
               </button>
             </div>
           </div>,
