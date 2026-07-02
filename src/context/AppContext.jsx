@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { localToday } from '../lib/utils';
 import { onAuthChange } from '../lib/authService';
 import { loadUserData, saveTask, deleteTask, saveHabit, saveEvent, deleteEvent,
@@ -255,6 +255,11 @@ function reducer(state, action) {
     case 'TOGGLE_HABIT': {
       const todayStr  = new Date().toLocaleDateString('en-CA');
       const todayIdx  = (new Date().getDay() + 6) % 7; // Mon=0 … Sun=6
+
+      // Compute yesterday string for streak validation
+      const yest = new Date(); yest.setDate(yest.getDate() - 1);
+      const yesterdayStr = yest.toLocaleDateString('en-CA');
+
       const habits = state.habits.map(h => {
         if (h.id !== action.id) return h;
         const wasCompleted = h.completedToday;
@@ -262,11 +267,24 @@ function reducer(state, action) {
         const weekData     = [...(h.weekData || Array(7).fill(false))];
         weekData[todayIdx] = newCompleted;
 
-        // Streak = consecutive filled days going backwards from today in weekData
-        let newStreak = 0;
-        for (let i = todayIdx; i >= 0; i--) {
-          if (weekData[i]) newStreak++;
-          else break;
+        // ── Real streak: uses lastCompletedDate to detect missed days ──
+        // Completing today:
+        //   - lastCompleted was YESTERDAY → streak + 1 (consecutive)
+        //   - lastCompleted was today already → keep (shouldn't happen, but guard)
+        //   - any gap → reset to 1
+        // Uncompleting: streak resets to 0
+        let newStreak;
+        if (!newCompleted) {
+          newStreak = 0;
+        } else {
+          const last = h.lastCompletedDate;
+          if (!last || last === yesterdayStr || last === todayStr) {
+            // consecutive or same day (re-toggle guard)
+            newStreak = last === todayStr ? (h.streak || 1) : (Number(h.streak) || 0) + 1;
+          } else {
+            // gap of 2+ days → streak broken, start fresh
+            newStreak = 1;
+          }
         }
 
         return {
@@ -713,20 +731,27 @@ export function AppProvider({ children }) {
         }
 
         case 'TOGGLE_HABIT': {
-          // state here is the PRE-dispatch snapshot (same data the reducer received).
-          // So h.completedToday = OLD value before the toggle.
+          // state = PRE-dispatch snapshot: h.completedToday = OLD value
           const todayIdx = (new Date().getDay() + 6) % 7;
           const h = state.habits.find(h => h.id === enrichedAction.id);
           if (h) {
             const todayStr     = new Date().toLocaleDateString('en-CA');
+            const yest2 = new Date(); yest2.setDate(yest2.getDate() - 1);
+            const yesterdayStr = yest2.toLocaleDateString('en-CA');
             const newCompleted = !h.completedToday;
             const weekData     = [...(h.weekData || Array(7).fill(false))];
             weekData[todayIdx] = newCompleted;
-            // Same streak formula as reducer: consecutive filled days backwards from today
-            let newStreak = 0;
-            for (let i = todayIdx; i >= 0; i--) {
-              if (weekData[i]) newStreak++;
-              else break;
+            // Mirror reducer streak logic: lastCompletedDate-based
+            let newStreak;
+            if (!newCompleted) {
+              newStreak = 0;
+            } else {
+              const last = h.lastCompletedDate;
+              if (!last || last === yesterdayStr || last === todayStr) {
+                newStreak = last === todayStr ? (h.streak || 1) : (Number(h.streak) || 0) + 1;
+              } else {
+                newStreak = 1;
+              }
             }
             await saveHabit(uid, {
               ...h,

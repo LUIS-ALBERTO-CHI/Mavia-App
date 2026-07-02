@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
 import {
   Heart, Play, Pause, Square, Clock, Headphones, Wind,
@@ -241,7 +242,7 @@ function YoutubeModal({ video, sessionSecs = 0, onClose }) {
 
   const thumbnailUrl = `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`;
 
-  return (
+  return createPortal(
     <div className="yt-overlay" onClick={onClose} id="yt-modal-backdrop">
       <div className="yt-modal" onClick={e => e.stopPropagation()} id="yt-modal">
 
@@ -319,7 +320,8 @@ function YoutubeModal({ video, sessionSecs = 0, onClose }) {
           <ExternalLink size={14} strokeWidth={2} />
         </a>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
