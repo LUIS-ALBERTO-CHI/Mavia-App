@@ -17,6 +17,7 @@ const CAT_STYLE = {
 
 export default function TasksScreen() {
   const { state, dispatch, navigate, showToast } = useApp();
+  const { t } = useTranslation();
   const activeFilter = state.activeFilter || 'Hoy';
   const [search, setSearch]       = useState('');
   const [confirmData, setConfirmData] = useState(null);
@@ -66,9 +67,9 @@ export default function TasksScreen() {
   };
 
   const filtered  = getFiltered();
-  const urgent    = filtered.filter(t => !t.completed && t.priority === 'alta');
-  const pending   = filtered.filter(t => !t.completed && t.priority !== 'alta');
-  const completed = filtered.filter(t => t.completed);
+  const urgent    = filtered.filter(task => !task.completed && task.priority === 'alta');
+  const pending   = filtered.filter(task => !task.completed && task.priority !== 'alta');
+  const completed = filtered.filter(task => task.completed);
 
 
   // #11 Haptic feedback helper
@@ -527,9 +528,9 @@ export default function TasksScreen() {
           <input
             className="ts-search"
             type="text"
-            placeholder={`${t('common.search')}...`}
+            placeholder={t('tasks.searchPlaceholder')}
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={ev => setSearch(ev.target.value)}
             id="tasks-search"
           />
         </div>
@@ -540,7 +541,7 @@ export default function TasksScreen() {
             <button
               key={f}
               className={`ts-chip${activeFilter === f ? ' active' : ''}`}
-              onClick={(e) => handleFilter(f, e)}
+              onClick={(ev) => handleFilter(f, ev)}
               id={`tasks-filter-${f}`}
             >
               {f}
@@ -561,7 +562,7 @@ export default function TasksScreen() {
             <p className="empty-state-title">{t('tasks.noTasks')}</p>
             <p className="empty-state-sub">{t('tasks.noTasksFilter')}</p>
             <button className="empty-state-cta" onClick={() => navigate('createTask')} id="tasks-create-empty">
-              Nueva tarea
+              {t('tasks.newTask')}
             </button>
           </div>
         )}
@@ -637,8 +638,8 @@ function TaskCard({ task, onToggle, onDelete, onOpen, onEdit }) {
   // Close menu when clicking outside
   useEffect(() => {
     if (!menuOpen) return;
-    const close = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+    const close = (ev) => {
+      if (menuRef.current && !menuRef.current.contains(ev.target)) {
         setMenuOpen(false);
         setConfirming(false);
       }
@@ -647,8 +648,8 @@ function TaskCard({ task, onToggle, onDelete, onOpen, onEdit }) {
     return () => document.removeEventListener('mousedown', close);
   }, [menuOpen]);
 
-  const handleCheck = (e) => {
-    e.stopPropagation();
+  const handleCheck = (ev) => {
+    ev.stopPropagation();
     if (!task.completed) {
       setCompleting(true);
       setTimeout(() => { onToggle(task.id); setCompleting(false); }, 480);
@@ -657,26 +658,26 @@ function TaskCard({ task, onToggle, onDelete, onOpen, onEdit }) {
     }
   };
 
-  const openMenu = (e) => {
-    e.stopPropagation();
+  const openMenu = (ev) => {
+    ev.stopPropagation();
     setMenuOpen(v => !v);
     setConfirming(false);
   };
 
-  const handleDeleteClick = (e) => {
-    e.stopPropagation();
+  const handleDeleteClick = (ev) => {
+    ev.stopPropagation();
     setConfirming(true);
   };
 
-  const handleConfirmDelete = (e) => {
-    e.stopPropagation();
+  const handleConfirmDelete = (ev) => {
+    ev.stopPropagation();
     setMenuOpen(false);
     setConfirming(false);
     onDelete(task.id);
   };
 
-  const handleCancelDelete = (e) => {
-    e.stopPropagation();
+  const handleCancelDelete = (ev) => {
+    ev.stopPropagation();
     setConfirming(false);
   };
 
@@ -711,7 +712,7 @@ function TaskCard({ task, onToggle, onDelete, onOpen, onEdit }) {
             <span className="ts-time">
               <Clock size={12} strokeWidth={2} />
               {task.date === localToday()
-                ? task.time ? `Hoy, ${task.time}` : 'Hoy'
+                ? task.time ? `${t('common.today')}, ${task.time}` : t('common.today')
                 : task.time ? `${task.date}, ${task.time}` : task.date}
             </span>
           )}
@@ -730,11 +731,11 @@ function TaskCard({ task, onToggle, onDelete, onOpen, onEdit }) {
         </button>
 
         {menuOpen && (
-          <div className="ts-ctx-menu" onClick={e => e.stopPropagation()}>
+          <div className="ts-ctx-menu" onClick={ev => ev.stopPropagation()}>
             {/* Edit */}
             <button
               className="ts-ctx-item"
-              onClick={e => { e.stopPropagation(); setMenuOpen(false); onEdit(task.id); }}
+              onClick={ev => { ev.stopPropagation(); setMenuOpen(false); onEdit(task.id); }}
               id={`task-menu-edit-${task.id}`}
             >
               <Edit2 size={15} strokeWidth={1.75} />{t('common.edit')}
