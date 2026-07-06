@@ -69,7 +69,8 @@ export default function RemindersScreen() {
 
   const handleDelete = (id) => {
     dispatch({ type: 'DELETE_TASK', id });
-    >{t('reminders.deleted')}<;
+    showToast(t('common.deleted'));
+
     setConfirmId(null);
   };
 
