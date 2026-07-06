@@ -396,7 +396,7 @@ export default function SearchScreen() {
             <div className="srch-empty-icon" style={{ background: 'var(--surface-container)' }}>
               <Search size={38} color="var(--outline)" strokeWidth={1.25} />
             </div>
-            <div className="srch-empty-title">Sin resultados</div>
+            <div className="srch-empty-title">{t('search.noResults')}</div>
             <p className="srch-empty-sub">
               No encontramos nada para "<strong>{query}</strong>". Prueba con otra búsqueda.
             </p>

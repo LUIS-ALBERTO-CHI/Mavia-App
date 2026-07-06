@@ -40,7 +40,7 @@ export default function GratitudeScreen() {
     const filled = items.filter(i => i.trim());
     if (filled.length === 0) return;
     dispatch({ type: 'ADD_GRATITUDE', entry: { id: Date.now().toString(), date: today, items: filled } });
-    showToast('Gratitud registrada', 'success');
+    showToast(t('gratitude.saved'), 'success');
     setSaved(true);
   };
 
@@ -241,7 +241,7 @@ export default function GratitudeScreen() {
       <div className="grt-screen">
 
         {/* Hero */}
-        <h1 className="grt-hero-title">Gratitud</h1>
+        <h1 className="grt-hero-title">{t('gratitude.title')}</h1>
         <p className="grt-hero-sub">Reconocer lo bueno cambia tu perspectiva del mundo.</p>
 
         {/* Today's card */}

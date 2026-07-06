@@ -69,7 +69,7 @@ export default function RemindersScreen() {
 
   const handleDelete = (id) => {
     dispatch({ type: 'DELETE_TASK', id });
-    showToast('Recordatorio eliminado');
+    >{t('reminders.deleted')}<;
     setConfirmId(null);
   };
 

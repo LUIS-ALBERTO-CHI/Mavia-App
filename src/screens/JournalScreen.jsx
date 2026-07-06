@@ -40,7 +40,7 @@ export default function JournalScreen() {
   const handleSave = () => {
     if (!form.content.trim()) return;
     dispatch({ type: 'ADD_JOURNAL', entry: { ...form, id: Date.now().toString(), images: [] } });
-    showToast('Entrada guardada', 'success');
+    showToast(t('journal.saved'), 'success');
     setWriting(false);
   };
 
@@ -429,7 +429,7 @@ export default function JournalScreen() {
         {/* ── Write panel ── */}
         {writing && (
           <div className="jrn-write-panel">
-            <div className="jrn-write-heading">¿Cómo te sientes hoy?</div>
+            <div className="jrn-write-heading">{t('journal.howDoYouFeel')}</div>
 
             {/* Mood selector */}
             <div className="jrn-mood-row">

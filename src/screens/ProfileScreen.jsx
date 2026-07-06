@@ -38,7 +38,7 @@ export default function ProfileScreen() {
 
   const handleSave = () => {
     dispatch({ type: 'UPDATE_USER', updates: { name: form.name, email: form.email, firstName: form.name.split(' ')[0] } });
-    showToast('Perfil actualizado', 'success');
+    showToast(t('profile.profileUpdated'), 'success');
     setEditing(false);
   };
 
@@ -58,7 +58,7 @@ export default function ProfileScreen() {
       reader.onload = (ev) => {
         const dataURL = ev.target.result;
         dispatch({ type: 'UPDATE_USER', updates: { photoURL: dataURL } });
-        showToast('Foto actualizada', 'success');
+        showToast(t('profile.photoUpdated'), 'success');
         setUploading(false);
       };
       reader.onerror = () => { showToast('Error al leer la imagen', 'error'); setUploading(false); };
@@ -548,7 +548,7 @@ export default function ProfileScreen() {
         {/* ── Edit panel (visible when editing) ── */}
         {editing && (
           <div className="prof-edit-panel">
-            <div className="prof-edit-title">Editar perfil</div>
+            <div className="prof-edit-title">{t('profile.editProfile')}</div>
             <input
               className="prof-edit-input"
               placeholder="Nombre completo"
@@ -645,7 +645,7 @@ export default function ProfileScreen() {
               <div className="prof-row-icon" style={{ background: 'rgba(208,195,200,0.2)' }}>
                 <TrendingUp size={18} color="var(--on-surface-variant)" strokeWidth={1.75} />
               </div>
-              <span className="prof-row-label">Mis estadísticas</span>
+              <span className="prof-row-label">{t('profile.stats')}</span>
             </div>
             <ChevronRight size={16} color="var(--on-surface-variant)" />
           </div>

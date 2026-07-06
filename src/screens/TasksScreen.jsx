@@ -87,7 +87,7 @@ export default function TasksScreen() {
           onConfirm: () => {
             dispatch({ type: 'TOGGLE_TASK', id });
             haptic([30, 20, 60]);  // #11 success pattern
-            showToast('¡Tarea completada!', 'success');
+            showToast(t('tasks.taskCompleted'), 'success');
             setConfirmData(null);
           },
           onReview: () => {
@@ -103,13 +103,13 @@ export default function TasksScreen() {
     dispatch({ type: 'TOGGLE_TASK', id });
     if (!task.completed) {
       haptic([30, 20, 60]);  // #11 haptic
-      showToast('¡Tarea completada!', 'success');
+      showToast(t('tasks.taskCompleted'), 'success');
     }
   };
 
   const handleDelete = (id) => {
     dispatch({ type: 'DELETE_TASK', id });
-    showToast('Tarea eliminada');
+    showToast(t('tasks.taskDeleted'));
     cancelReminder(id);
   };
 
@@ -518,8 +518,8 @@ export default function TasksScreen() {
 
       <div className="ts-screen">
         {/* ── Page header ── */}
-        <h2 className="ts-heading">Mis Tareas</h2>
-        <p className="ts-sub">Organiza tu día con intención y calma.</p>
+        <h2 className="ts-heading">{t('tasks.title')}</h2>
+        <p className="ts-sub">{t('tasks.defineIntent')}</p>
 
         {/* ── Search ── */}
         <div className="ts-search-wrap">
@@ -527,7 +527,7 @@ export default function TasksScreen() {
           <input
             className="ts-search"
             type="text"
-            placeholder="Buscar tareas..."
+            placeholder={`${t('common.search')}...`}
             value={search}
             onChange={e => setSearch(e.target.value)}
             id="tasks-search"
@@ -558,8 +558,8 @@ export default function TasksScreen() {
               <circle cx="88" cy="48" r="4" fill="var(--tertiary-container)" />
               <circle cx="32" cy="80" r="5" fill="var(--secondary-container)" />
             </svg>
-            <p className="empty-state-title">Todo en calma</p>
-            <p className="empty-state-sub">No hay tareas en esta categoría.<br />Disfruta el momento o crea una nueva.</p>
+            <p className="empty-state-title">{t('tasks.noTasks')}</p>
+            <p className="empty-state-sub">{t('tasks.noTasksFilter')}</p>
             <button className="empty-state-cta" onClick={() => navigate('createTask')} id="tasks-create-empty">
               Nueva tarea
             </button>
@@ -570,7 +570,7 @@ export default function TasksScreen() {
         {urgent.length > 0 && (
           <div className="ts-group">
             <div className="ts-group-label urgent">
-              Urgentes &amp; Prioritarias
+              {t('tasks.filterUrgent')}
             </div>
             {urgent.map(task => (
               <TaskCard
@@ -588,9 +588,7 @@ export default function TasksScreen() {
         {/* ── Pending group ── */}
         {pending.length > 0 && (
           <div className="ts-group">
-            <div className="ts-group-label pending">
-              Pendientes
-            </div>
+            <div className="ts-group-label pending">{t('common.pending')}</div>
             {pending.map(task => (
               <TaskCard
                 key={task.id}
@@ -607,9 +605,7 @@ export default function TasksScreen() {
         {/* ── Completed group ── */}
         {completed.length > 0 && (
           <div className="ts-group">
-            <div className="ts-group-label done">
-              Completadas
-            </div>
+            <div className="ts-group-label done">{t('common.completed')}</div>
             {completed.map(task => (
               <TaskCard
                 key={task.id}
@@ -631,6 +627,7 @@ export default function TasksScreen() {
 
 /* ─── Task Card Component ─── */
 function TaskCard({ task, onToggle, onDelete, onOpen, onEdit }) {
+  const { t } = useTranslation();
   const [completing, setCompleting]   = useState(false);
   const [menuOpen,   setMenuOpen]     = useState(false);
   const [confirming, setConfirming]   = useState(false);
@@ -693,7 +690,7 @@ function TaskCard({ task, onToggle, onDelete, onOpen, onEdit }) {
       <button
         className={`ts-check${task.completed ? ' checked' : ''}`}
         onClick={handleCheck}
-        aria-label={task.completed ? 'Desmarcar' : 'Completar'}
+        aria-label={task.completed ? t('common.undo') : t('common.done')}
         id={`task-check-${task.id}`}
       >
         {task.completed && <Check size={13} color="white" strokeWidth={3} />}
@@ -726,7 +723,7 @@ function TaskCard({ task, onToggle, onDelete, onOpen, onEdit }) {
         <button
           className={`ts-more-btn${menuOpen ? ' open' : ''}`}
           onClick={openMenu}
-          aria-label="Opciones de tarea"
+          aria-label={t('common.options')}
           id={`task-more-${task.id}`}
         >
           <MoreVertical size={18} />
@@ -740,8 +737,7 @@ function TaskCard({ task, onToggle, onDelete, onOpen, onEdit }) {
               onClick={e => { e.stopPropagation(); setMenuOpen(false); onEdit(task.id); }}
               id={`task-menu-edit-${task.id}`}
             >
-              <Edit2 size={15} strokeWidth={1.75} />
-              Editar
+              <Edit2 size={15} strokeWidth={1.75} />{t('common.edit')}
             </button>
 
             <div className="ts-ctx-divider" />
@@ -753,14 +749,13 @@ function TaskCard({ task, onToggle, onDelete, onOpen, onEdit }) {
                 onClick={handleDeleteClick}
                 id={`task-menu-delete-${task.id}`}
               >
-                <Trash2 size={15} strokeWidth={1.75} />
-                Eliminar
+                <Trash2 size={15} strokeWidth={1.75} />{t('common.delete')}
               </button>
             ) : (
               <div className="ts-del-confirm">
-                <span className="ts-del-confirm-label">¿Eliminar?</span>
-                <button className="ts-del-no" onClick={handleCancelDelete}>No</button>
-                <button className="ts-del-yes" onClick={handleConfirmDelete}>Sí</button>
+                <span className="ts-del-confirm-label">{t('common.confirm')}?</span>
+                <button className="ts-del-no" onClick={handleCancelDelete}>{t('common.no')}</button>
+                <button className="ts-del-yes" onClick={handleConfirmDelete}>{t('common.yes')}</button>
               </div>
             )}
           </div>

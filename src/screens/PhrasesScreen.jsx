@@ -57,7 +57,7 @@ export default function PhrasesScreen() {
 
   const handleSave = () => {
     setSaved(true);
-    showToast('Frase guardada en tus favoritos', 'success');
+    showToast(t('phrases.saved'), 'success');
   };
 
   return (

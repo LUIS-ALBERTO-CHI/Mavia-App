@@ -355,11 +355,11 @@ export default function HabitsScreen() {
             <div className="hbt-banner-stats">
               <div className="hbt-stat">
                 <span className="hbt-stat-num">{maxStreak}</span>
-                <span className="hbt-stat-label">Racha máx.</span>
+                <span className="hbt-stat-label">{t('habits.maxStreak')}</span>
               </div>
               <div className="hbt-stat">
                 <span className="hbt-stat-num">{habits.length}</span>
-                <span className="hbt-stat-label">Hábitos activos</span>
+                <span className="hbt-stat-label">{t('habits.activeHabits')}</span>
               </div>
             </div>
           </div>
@@ -367,7 +367,7 @@ export default function HabitsScreen() {
 
         {/* ── List ── */}
         <div className="hbt-section-head">
-          <span className="hbt-section-title">Hábitos de hoy</span>
+          <span className="hbt-section-title">{t('habits.todayHabits')}</span>
           <Button variant="soft" size="sm" onClick={() => navigate('createHabit')} id="hbt-add">
             <Plus size={15} /> Añadir
           </Button>
@@ -441,7 +441,7 @@ export default function HabitsScreen() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
                         <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--error)', whiteSpace: 'nowrap' }}>¿Eliminar?</span>
                         <button onClick={() => setConfirmDeleteId(null)} style={{ border: 'none', background: 'var(--surface-container)', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)', color: 'var(--on-surface-variant)' }}>No</button>
-                        <button onClick={() => { dispatch({ type: 'DELETE_HABIT', id: habit.id }); showToast('Hábito eliminado'); setConfirmDeleteId(null); }} style={{ border: 'none', background: 'var(--error)', color: 'white', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Sí</button>
+                        <button onClick={() => { dispatch({ type: 'DELETE_HABIT', id: habit.id }); showToast('{t('habits.title')} eliminado'); setConfirmDeleteId(null); }} style={{ border: 'none', background: 'var(--error)', color: 'white', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Sí</button>
                       </div>
                     ) : (
                       <button
@@ -472,7 +472,7 @@ export default function HabitsScreen() {
                         <div
                           className={`hbt-dot${done ? ' done' : ''}${isToday ? ' today-dot' : ''}`}
                           style={done ? { background: habit.color } : {}}
-                          aria-label={`${day}: ${done ? 'completado' : 'pendiente'}`}
+                          aria-label={`${day}: ${done ? t('common.completed') : 'pendiente'}`}
                         />
                         <span className={`hbt-dot-label${isToday ? ' today-label' : ''}`}>{day}</span>
                       </div>

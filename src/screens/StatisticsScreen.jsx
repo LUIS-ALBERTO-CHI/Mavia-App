@@ -347,7 +347,7 @@ export default function StatisticsScreen() {
       <div className="st-screen">
 
         {/* ── Hero ── */}
-        <h1 className="st-hero-title">Estadísticas</h1>
+        <h1 className="st-hero-title">{t('statistics.title')}</h1>
         <p className="st-hero-sub">Una mirada al progreso de tu bienestar y productividad.</p>
 
         {/* ── KPI Grid ── */}

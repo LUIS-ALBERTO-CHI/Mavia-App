@@ -316,7 +316,7 @@ export default function NotificationsScreen() {
         {/* Hero */}
         <div className="ntf-hero-row">
           <div>
-            <h1 className="ntf-hero-title">Notificaciones</h1>
+            <h1 className="ntf-hero-title">{t('notifications.title')}</h1>
             <p className="ntf-hero-sub">
               {unread.length > 0 ? `${unread.length} sin leer` : 'Todo al día'}
             </p>

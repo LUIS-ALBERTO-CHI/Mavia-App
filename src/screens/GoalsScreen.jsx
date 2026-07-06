@@ -348,7 +348,7 @@ export default function GoalsScreen() {
         {/* ── Hero ── */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 'var(--space-md)', marginBottom: 'var(--space-sm)' }}>
           <div>
-            <h1 className="gls-hero-title">Mis Objetivos</h1>
+            <h1 className="gls-hero-title">{t('goals.title')}</h1>
             <p className="gls-hero-sub">Visualiza y avanza en lo que más importa.</p>
           </div>
           <Button variant="soft" onClick={() => navigate('createGoal')} id="gls-add">
@@ -447,7 +447,7 @@ export default function GoalsScreen() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
                           <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--error)' }}>¿Eliminar?</span>
                           <button onClick={() => setConfirmDeleteId(null)} style={{ border: 'none', background: 'var(--surface-container)', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)', color: 'var(--on-surface-variant)' }}>No</button>
-                          <button onClick={() => { dispatch({ type: 'DELETE_GOAL', id: goal.id }); showToast('Objetivo eliminado'); setConfirmDeleteId(null); }} style={{ border: 'none', background: 'var(--error)', color: 'white', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Sí</button>
+                          <button onClick={() => { dispatch({ type: 'DELETE_GOAL', id: goal.id }); showToast(t('common.deleted')); setConfirmDeleteId(null); }} style={{ border: 'none', background: 'var(--error)', color: 'white', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Sí</button>
                         </div>
                       ) : (
                         <button
