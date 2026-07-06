@@ -59,26 +59,26 @@ export default function SettingsScreen() {
   const [pwError,     setPwError]       = useState('');
 
   const handleChangePassword = async () => {
-    if (!newPw || newPw.length < 6) { setPwError('La nueva contraseña debe tener al menos 6 caracteres.'); return; }
-    if (newPw !== confirmPw)         { setPwError('Las contraseñas no coinciden.'); return; }
+    if (!newPw || newPw.length < 6) { setPwError(t('settings.pwShort')); return; }
+    if (newPw !== confirmPw)         { setPwError(t('settings.pwMismatch')); return; }
     setPwLoading(true); setPwError('');
     try {
       const auth = getAuth();
       const user = auth.currentUser;
-      if (!user) throw new Error('No hay sesión activa');
+      if (!user) throw new Error('No session');
       const cred = EmailAuthProvider.credential(user.email, currentPw);
       await reauthenticateWithCredential(user, cred);
       await updatePassword(user, newPw);
-      showToast('Contraseña actualizada', 'success');
+      showToast(t('settings.pwUpdated'), 'success');
       setShowPwModal(false);
       setCurrentPw(''); setNewPw(''); setConfirmPw('');
     } catch (err) {
       if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        setPwError('Contraseña actual incorrecta.');
+        setPwError(t('settings.pwWrong'));
       } else if (err.code === 'auth/weak-password') {
-        setPwError('La contraseña es demasiado débil.');
+        setPwError(t('settings.pwShort'));
       } else {
-        setPwError(err.message || 'Error al actualizar la contraseña.');
+        setPwError(err.message || t('toasts.error'));
       }
     } finally {
       setPwLoading(false);
@@ -102,9 +102,9 @@ export default function SettingsScreen() {
         if (data.habits)           dispatch({ type: 'IMPORT_HABITS',  habits:  data.habits });
         if (data.journalEntries)   dispatch({ type: 'IMPORT_JOURNAL', entries: data.journalEntries });
         if (data.gratitudeEntries) dispatch({ type: 'IMPORT_GRATITUDE', entries: data.gratitudeEntries });
-        showToast('Datos importados correctamente', 'success');
+        showToast(t('toasts.dataImported'), 'success');
       } catch {
-        showToast('Archivo inválido o corrupto', 'error');
+        showToast(t('toasts.invalidFile'), 'error');
       }
     };
     reader.readAsText(file);
@@ -115,8 +115,8 @@ export default function SettingsScreen() {
     if (!('Notification' in window)) return;
     const result = await Notification.requestPermission();
     setPermStatus(result);
-    if (result === 'granted') showToast('Notificaciones activadas', 'success');
-    else showToast('Notificaciones bloqueadas en el navegador', 'error');
+    if (result === 'granted') showToast(t('toasts.notifActivated'), 'success');
+    else showToast(t('toasts.notifBlocked'), 'error');
   };
 
   const handleExport = () => {
@@ -134,9 +134,9 @@ export default function SettingsScreen() {
       a.download = `mavia-datos-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast('Datos exportados correctamente', 'success');
+      showToast(t('toasts.dataExported'), 'success');
     } catch {
-      showToast('Error al exportar datos');
+      showToast(t('toasts.exportError'));
     }
   };
 
@@ -262,17 +262,39 @@ export default function SettingsScreen() {
           font-size: var(--text-label-sm);
           color: var(--outline);
         }
-        /* ── Language pills ── */
+        /* ── Language selector (full width) ── */
+        .stg-lang-row {
+          padding: var(--space-md) var(--space-lg);
+          border-bottom: 1px solid rgba(208,195,200,0.1);
+        }
+        .stg-lang-row-top {
+          display: flex;
+          align-items: center;
+          gap: var(--space-md);
+          margin-bottom: 12px;
+        }
+        .stg-lang-icon {
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          background: var(--surface-container);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .stg-lang-label { font-size: 14px; font-weight: 500; color: var(--on-surface); }
+        .stg-lang-sub   { font-size: 12px; color: var(--on-surface-variant); margin-top: 1px; }
         .stg-lang-pills {
           display: flex;
           gap: 8px;
-          flex-wrap: wrap;
+          flex-wrap: nowrap;
         }
         .stg-lang-pill {
           display: flex;
           align-items: center;
-          gap: 6px;
-          padding: 6px 14px;
+          gap: 5px;
+          padding: 7px 14px;
           border-radius: 99px;
           font-size: 13px;
           font-weight: 600;
@@ -282,13 +304,16 @@ export default function SettingsScreen() {
           border: 1.5px solid var(--outline-variant);
           background: none;
           color: var(--on-surface-variant);
+          white-space: nowrap;
+          flex: 1;
+          justify-content: center;
         }
         .stg-lang-pill.active {
           border-color: var(--primary);
           background: var(--primary-container);
           color: var(--primary);
         }
-        .stg-lang-pill .flag { font-size: 16px; }
+        .stg-lang-pill .flag { font-size: 15px; }
       `}</style>
 
       <div className="stg-screen">
@@ -359,27 +384,31 @@ export default function SettingsScreen() {
             id="set-dark"
             right={<Switch checked={state.darkMode} onCheckedChange={() => dispatch({ type: 'TOGGLE_DARK_MODE' })} id="sw-dark" />}
           />
-          <SettingRow
-            icon={Globe} iconBg="var(--surface-container)"
-            label={t('settings.language')}
-            sub={t('settings.languageLabel')}
-            id="set-lang"
-            right={
-              <div className="stg-lang-pills">
-                {LANGUAGES.map(l => (
-                  <button
-                    key={l.code}
-                    className={`stg-lang-pill${lang === l.code ? ' active' : ''}`}
-                    onClick={() => setLang(l.code)}
-                    id={`set-lang-${l.code}`}
-                  >
-                    <span className="flag">{l.flag}</span>
-                    {l.label}
-                  </button>
-                ))}
+          {/* Language — full width row outside SettingRow */}
+          <div className="stg-lang-row">
+            <div className="stg-lang-row-top">
+              <div className="stg-lang-icon">
+                <Globe size={18} color="var(--on-surface-variant)" />
               </div>
-            }
-          />
+              <div>
+                <div className="stg-lang-label">{t('settings.language')}</div>
+                <div className="stg-lang-sub">{t('settings.languageLabel')}</div>
+              </div>
+            </div>
+            <div className="stg-lang-pills">
+              {LANGUAGES.map(l => (
+                <button
+                  key={l.code}
+                  className={`stg-lang-pill${lang === l.code ? ' active' : ''}`}
+                  onClick={() => setLang(l.code)}
+                  id={`set-lang-${l.code}`}
+                >
+                  <span className="flag">{l.flag}</span>
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <SettingRow
             icon={Clock} iconBg="var(--surface-container)"
             label={t('common.time')}
