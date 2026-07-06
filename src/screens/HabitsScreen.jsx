@@ -441,7 +441,7 @@ export default function HabitsScreen() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
                         <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--error)', whiteSpace: 'nowrap' }}>¿Eliminar?</span>
                         <button onClick={() => setConfirmDeleteId(null)} style={{ border: 'none', background: 'var(--surface-container)', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)', color: 'var(--on-surface-variant)' }}>No</button>
-                        <button onClick={() => { dispatch({ type: 'DELETE_HABIT', id: habit.id }); showToast('{t('habits.title')} eliminado'); setConfirmDeleteId(null); }} style={{ border: 'none', background: 'var(--error)', color: 'white', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Sí</button>
+                        <button onClick={() => { dispatch({ type: 'DELETE_HABIT', id: habit.id }); showToast(t('common.deleted')); setConfirmDeleteId(null); }} style={{ border: 'none', background: 'var(--error)', color: 'white', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Sí</button>
                       </div>
                     ) : (
                       <button

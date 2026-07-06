@@ -91,7 +91,7 @@ export default function CreateTaskScreen() {
     setTimeout(() => {
       if (isEdit) {
         dispatch({ type: 'UPDATE_TASK', task: { ...editTask, ...taskData } });
-        showToast('Tarea actualizada', 'success');
+        showToast(t('tasks.taskUpdated'), 'success');
         navigate('taskDetail', { taskId: editTask.id }, true);
       } else {
         dispatch({ type: 'ADD_TASK', task: { ...taskData, completed: false } });
@@ -417,7 +417,7 @@ export default function CreateTaskScreen() {
 
                 {/* Title */}
                 <div>
-                  <label className="ct-field-label" htmlFor="ct-title">Título de la tarea</label>
+                  <label className="ct-field-label" htmlFor="ct-title">{t('tasks.taskTitle')}</label>
                   <input
                     ref={titleRef}
                     id="ct-title"
@@ -432,7 +432,7 @@ export default function CreateTaskScreen() {
 
                 {/* Description */}
                 <div>
-                  <label className="ct-field-label" htmlFor="ct-desc">Descripción detallada</label>
+                  <label className="ct-field-label" htmlFor="ct-desc">{t('tasks.taskDesc')}</label>
                   <Textarea
                     id="ct-desc"
                     placeholder="¿Qué necesitas lograr hoy?..."
@@ -458,7 +458,7 @@ export default function CreateTaskScreen() {
 
                 {/* Categories */}
                 <div>
-                  <div className="ct-field-label">Categoría</div>
+                  <div className="ct-field-label">{t('common.category')}</div>
                   <div className="ct-cats">
                     {CATEGORIES.map(cat => (
                       <button
@@ -480,7 +480,7 @@ export default function CreateTaskScreen() {
 
                 {/* Priority */}
                 <div>
-                  <div className="ct-field-label">Prioridad</div>
+                  <div className="ct-field-label">{t('common.priority')}</div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     {[
                       { id: 'alta',  label: 'Alta',  color: 'var(--error)',     bg: 'rgba(186,26,26,0.08)'   },
@@ -576,7 +576,7 @@ export default function CreateTaskScreen() {
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                 <div>
-                  <span className="ct-dt-label">Fecha</span>
+                  <span className="ct-dt-label">{t('common.date')}</span>
                   <DatePicker
                     value={form.date}
                     onChange={v => set('date', v)}
@@ -585,7 +585,7 @@ export default function CreateTaskScreen() {
                   />
                 </div>
                 <div>
-                  <span className="ct-dt-label">Hora</span>
+                  <span className="ct-dt-label">{t('common.time')}</span>
                   <TimePicker
                     value={form.time}
                     onChange={v => set('time', v)}
@@ -615,7 +615,7 @@ export default function CreateTaskScreen() {
 
                 {/* Repeat */}
                 <div>
-                  <span className="ct-dt-label">Repetir</span>
+                  <span className="ct-dt-label">{t('common.repeat')}</span>
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
                     {['No repetir', 'Diario', 'Semanal', 'Mensual'].map(opt => (
                       <button
@@ -679,7 +679,7 @@ export default function CreateTaskScreen() {
             <div className="ct-reminder">
               <div className="ct-reminder-left">
                 <Bell size={20} color="var(--tertiary)" strokeWidth={1.5} />
-                <span>Recordatorio</span>
+                <span>{t('common.reminder')}</span>
               </div>
               <Switch
                 id="ct-reminder"

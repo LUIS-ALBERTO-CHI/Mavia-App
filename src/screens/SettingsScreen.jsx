@@ -264,14 +264,14 @@ export default function SettingsScreen() {
         }
         /* ── Language selector (full width) ── */
         .stg-lang-row {
-          padding: var(--space-md) var(--space-lg);
+          padding: 14px var(--space-lg);
           border-bottom: 1px solid rgba(208,195,200,0.1);
         }
         .stg-lang-row-top {
           display: flex;
           align-items: center;
           gap: var(--space-md);
-          margin-bottom: 12px;
+          margin-bottom: 10px;
         }
         .stg-lang-icon {
           width: 36px;
@@ -285,18 +285,20 @@ export default function SettingsScreen() {
         }
         .stg-lang-label { font-size: 14px; font-weight: 500; color: var(--on-surface); }
         .stg-lang-sub   { font-size: 12px; color: var(--on-surface-variant); margin-top: 1px; }
+        /* 3 equal columns — always fills the container regardless of screen width */
         .stg-lang-pills {
-          display: flex;
-          gap: 8px;
-          flex-wrap: nowrap;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 6px;
         }
         .stg-lang-pill {
           display: flex;
           align-items: center;
-          gap: 5px;
-          padding: 7px 14px;
+          justify-content: center;
+          gap: 4px;
+          padding: 8px 4px;
           border-radius: 99px;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 600;
           font-family: var(--font-body);
           cursor: pointer;
@@ -305,15 +307,15 @@ export default function SettingsScreen() {
           background: none;
           color: var(--on-surface-variant);
           white-space: nowrap;
-          flex: 1;
-          justify-content: center;
+          overflow: hidden;
+          min-width: 0;
         }
         .stg-lang-pill.active {
           border-color: var(--primary);
           background: var(--primary-container);
           color: var(--primary);
         }
-        .stg-lang-pill .flag { font-size: 15px; }
+        .stg-lang-pill .flag { font-size: 14px; flex-shrink: 0; }
       `}</style>
 
       <div className="stg-screen">
@@ -402,9 +404,10 @@ export default function SettingsScreen() {
                   className={`stg-lang-pill${lang === l.code ? ' active' : ''}`}
                   onClick={() => setLang(l.code)}
                   id={`set-lang-${l.code}`}
+                  title={l.label}
                 >
                   <span className="flag">{l.flag}</span>
-                  {l.label}
+                  <span>{l.label}</span>
                 </button>
               ))}
             </div>

@@ -332,7 +332,7 @@ export default function CreateHabitScreen() {
 
         {/* Name */}
         <div className="ch-card">
-          <label className="ch-field-label" htmlFor="ch-name">Nombre del hábito</label>
+          <label className="ch-field-label" htmlFor="ch-name">{t('habits.habitName')}</label>
           <input
             className="ch-name-input"
             id="ch-name"
@@ -396,7 +396,7 @@ export default function CreateHabitScreen() {
 
         {/* Frequency */}
         <div className="ch-card">
-          <span className="ch-field-label">Frecuencia</span>
+          <span className="ch-field-label">{t('habits.frequency')}</span>
           <div className="ch-freq-grid">
             {FREQ_OPTIONS.map(f => (
               <button

@@ -519,7 +519,7 @@ export default function CreateEventScreen() {
 
           {/* ── Title Card ── */}
           <div className="ce-card">
-            <label className="ce-title-label">Título del evento</label>
+            <label className="ce-title-label">{t('events.eventTitle')}</label>
             <input
               className="ce-title-input"
               placeholder="Escribe el nombre del evento..."
@@ -554,7 +554,7 @@ export default function CreateEventScreen() {
                     />
                   </div>
                   <div className="ce-field">
-                    <label>Hora de inicio</label>
+                    <label>{t('events.startTime')}</label>
                     <TimePicker
                       value={form.startTime}
                       onChange={v => set('startTime', v)}

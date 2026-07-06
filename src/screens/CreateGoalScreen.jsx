@@ -230,7 +230,7 @@ export default function CreateGoalScreen() {
 
         {/* Deadline */}
         <div className="cg-card">
-          <label className="cg-label" htmlFor="cg-deadline">Fecha límite</label>
+          <label className="cg-label" htmlFor="cg-deadline">{t('goals.deadline')}</label>
           <DatePicker
             id="cg-deadline"
             min={today}
