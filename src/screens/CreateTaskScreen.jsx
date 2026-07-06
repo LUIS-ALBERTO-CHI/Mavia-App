@@ -26,7 +26,7 @@ export default function CreateTaskScreen() {
 
   // Edit mode: if navigated with a taskId param, pre-load that task
   const taskId   = state.screenParams?.taskId || null;
-  const editTask = taskId ? state.tasks.find(t => t.id === taskId) : null;
+  const editTask = taskId ? state.tasks.find(task => task.id === taskId) : null;
   const isEdit   = !!editTask;
 
   const [form, setForm] = useState(

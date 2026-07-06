@@ -14,6 +14,7 @@ const AVATAR_COLORS_DARK = ['#57404d', '#3d4b31', '#504622', '#4a4060'];
 
 export default function ProfileScreen() {
   const { state, dispatch, navigate, showToast } = useApp();
+  const { t } = useTranslation();
   const { user, habits, tasks, goals, darkMode } = state;
 
   const [editing,    setEditing]    = useState(false);
@@ -22,7 +23,7 @@ export default function ProfileScreen() {
   const fileInputRef = useRef(null);
 
   /* Stats */
-  const completedTasks = tasks.filter(t => t.completed).length;
+  const completedTasks = tasks.filter(task => task.completed).length;
   const habitsDone     = habits.filter(h => h.completedToday).length;
   const avgGoals       = goals.length
     ? Math.round(goals.reduce((a, g) => a + g.progress, 0) / goals.length)

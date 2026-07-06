@@ -75,6 +75,7 @@ function NotifCard({ n, isUnread, onMarkRead, onDelete, forceExit }) {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function NotificationsScreen() {
   const { state, dispatch } = useApp();
+  const { t } = useTranslation();
   const { notifications } = state;
 
   // Track IDs being animated out (bulk clear)

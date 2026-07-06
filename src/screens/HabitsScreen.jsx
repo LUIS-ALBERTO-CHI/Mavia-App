@@ -16,6 +16,7 @@ const FREQ_LABEL = {
 
 export default function HabitsScreen() {
   const { state, dispatch, showToast, navigate } = useApp();
+  const { t } = useTranslation();
   const { habits } = state;
   const [showAll, setShowAll] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);

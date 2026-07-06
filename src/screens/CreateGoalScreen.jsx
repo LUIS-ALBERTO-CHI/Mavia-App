@@ -49,7 +49,7 @@ export default function CreateGoalScreen() {
 
   const handleSave = () => {
     if (!form.title.trim()) return;
-    const filledTasks = tasks.filter(t => t.trim());
+    const filledTasks = tasks.filter(g => g.trim());
     setSaving(true);
     setTimeout(() => {
       if (isEdit) {

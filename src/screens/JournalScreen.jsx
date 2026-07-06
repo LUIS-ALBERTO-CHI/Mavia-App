@@ -28,6 +28,7 @@ function formatEntryDate(dateStr) {
 
 export default function JournalScreen() {
   const { state, dispatch, showToast } = useApp();
+  const { t } = useTranslation();
   const { journalEntries } = state;
 
   const [writing,  setWriting]  = useState(false);
@@ -467,7 +468,7 @@ export default function JournalScreen() {
                     {tag}
                     <button
                       className="jrn-tag-remove"
-                      onClick={() => setForm(f => ({ ...f, tags: f.tags.filter(t => t !== tag) }))}
+                      onClick={() => setForm(f => ({ ...f, tags: f.tags.filter(tag2 => tag2 !== tag) }))}
                       type="button"
                     >
                       <X size={12} />

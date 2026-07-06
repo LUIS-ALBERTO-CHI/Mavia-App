@@ -38,6 +38,7 @@ function dayLabel(dateStr) {
 
 export default function RemindersScreen() {
   const { state, dispatch, navigate, showToast } = useApp();
+  const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState('Todos');
   const [search, setSearch] = useState('');
   const [confirmId, setConfirmId] = useState(null);  // id of task pending delete confirm
@@ -46,26 +47,26 @@ export default function RemindersScreen() {
   const tomorrowStr = localDateOffset(1);
 
   // All tasks with reminder flag that are NOT yet completed
-  const all = state.tasks.filter(t => t.reminder && !t.completed);
+  const all = state.tasks.filter(item => item.reminder && !t.completed);
 
   // Filter by chip
   const byChip = (() => {
     switch (activeFilter) {
-      case 'Hoy':      return all.filter(t => t.date === todayStr);
-      case 'Próximos': return all.filter(t => t.date > todayStr);
-      case 'Vencidos': return all.filter(t => t.date < todayStr);  // completed already excluded in `all`
+      case 'Hoy':      return all.filter(item => item.date === todayStr);
+      case 'Próximos': return all.filter(item => item.date > todayStr);
+      case 'Vencidos': return all.filter(item => item.date < todayStr);  // completed already excluded in `all`
       default:         return all;
     }
   })();
 
   // Filter by search
   const filtered = search.trim()
-    ? byChip.filter(t => t.title.toLowerCase().includes(search.toLowerCase()))
+    ? byChip.filter(item => item.title.toLowerCase().includes(search.toLowerCase()))
     : byChip;
 
   // Separate today vs upcoming
-  const todayItems    = filtered.filter(t => t.date === todayStr);
-  const upcomingItems = filtered.filter(t => t.date !== todayStr);
+  const todayItems    = filtered.filter(item => item.date === todayStr);
+  const upcomingItems = filtered.filter(item => item.date !== todayStr);
 
   const handleDelete = (id) => {
     dispatch({ type: 'DELETE_TASK', id });

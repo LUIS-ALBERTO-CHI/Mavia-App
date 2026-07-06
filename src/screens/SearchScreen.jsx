@@ -51,7 +51,7 @@ export default function SearchScreen() {
   const q = query.toLowerCase().trim();
 
   const results = {
-    tasks:   q ? state.tasks.filter(t => t.title.toLowerCase().includes(q) || t.category?.toLowerCase().includes(q)) : [],
+    tasks:   q ? state.tasks.filter(item => item.title.toLowerCase().includes(q) || t.category?.toLowerCase().includes(q)) : [],
     events:  q ? state.events.filter(e => e.title.toLowerCase().includes(q) || e.location?.toLowerCase().includes(q)) : [],
     journal: q ? state.journalEntries.filter(e => e.content.toLowerCase().includes(q)) : [],
     goals:   q ? state.goals.filter(g => g.title.toLowerCase().includes(q) || g.category.toLowerCase().includes(q)) : [],

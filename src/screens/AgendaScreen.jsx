@@ -13,9 +13,10 @@ const EVENT_COLORS = {
 
 export default function AgendaScreen() {
   const { state, dispatch, navigate, showToast } = useApp();
+  const { t } = useTranslation();
   const today = new Date().toISOString().split('T')[0];
   const todayEvents = state.events.filter(e => e.date === today).sort((a, b) => a.startTime.localeCompare(b.startTime));
-  const todayTasks  = state.tasks.filter(t => t.date === today && !t.completed).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  const todayTasks  = state.tasks.filter(item => item.date === today && !t.completed).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
   const allItems = [
     ...todayEvents.map(e => ({ ...e, _type: 'event' })),

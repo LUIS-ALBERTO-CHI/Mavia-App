@@ -117,7 +117,7 @@ export default function StatisticsScreen() {
 
   // ── Tasks ──
   const totalTasks     = tasks.length;
-  const completedTasks = tasks.filter(t => t.completed).length;
+  const completedTasks = tasks.filter(item => item.completed).length;
   const completionRate = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   // ── Habits ──
