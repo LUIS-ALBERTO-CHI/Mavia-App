@@ -1,13 +1,9 @@
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
-import AppIcon from '../components/AppIcon';
-import LottieIcon from '../components/LottieIcon';
 import { localToday, formatTime12h } from '../lib/utils';
-import { Clock, Zap } from 'lucide-react';
+import { Clock, CalendarDays, StickyNote, Target } from 'lucide-react';
 import PriorityBadge from '../components/PriorityBadge';
 import ChecklistConfirmModal from '../components/ChecklistConfirmModal';
-import HabitIcon from '../components/HabitIcon';
-import FocusMode from '../components/FocusMode';
 import { useState } from 'react';
 
 function getGreeting(t) {
@@ -17,22 +13,19 @@ function getGreeting(t) {
   return t('auth.goodEvening');
 }
 
-function getMotivationalMessage(completedToday, totalToday, habitsDone, habitsTotal) {
+function getMotivationalMessage(completedToday, totalToday) {
   const h = new Date().getHours();
   const allTasksDone = totalToday > 0 && completedToday === totalToday;
   const noTasks = totalToday === 0;
-  const allHabitsDone = habitsTotal > 0 && habitsDone === habitsTotal;
 
-  if (allTasksDone && allHabitsDone) return 'Hoy lo lograste todo. Eres increíble.';
-  if (allTasksDone) return 'Tareas completas. Ahora cuida tus hábitos.';
-  if (allHabitsDone) return 'Hábitos al 100%. Sigue con tus tareas.';
+  if (allTasksDone) return 'Todo listo por hoy. Buen trabajo.';
   if (noTasks && h < 10) return 'Empieza el día con intención. ¿Qué quieres lograr?';
-  if (noTasks) return 'Tienes el día libre. Úsalo con propósito.';
+  if (noTasks) return 'No tienes tareas para hoy. Planifica lo que viene.';
   if (completedToday === 0 && h > 16) return 'La tarde es tuya. Termina fuerte.';
   if (completedToday === 0) return 'Cada gran logro empieza con el primer paso.';
   const pct = Math.round((completedToday / totalToday) * 100);
   if (pct >= 75) return `${pct}% logrado. Ya casi terminas, no pares.`;
-  if (pct >= 50) return `Mitad del camino. Mantén el ritmo.`;
+  if (pct >= 50) return 'Mitad del camino. Mantén el ritmo.';
   return `${completedToday} de ${totalToday} listo. Sigue avanzando.`;
 }
 
@@ -45,13 +38,18 @@ const CAT_DOTS = {
   Salud:      '#5a9e7a',
 };
 
+const QUICK_LINKS = [
+  { id: 'calendar', label: 'Calendario', icon: CalendarDays, color: 'var(--secondary)', bg: 'var(--secondary-container)' },
+  { id: 'notes',    label: 'Notas',      icon: StickyNote,   color: 'var(--primary)',   bg: 'var(--primary-container)'   },
+  { id: 'goals',    label: 'Objetivos',  icon: Target,       color: 'var(--tertiary)',  bg: 'var(--tertiary-container)'  },
+];
+
 export default function DashboardScreen() {
   const { state, navigate, dispatch, showToast } = useApp();
   const { t } = useTranslation();
-  const { user, tasks, events, habits, phrases, darkMode } = state;
+  const { user, tasks, events } = state;
 
   const [confirmData, setConfirmData] = useState(null);
-  const [focusMode, setFocusMode]     = useState(false);
 
   const today = localToday();
   // Sort: Alta first, then Media, then Baja — within same priority, sort by time
@@ -77,7 +75,6 @@ export default function DashboardScreen() {
   const completedToday = todayTasks.filter(t => t.completed).length;
   const pendingCount   = todayTasks.filter(t => !t.completed).length;
   const todayEvents    = events.filter(e => e.date === today).sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
-  const todayPhrase    = phrases[new Date().getDay() % phrases.length];
 
   const handleToggle = (taskId, e) => {
     if (e) e.stopPropagation();
@@ -177,143 +174,44 @@ export default function DashboardScreen() {
           letter-spacing: 0.02em;
         }
 
-        .dash-focus-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          background: linear-gradient(135deg, var(--primary) 0%, #9b6b8c 100%);
-          color: white;
-          border: none;
-          border-radius: 99px;
-          padding: 8px 14px;
-          font-size: 12px;
-          font-weight: 600;
-          font-family: var(--font-body);
-          cursor: pointer;
-          transition: transform var(--transition-spring), opacity var(--transition-fast);
-          box-shadow: 0 3px 12px rgba(112,87,101,0.3);
-          letter-spacing: 0.01em;
-          flex-shrink: 0;
-        }
-        .dash-focus-btn:hover { opacity: 0.9; transform: scale(1.04); }
-        .dash-focus-btn:active { transform: scale(0.96); }
-
-        /* ---- Bento Grid ---- */
-        .bento-grid {
+        /* ---- Quick links ---- */
+        .dash-quick {
           display: grid;
-          grid-template-columns: 1fr;
+          grid-template-columns: repeat(3, 1fr);
           gap: var(--space-md);
           margin-bottom: var(--space-xl);
         }
 
-        @media (min-width: 768px) {
-          .bento-grid {
-            grid-template-columns: 2fr 1fr;
-          }
-        }
-
-        /* Meditation hero card */
-        .meditation-card {
-          background: var(--surface-container-lowest);
-          border-radius: var(--radius-2xl);
-          padding: var(--space-lg);
-          box-shadow: var(--shadow-glow);
-          position: relative;
-          overflow: hidden;
-          cursor: pointer;
-          transition: all var(--transition-base);
-        }
-
-        .meditation-card:hover .med-deco { opacity: 0.18; }
-        .meditation-card:hover .med-play-btn { transform: scale(1.05); }
-        .meditation-card:active { transform: scale(0.99); }
-
-        .med-eyebrow {
-          font-size: var(--text-label-sm);
-          color: var(--secondary);
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          font-weight: 700;
-          margin-bottom: var(--space-sm);
-          display: block;
-        }
-
-        .med-title {
-          font-family: var(--font-display);
-          font-size: var(--text-headline-md);
-          font-weight: 500;
-          color: var(--primary);
-          margin-bottom: var(--space-md);
-          line-height: 1.4;
-        }
-
-        .med-desc {
-          font-size: var(--text-body-md);
-          color: var(--on-surface-variant);
-          margin-bottom: var(--space-lg);
-          max-width: 28rem;
-          line-height: 1.6;
-        }
-
-        .med-play-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: var(--space-sm);
-          padding: 0.625rem var(--space-lg);
-          background: var(--primary);
-          color: var(--on-primary);
-          border-radius: var(--radius-full);
-          font-size: var(--text-label-md);
-          font-weight: 500;
-          letter-spacing: 0.02em;
-          border: none;
-          cursor: pointer;
-          transition: transform var(--transition-spring);
-        }
-
-        .med-deco {
-          position: absolute;
-          right: -1rem;
-          bottom: -1rem;
-          opacity: 0.08;
-          transition: opacity var(--transition-base);
-          font-size: 11.25rem;   /* text-[180px] */
-          line-height: 1;
-          color: var(--primary);
-          font-variation-settings: 'FILL' 0, 'wght' 100;
-          pointer-events: none;
-          user-select: none;
-        }
-
-        /* Phrase card */
-        .phrase-card {
-          background: rgba(240, 223, 174, 0.30); /* tertiary-container/30 */
-          border-radius: var(--radius-2xl);
-          padding: var(--space-lg);
+        .dash-quick-card {
           display: flex;
           flex-direction: column;
           align-items: center;
+          gap: var(--space-sm);
+          padding: var(--space-lg) var(--space-sm);
+          background: var(--surface-container-lowest);
+          border-radius: var(--radius-2xl);
+          box-shadow: var(--shadow-glow);
+          border: none;
+          cursor: pointer;
+          transition: transform var(--transition-spring), box-shadow var(--transition-base);
+        }
+        .dash-quick-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .dash-quick-card:active { transform: scale(0.98); }
+
+        .dash-quick-icon {
+          width: 46px;
+          height: 46px;
+          border-radius: var(--radius-full);
+          display: flex;
+          align-items: center;
           justify-content: center;
-          text-align: center;
-          position: relative;
-          overflow: hidden;
-          min-height: 180px;
+          flex-shrink: 0;
         }
 
-        .phrase-card-img {
-          width: 6rem;
-          height: 6rem;
-          object-fit: contain;
-          margin-bottom: var(--space-md);
-        }
-
-        .phrase-card-text {
-          font-family: var(--font-display);
-          font-style: italic;
-          color: var(--on-tertiary-container);
-          font-size: 1rem;
-          line-height: 1.5;
-          padding: 0 var(--space-sm);
+        .dash-quick-label {
+          font-size: var(--text-label-md);
+          font-weight: 600;
+          color: var(--on-surface);
         }
 
         /* ---- Secondary grid ---- */
@@ -486,85 +384,7 @@ export default function DashboardScreen() {
         .ti-cat   { background: var(--surface-container-high); color: var(--on-surface-variant); }
         .ti-time  { background: var(--surface-container-high); color: var(--on-surface-variant); }
         .ti-dot   { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-
-        /* ---- Habits strip ---- */
-        .habits-strip {
-          display: flex;
-          gap: var(--space-sm);
-          overflow-x: auto;
-          scrollbar-width: none;
-          padding-bottom: var(--space-sm);
-          margin-bottom: var(--space-xl);
-        }
-
-        .habits-strip::-webkit-scrollbar { display: none; }
-
-        .habit-pill {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: var(--space-xs);
-          min-width: 56px;
-          cursor: pointer;
-          background: none;
-          border: none;
-          padding: 0;
-        }
-
-        .habit-pill-circle {
-          width: 44px;
-          height: 44px;
-          border-radius: var(--radius-full);
-          border: 2px solid var(--outline-variant);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.3rem;
-          transition: all var(--transition-spring);
-          background: var(--surface-container-lowest);
-        }
-
-        .habit-pill-circle.done {
-          border-color: transparent;
-          box-shadow: var(--shadow-sm);
-        }
-
-        .habit-pill-label {
-          font-size: 10px;
-          font-weight: 600;
-          color: var(--on-surface-variant);
-          text-align: center;
-          max-width: 56px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        /* ---- Gratitude card ---- */
-        .dash-gratitude-card {
-          background: linear-gradient(135deg, #FDF8EC 0%, #F2E2B1 100%);
-          border-radius: var(--radius-2xl);
-          padding: var(--space-lg);
-          cursor: pointer;
-          border: 1px solid rgba(208,195,200,0.15);
-          box-shadow: var(--shadow-card);
-          transition: transform var(--transition-spring);
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-sm);
-        }
-        .dark .dash-gratitude-card {
-          background: linear-gradient(135deg, rgba(80,70,34,0.35) 0%, rgba(80,70,34,0.15) 100%);
-          border-color: rgba(77,68,73,0.3);
-        }
-        .dark .phrase-card {
-          background: rgba(80,70,34,0.18) !important;
-          border: 1px solid rgba(77,68,73,0.2);
-        }
       `}</style>
-
-      {/* #14 Focus Mode overlay */}
-      {focusMode && <FocusMode onClose={() => setFocusMode(false)} />}
 
       <div className="dash-content">
         {/* === GREETING === */}
@@ -575,72 +395,33 @@ export default function DashboardScreen() {
                 {getGreeting(t)}, {user.firstName}
               </h2>
               <p className="dash-greeting-sub">
-                {getMotivationalMessage(completedToday, todayTasks.length, habits.filter(h => h.completedToday).length, habits.length)}
+                {getMotivationalMessage(completedToday, todayTasks.length)}
               </p>
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
-              <div className="dash-tasks-badge">
-                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--on-secondary-container)' }}>task_alt</span>
-                <span className="dash-tasks-badge-text">{pendingCount} {t('dashboard.tasksToday')}</span>
-              </div>
-              <button
-                className="dash-focus-btn"
-                onClick={() => setFocusMode(true)}
-                id="dash-focus-mode"
-                title="Modo Enfoque"
-                aria-label="Activar modo enfoque"
-              >
-                <Zap size={14} strokeWidth={2.5} />
-                Enfocarme
-              </button>
+            <div className="dash-tasks-badge">
+              <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--on-secondary-container)' }}>task_alt</span>
+              <span className="dash-tasks-badge-text">{pendingCount} {t('dashboard.tasksToday')}</span>
             </div>
           </div>
 
-          {/* === BENTO GRID === */}
-          <div className="bento-grid">
-            {/* Meditation card */}
-            <div className="meditation-card" onClick={() => navigate('wellness')}>
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <span className="med-eyebrow">Bienestar</span>
-                <h3 className="med-title">Meditación de Enfoque Creativo</h3>
-                <p className="med-desc">
-                  Prepárate para tu jornada con 10 minutos de claridad mental.
-                </p>
-                <button className="med-play-btn" id="dash-med-play">
-                  <span className="material-symbols-outlined ms-filled" style={{ fontSize: '20px' }}>play_arrow</span>
-                  Comenzar ahora
+          {/* === QUICK LINKS === */}
+          <div className="dash-quick">
+            {QUICK_LINKS.map(link => {
+              const Icon = link.icon;
+              return (
+                <button
+                  key={link.id}
+                  className="dash-quick-card"
+                  onClick={() => navigate(link.id)}
+                  id={`dash-quick-${link.id}`}
+                >
+                  <span className="dash-quick-icon" style={{ background: link.bg }}>
+                    <Icon size={22} color={link.color} strokeWidth={1.9} />
+                  </span>
+                  <span className="dash-quick-label">{link.label}</span>
                 </button>
-              </div>
-              {/* Decorative icon */}
-              <span className="material-symbols-outlined med-deco">self_care</span>
-            </div>
-
-            {/* Phrase card */}
-            <div className="phrase-card" onClick={() => navigate('phrases')}>
-              <div style={{ width: '6rem', height: '6rem', marginBottom: 'var(--space-md)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <LottieIcon name="flower" size={80} loop autoplay />
-              </div>
-              <p className="phrase-card-text">
-                "{todayPhrase?.text || 'Donde pones tu atención, florece tu energía.'}"
-              </p>
-            </div>
-
-            {/* Gratitude card */}
-            <div
-              onClick={() => navigate('gratitude')}
-              id="dash-gratitude"
-              className="dash-gratitude-card"
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-            >
-              <span style={{ fontSize: '2rem' }}>🌿</span>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-headline-md)', fontWeight: 500, color: darkMode ? 'var(--tertiary)' : '#695e37' }}>
-                Gratitud
-              </div>
-              <p style={{ fontSize: 'var(--text-label-md)', color: 'var(--on-surface-variant)', lineHeight: 1.5 }}>
-                Escribe 3 cosas por las que estás agradecida hoy.
-              </p>
-            </div>
+              );
+            })}
           </div>
         </section>
 
@@ -649,7 +430,7 @@ export default function DashboardScreen() {
           {/* Events */}
           <section>
             <div className="section-header-row">
-              <h4 className="section-h">Próximos Eventos</h4>
+              <h4 className="section-h">Eventos de hoy</h4>
               <button className="btn-ghost btn btn-sm" onClick={() => navigate('events')} id="dash-events-all">Ver todo</button>
             </div>
             <div>
@@ -715,7 +496,7 @@ export default function DashboardScreen() {
           {/* Tasks */}
           <section>
             <div className="section-header-row">
-              <h4 className="section-h">Tareas Pendientes</h4>
+              <h4 className="section-h">Tareas pendientes</h4>
               <button className="btn-ghost btn btn-sm" onClick={() => navigate('tasks')} id="dash-tasks-all">Ver lista</button>
             </div>
             <div className="task-list-card">
@@ -782,44 +563,6 @@ export default function DashboardScreen() {
             </div>
           </section>
         </div>
-
-        {/* === HABITS QUICK ROW === */}
-        <section style={{ marginTop: 'var(--space-xl)' }}>
-          <div className="section-header-row">
-            <h4 className="section-h">Hábitos de hoy</h4>
-            <button className="btn-ghost btn btn-sm" onClick={() => navigate('habits')} id="dash-habits-all">Ver todos</button>
-          </div>
-          <div className="habits-strip">
-            {habits.map(habit => (
-              <button
-                key={habit.id}
-                className="habit-pill"
-                onClick={() => {
-                  dispatch({ type: 'TOGGLE_HABIT', id: habit.id });
-                  if (!habit.completedToday) showToast(`${habit.name} completado`, 'success');
-                }}
-                id={`dash-habit-${habit.id}`}
-              >
-                <div
-                  className={`habit-pill-circle${habit.completedToday ? ' done' : ''}`}
-                  style={habit.completedToday ? {
-                    background: `linear-gradient(135deg, ${habit.color}BB 0%, ${habit.color} 100%)`,
-                  } : {
-                    background: 'var(--surface-container)',
-                    borderColor: 'var(--outline-variant)',
-                  }}
-                >
-                  <HabitIcon
-                    id={habit.icon || 'meditation'}
-                    size={20}
-                    color={habit.completedToday ? 'white' : 'var(--outline)'}
-                  />
-                </div>
-                <span className="habit-pill-label">{habit.name}</span>
-              </button>
-            ))}
-          </div>
-        </section>
       </div>
     </>
   );

@@ -398,8 +398,8 @@ export default function JournalScreen() {
 
         {/* ── Hero ── */}
         <div className="jrn-hero">
-          <h1 className="jrn-hero-title">Mi Diario</h1>
-          <p className="jrn-hero-sub">Un espacio seguro para tus pensamientos y reflexiones del día.</p>
+          <h1 className="jrn-hero-title">Notas</h1>
+          <p className="jrn-hero-sub">Apunta ideas, pendientes y detalles de clientes en un solo lugar.</p>
         </div>
 
         {/* ── Today banner (write button) ── */}
@@ -417,10 +417,10 @@ export default function JournalScreen() {
             </div>
             <div className="jrn-banner-body">
               <div className="jrn-banner-title">
-                {todayEntry ? 'Continuar escribiendo' : '¿Cómo fue tu día?'}
+                {todayEntry ? 'Continuar nota de hoy' : 'Escribe una nota'}
               </div>
               <div className="jrn-banner-sub">
-                {todayEntry ? 'Toca para editar tu entrada de hoy' : 'Escribe tus pensamientos del día'}
+                {todayEntry ? 'Toca para editar la nota de hoy' : 'Anota ideas, tareas o notas de clientes'}
               </div>
             </div>
             <Edit2 size={20} color="var(--primary)" strokeWidth={1.75} />
@@ -430,7 +430,7 @@ export default function JournalScreen() {
         {/* ── Write panel ── */}
         {writing && (
           <div className="jrn-write-panel">
-            <div className="jrn-write-heading">{t('journal.howDoYouFeel')}</div>
+            <div className="jrn-write-heading">Nueva nota</div>
 
             {/* Mood selector */}
             <div className="jrn-mood-row">
@@ -452,7 +452,7 @@ export default function JournalScreen() {
             {/* Textarea */}
             <textarea
               className="jrn-textarea"
-              placeholder="Escribe libremente… ¿qué pasó hoy? ¿cómo te sentiste? ¿qué aprendiste?"
+              placeholder="Escribe tu nota… ideas, pendientes, detalles de un cliente…"
               value={form.content}
               onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
               id="journal-text"
@@ -481,7 +481,7 @@ export default function JournalScreen() {
             {/* Tag input */}
             <div className="jrn-tag-add-row">
               <Input
-                placeholder="Etiqueta (ej: gratitud)"
+                placeholder="Etiqueta (ej: cliente, idea)"
                 value={tagInput}
                 onChange={e => setTagInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
@@ -500,7 +500,7 @@ export default function JournalScreen() {
               </Button>
               <Button type="button" className="flex-1" onClick={handleSave} id="journal-save" disabled={!form.content.trim()}>
                 <Bookmark size={16} />
-                Guardar entrada
+                Guardar nota
               </Button>
             </div>
           </div>
@@ -510,7 +510,7 @@ export default function JournalScreen() {
         {journalEntries.length > 0 ? (
           <>
             <div className="jrn-section-head">
-              <span className="jrn-section-label">Entradas anteriores</span>
+              <span className="jrn-section-label">Notas anteriores</span>
               <div className="jrn-section-line" />
             </div>
 
@@ -573,9 +573,9 @@ export default function JournalScreen() {
             <div className="jrn-empty-icon">
               <BookOpen size={38} color="var(--primary)" strokeWidth={1.25} />
             </div>
-            <div className="jrn-empty-title">Tu diario te espera</div>
+            <div className="jrn-empty-title">Aún no hay notas</div>
             <p className="jrn-empty-sub">
-              Empieza a escribir tus pensamientos. Cada entrada es un pequeño tesoro para tu yo futuro.
+              Crea tu primera nota para guardar ideas, pendientes y detalles de tus clientes.
             </p>
           </div>
         )}

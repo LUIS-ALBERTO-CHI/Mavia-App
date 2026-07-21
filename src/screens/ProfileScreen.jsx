@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
 import {
   Edit2, Moon, Globe, Bell, Shield, HelpCircle,
-  LogOut, ChevronRight, Check, X, TrendingUp, Flame, Camera
+  LogOut, ChevronRight, Check, X, Camera
 } from 'lucide-react';
 import { Switch } from '../components/ui/switch';
 import { Button } from '../components/ui/button';
@@ -15,27 +15,18 @@ const AVATAR_COLORS_DARK = ['#57404d', '#3d4b31', '#504622', '#4a4060'];
 export default function ProfileScreen() {
   const { state, dispatch, navigate, showToast } = useApp();
   const { t } = useTranslation();
-  const { user, habits, tasks, goals, darkMode } = state;
+  const { user, tasks, events, goals, journalEntries, darkMode } = state;
 
   const [editing,    setEditing]    = useState(false);
   const [uploading,  setUploading]  = useState(false);
   const [form,       setForm]       = useState({ name: user.name || '', email: user.email || '' });
   const fileInputRef = useRef(null);
 
-  /* Stats */
+  /* Stats — agenda focused */
   const completedTasks = tasks.filter(task => task.completed).length;
-  const habitsDone     = habits.filter(h => h.completedToday).length;
-  const avgGoals       = goals.length
-    ? Math.round(goals.reduce((a, g) => a + g.progress, 0) / goals.length)
-    : 0;
-  const streakMax      = habits.length
-    ? Math.max(...habits.map(h => h.streak))
-    : 0;
-  const appStreak      = user.appStreak || 0;
-
-  const wellbeingScore = Math.min(100, Math.round(
-    (habitsDone / Math.max(habits.length, 1)) * 50 + avgGoals * 0.5
-  ));
+  const pendingTasks   = tasks.filter(task => !task.completed).length;
+  const totalEvents    = events.length;
+  const totalNotes     = (journalEntries || []).length;
 
   const handleSave = () => {
     dispatch({ type: 'UPDATE_USER', updates: { name: form.name, email: form.email, firstName: form.name.split(' ')[0] } });
@@ -506,7 +497,7 @@ export default function ProfileScreen() {
             </button>
           </div>
           <h2 className="prof-name">{user.name || user.firstName || 'Usuario'}</h2>
-          <p className="prof-role">{user.email || 'Mavia · Bienestar & Productividad'}</p>
+          <p className="prof-role">{user.email || 'Mavia · Agenda de trabajo'}</p>
           <button
             className="prof-edit-name-btn"
             onClick={() => setEditing(e => !e)}
@@ -524,25 +515,25 @@ export default function ProfileScreen() {
             <span className="prof-stat-num" style={{ color: 'var(--primary)' }}>
               {completedTasks}
             </span>
-            <span className="prof-stat-label">Logros diarios</span>
+            <span className="prof-stat-label">Tareas hechas</span>
           </div>
           <div className="prof-stat-card">
             <span className="prof-stat-num" style={{ color: 'var(--secondary)' }}>
-              {wellbeingScore}%
+              {pendingTasks}
             </span>
-            <span className="prof-stat-label">Bienestar</span>
-          </div>
-          <div className="prof-stat-card">
-            <span className="prof-stat-num" style={{ color: '#E56B4E', display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center' }}>
-              <Flame size={18} color="#E56B4E" />{appStreak}
-            </span>
-            <span className="prof-stat-label">Racha de app</span>
+            <span className="prof-stat-label">Pendientes</span>
           </div>
           <div className="prof-stat-card">
             <span className="prof-stat-num" style={{ color: 'var(--tertiary)' }}>
-              {streakMax}
+              {totalEvents}
             </span>
-            <span className="prof-stat-label">Racha hábito</span>
+            <span className="prof-stat-label">Eventos</span>
+          </div>
+          <div className="prof-stat-card">
+            <span className="prof-stat-num" style={{ color: 'var(--primary)' }}>
+              {totalNotes}
+            </span>
+            <span className="prof-stat-label">Notas</span>
           </div>
         </div>
 
@@ -636,17 +627,6 @@ export default function ProfileScreen() {
                 <Shield size={18} color="var(--on-surface-variant)" strokeWidth={1.75} />
               </div>
               <span className="prof-row-label">Privacidad y Seguridad</span>
-            </div>
-            <ChevronRight size={16} color="var(--on-surface-variant)" />
-          </div>
-
-          {/* Statistics */}
-          <div className="prof-row" onClick={() => navigate('statistics')} id="prof-stats-row">
-            <div className="prof-row-left">
-              <div className="prof-row-icon" style={{ background: 'rgba(208,195,200,0.2)' }}>
-                <TrendingUp size={18} color="var(--on-surface-variant)" strokeWidth={1.75} />
-              </div>
-              <span className="prof-row-label">{t('profile.stats')}</span>
             </div>
             <ChevronRight size={16} color="var(--on-surface-variant)" />
           </div>

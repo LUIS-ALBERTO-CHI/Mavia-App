@@ -19,15 +19,10 @@ import TasksScreen from './screens/TasksScreen';
 import CreateTaskScreen from './screens/CreateTaskScreen';
 import TaskDetailScreen from './screens/TaskDetailScreen';
 
-// Screens - Wellness
-import MeditationScreen from './screens/MeditationScreen';
-import HabitsScreen from './screens/HabitsScreen';
-import CreateHabitScreen from './screens/CreateHabitScreen';
+// Screens - Planning
 import GoalsScreen from './screens/GoalsScreen';
 import CreateGoalScreen from './screens/CreateGoalScreen';
 import JournalScreen from './screens/JournalScreen';
-import GratitudeScreen from './screens/GratitudeScreen';
-import PhrasesScreen from './screens/PhrasesScreen';
 
 // Screens - Management
 import EventsScreen from './screens/EventsScreen';
@@ -39,7 +34,6 @@ import RemindersScreen from './screens/RemindersScreen';
 import NotificationsScreen from './screens/NotificationsScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import SettingsScreen from './screens/SettingsScreen';
-import StatisticsScreen from './screens/StatisticsScreen';
 import SearchScreen from './screens/SearchScreen';
 import NotFoundScreen from './screens/NotFoundScreen';
 
@@ -64,15 +58,10 @@ const SCREEN_MAP = {
   tasks: TasksScreen,
   createTask: CreateTaskScreen,
   taskDetail: TaskDetailScreen,
-  wellness: MeditationScreen,
-  meditation: MeditationScreen,
-  habits: HabitsScreen,
-  createHabit: CreateHabitScreen,
   goals: GoalsScreen,
   createGoal: CreateGoalScreen,
+  notes: JournalScreen,
   journal: JournalScreen,
-  gratitude: GratitudeScreen,
-  phrases: PhrasesScreen,
   events: EventsScreen,
   eventDetail: EventDetailScreen,
   createEvent: CreateEventScreen,
@@ -80,7 +69,6 @@ const SCREEN_MAP = {
   notifications: NotificationsScreen,
   profile: ProfileScreen,
   settings: SettingsScreen,
-  statistics: StatisticsScreen,
   search: SearchScreen,
 };
 
@@ -88,11 +76,11 @@ const SCREEN_MAP = {
    SIDEBAR NAV ITEMS
    ============================================ */
 const MAIN_NAV = [
-  { id: 'dashboard', label: 'Inicio',     icon: 'dashboard'          },
-  { id: 'calendar',  label: 'Calendario', icon: 'calendar_today'      },
-  { id: 'tasks',     label: 'Tareas',     icon: 'check_circle'        },
-  { id: 'wellness',  label: 'Bienestar',  icon: 'energy_savings_leaf' },
-  { id: 'profile',   label: 'Perfil',     icon: 'person'              },
+  { id: 'dashboard', label: 'Inicio',     icon: 'dashboard'      },
+  { id: 'calendar',  label: 'Calendario', icon: 'calendar_today'  },
+  { id: 'tasks',     label: 'Tareas',     icon: 'check_circle'    },
+  { id: 'notes',     label: 'Notas',      icon: 'edit_note'       },
+  { id: 'profile',   label: 'Perfil',     icon: 'person'          },
 ];
 
 // Screens that use the calendar FAB destination
@@ -100,13 +88,13 @@ const CALENDAR_SCREENS = new Set(['calendar', 'events', 'createEvent', 'agenda']
 
 // Screens that already have their own "Añadir" button — hide FAB to avoid confusion
 const SCREENS_WITH_OWN_ADD = new Set([
-  'habits', 'goals', 'journal', 'gratitude', 'createTask', 'createEvent',
-  'createHabit', 'createGoal', 'taskDetail', 'eventDetail', 'notifications',
-  'statistics', 'search', 'profile', 'settings', 'reminders',
+  'goals', 'notes', 'journal', 'createTask', 'createEvent',
+  'createGoal', 'taskDetail', 'eventDetail', 'notifications',
+  'search', 'profile', 'settings', 'reminders',
 ]);
 
 // Back-navigation screens (animate slide-back instead of slide-in)
-const DETAIL_SCREENS = new Set(['taskDetail', 'eventDetail', 'createTask', 'createEvent', 'createHabit', 'createGoal']);
+const DETAIL_SCREENS = new Set(['taskDetail', 'eventDetail', 'createTask', 'createEvent', 'createGoal']);
 
 const SCREEN_TITLES = {
   dashboard: 'Mavia',
@@ -116,18 +104,14 @@ const SCREEN_TITLES = {
   createTask: 'Nueva tarea',
   createEvent: 'Nuevo evento',
   taskDetail: 'Detalle de tarea',
-  wellness: 'Bienestar',
-  habits: 'Hábitos',
   goals: 'Objetivos',
-  journal: 'Mi diario',
-  gratitude: 'Gratitud',
-  phrases: 'Frase del día',
+  notes: 'Notas',
+  journal: 'Notas',
   events: 'Eventos',
   reminders: 'Recordatorios',
   notifications: 'Notificaciones',
   profile: 'Mi perfil',
   settings: 'Configuración',
-  statistics: 'Estadísticas',
   search: 'Buscar',
 };
 
@@ -215,13 +199,12 @@ function DesktopSidebar() {
         {/* Extra items */}
         <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(208,195,200,0.2)', paddingTop: '0.75rem' }}>
           {[
-            { id: 'notifications', label: 'Notificaciones', icon: 'notifications', badge: unread },
-            { id: 'reminders',    label: 'Recordatorios',  icon: 'alarm'          },
-            { id: 'journal',      label: 'Diario',          icon: 'book_2'         },
-            { id: 'goals',        label: 'Objetivos',       icon: 'flag'           },
-            { id: 'habits',       label: 'Hábitos',         icon: 'self_care'      },
-            { id: 'statistics',   label: 'Estadísticas',    icon: 'bar_chart'      },
-            { id: 'search',       label: 'Búsqueda',        icon: 'search'         },
+            { id: 'agenda',        label: 'Agenda del día',  icon: 'today'         },
+            { id: 'events',        label: 'Eventos',         icon: 'event'         },
+            { id: 'reminders',     label: 'Recordatorios',   icon: 'alarm'         },
+            { id: 'goals',         label: 'Objetivos',       icon: 'flag'          },
+            { id: 'notifications', label: 'Notificaciones',  icon: 'notifications', badge: unread },
+            { id: 'search',        label: 'Búsqueda',        icon: 'search'        },
           ].map(item => (
             <button
               key={item.id}
@@ -268,18 +251,15 @@ function DesktopSidebar() {
    MOBILE SIDE DRAWER  (hamburger → slide-from-left)
    ============================================ */
 const DRAWER_ITEMS = [
-  { id: 'habits',     label: 'Hábitos',       icon: 'self_care',    section: 'Bienestar',  color: '#546347' },
-  { id: 'goals',      label: 'Objetivos',     icon: 'flag',         section: 'Bienestar',  color: '#695e37' },
-  { id: 'journal',    label: 'Diario',        icon: 'book_2',       section: 'Bienestar',  color: '#705765' },
-  { id: 'gratitude',  label: 'Gratitud',      icon: 'favorite',     section: 'Bienestar',  color: '#8c5f7a' },
-  { id: 'phrases',    label: 'Frases',        icon: 'format_quote', section: 'Bienestar',  color: '#546347' },
-  { id: 'reminders',  label: 'Recordatorios', icon: 'alarm',        section: 'Tareas',     color: '#705765' },
-  { id: 'events',     label: 'Eventos',       icon: 'event',        section: 'Calendario', color: '#695e37' },
-  { id: 'statistics', label: 'Estadísticas',  icon: 'bar_chart',    section: 'General',    color: '#546347' },
-  { id: 'search',     label: 'Buscar',        icon: 'search',       section: 'General',    color: '#705765' },
+  { id: 'agenda',     label: 'Agenda del día', icon: 'today',     section: 'Agenda',    color: '#705765' },
+  { id: 'events',     label: 'Eventos',        icon: 'event',     section: 'Agenda',    color: '#695e37' },
+  { id: 'reminders',  label: 'Recordatorios',  icon: 'alarm',     section: 'Agenda',    color: '#546347' },
+  { id: 'notes',      label: 'Notas',          icon: 'edit_note', section: 'Trabajo',   color: '#705765' },
+  { id: 'goals',      label: 'Objetivos',      icon: 'flag',      section: 'Trabajo',   color: '#695e37' },
+  { id: 'search',     label: 'Buscar',         icon: 'search',    section: 'General',   color: '#546347' },
 ];
 
-const SECTION_ORDER = ['Bienestar', 'Tareas', 'Calendario', 'General'];
+const SECTION_ORDER = ['Agenda', 'Trabajo', 'General'];
 
 function MobileSideDrawer({ open, onClose }) {
   const { state, navigate, dispatch } = useApp();
@@ -633,20 +613,19 @@ function MobileBottomNav() {
   const { currentScreen } = state;
 
   const BOTTOM_NAV = [
-    { id: 'dashboard', label: 'Inicio',     icon: 'home'               },
-    { id: 'calendar',  label: 'Calendario', icon: 'calendar_today'      },
-    { id: 'tasks',     label: 'Tareas',     icon: 'check_circle'        },
-    { id: 'wellness',  label: 'Bienestar',  icon: 'energy_savings_leaf' },
-    { id: 'profile',   label: 'Perfil',     icon: 'person'              },
+    { id: 'dashboard', label: 'Inicio',     icon: 'home'           },
+    { id: 'calendar',  label: 'Calendario', icon: 'calendar_today'  },
+    { id: 'tasks',     label: 'Tareas',     icon: 'check_circle'    },
+    { id: 'notes',     label: 'Notas',      icon: 'edit_note'       },
+    { id: 'profile',   label: 'Perfil',     icon: 'person'          },
   ];
 
   const TAB_GROUPS = {
     dashboard: ['dashboard', 'agenda'],
     calendar:  ['calendar', 'createEvent', 'events', 'eventDetail'],
     tasks:     ['tasks', 'createTask', 'taskDetail', 'reminders'],
-    wellness:  ['wellness', 'meditation', 'habits', 'createHabit', 'goals',
-                'createGoal', 'journal', 'gratitude', 'phrases'],
-    profile:   ['profile', 'settings', 'notifications', 'statistics', 'search'],
+    notes:     ['notes', 'journal'],
+    profile:   ['profile', 'settings', 'notifications', 'search', 'goals', 'createGoal'],
   };
 
   const activeTab = Object.entries(TAB_GROUPS)

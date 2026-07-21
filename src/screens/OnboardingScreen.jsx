@@ -23,7 +23,7 @@ const SLIDES = [
       </svg>
     ),
     title: 'Bienvenida a Mavia',
-    subtitle: 'Tu compañera de bienestar y productividad. Organiza, cuida y crece — todo en un solo lugar.',
+    subtitle: 'Su agenda de trabajo compartida. Organicen tareas, eventos y clientes en un solo lugar.',
     features: null,
   },
   {
@@ -47,45 +47,43 @@ const SLIDES = [
     features: ['Prioridad alta, media y baja', 'Recordatorios inteligentes', 'Categorías: Marketing, Personal, Espiritual'],
   },
   {
-    id: 'habits',
+    id: 'calendar',
     gradient: 'linear-gradient(160deg, #F0F8F0 0%, #E0F0DA 100%)',
     accentColor: '#546347',
     illustration: (
       <svg viewBox="0 0 200 200" fill="none" width="180" height="180">
-        <circle cx="100" cy="100" r="70" fill="#D5E5C2" opacity="0.5"/>
-        <g transform="translate(52, 58)">
-          {[0,1,2,3,4,5,6].map(i => (
-            <rect key={i} x={i*14} y={i < 4 ? 0 : 14} width="10" height="10" rx="3"
-              fill={i < 5 ? '#546347' : '#D5E5C2'} opacity={i < 5 ? 0.9 : 0.5}/>
-          ))}
-        </g>
-        <circle cx="100" cy="130" r="26" fill="#546347" opacity="0.15"/>
-        <path d="M87 130 L96 139 L114 121" stroke="#546347" strokeWidth="4" strokeLinecap="round"/>
-        <circle cx="148" cy="65" r="8" fill="#F0DFAE" opacity="0.8"/>
+        <rect x="38" y="46" width="124" height="114" rx="16" fill="#D5E5C2" opacity="0.55"/>
+        <rect x="38" y="46" width="124" height="28" rx="14" fill="#546347" opacity="0.85"/>
+        <circle cx="70" cy="40" r="6" fill="#546347"/>
+        <circle cx="130" cy="40" r="6" fill="#546347"/>
+        {[0,1,2].map(r => [0,1,2,3].map(c => (
+          <rect key={`${r}-${c}`} x={54 + c*26} y={88 + r*22} width="16" height="16" rx="4"
+            fill={r===0 && c===1 ? '#546347' : '#ffffff'} opacity={r===0 && c===1 ? 0.95 : 0.6}/>
+        )))}
       </svg>
     ),
-    title: 'Hábitos que duran',
-    subtitle: 'Construye rutinas sólidas. Rastrea tu progreso día a día y mantén tu racha.',
-    features: ['Racha de días consecutivos', 'Seguimiento semanal visual', 'Recordatorios personalizados por hábito'],
+    title: 'Tu calendario compartido',
+    subtitle: 'Eventos, reuniones y entregas de clientes. Todo en una vista clara del mes.',
+    features: ['Eventos con hora y ubicación', 'Recordatorios automáticos', 'Vista de agenda del día'],
   },
   {
-    id: 'wellness',
+    id: 'notes',
     gradient: 'linear-gradient(160deg, #FDF5F0 0%, #FAE8DC 100%)',
     accentColor: '#695e37',
     illustration: (
       <svg viewBox="0 0 200 200" fill="none" width="180" height="180">
-        <circle cx="100" cy="100" r="75" fill="#F0DFAE" opacity="0.45"/>
-        <path d="M60 100 Q80 65 100 100 Q120 135 140 100" stroke="#695e37" strokeWidth="3" fill="none" opacity="0.4"/>
-        <circle cx="100" cy="78" r="32" fill="#F0DFAE" opacity="0.7"/>
-        <circle cx="100" cy="78" r="18" fill="#695e37" opacity="0.2"/>
-        <path d="M93 78 L100 85 L110 70" stroke="#695e37" strokeWidth="2.5" strokeLinecap="round" opacity="0.8"/>
-        <circle cx="58"  cy="140" r="9" fill="#D5E5C2" opacity="0.7"/>
-        <circle cx="142" cy="135" r="7" fill="#F8D7E8" opacity="0.7"/>
+        <rect x="48" y="40" width="104" height="128" rx="14" fill="#F0DFAE" opacity="0.6"/>
+        <rect x="48" y="40" width="104" height="128" rx="14" stroke="#695e37" strokeWidth="2" opacity="0.3" fill="none"/>
+        {[0,1,2,3].map(i => (
+          <rect key={i} x="66" y={70 + i*22} width={i===3 ? 40 : 68} height="8" rx="4" fill="#695e37" opacity={0.35 - i*0.05}/>
+        ))}
+        <circle cx="140" cy="150" r="20" fill="#695e37" opacity="0.9"/>
+        <path d="M133 150 L138 155 L148 144" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
     ),
-    title: 'Cuida tu bienestar',
-    subtitle: 'Meditación guiada, diario de gratitud y reflexión. Tu mente merece atención.',
-    features: ['Meditaciones en audio', 'Diario de emociones', 'Frases motivacionales diarias'],
+    title: 'Notas y objetivos',
+    subtitle: 'Guarda ideas, pendientes y detalles de cada cliente. Define objetivos y sigue su avance.',
+    features: ['Notas con etiquetas', 'Objetivos con progreso', 'Búsqueda al instante'],
   },
   {
     id: 'ready',
@@ -103,7 +101,7 @@ const SLIDES = [
       </svg>
     ),
     title: '¡Todo listo para empezar!',
-    subtitle: 'Crea tu cuenta y descubre una nueva forma de vivir con claridad, intención y calma.',
+    subtitle: 'Crea tu cuenta y organiza el trabajo de la agencia con claridad.',
     features: null,
     cta: 'Crear mi cuenta',
   },

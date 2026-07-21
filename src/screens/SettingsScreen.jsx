@@ -99,9 +99,7 @@ export default function SettingsScreen() {
         if (data.tasks)            dispatch({ type: 'IMPORT_TASKS',   tasks:   data.tasks });
         if (data.events)           dispatch({ type: 'IMPORT_EVENTS',  events:  data.events });
         if (data.goals)            dispatch({ type: 'IMPORT_GOALS',   goals:   data.goals });
-        if (data.habits)           dispatch({ type: 'IMPORT_HABITS',  habits:  data.habits });
         if (data.journalEntries)   dispatch({ type: 'IMPORT_JOURNAL', entries: data.journalEntries });
-        if (data.gratitudeEntries) dispatch({ type: 'IMPORT_GRATITUDE', entries: data.gratitudeEntries });
         showToast(t('toasts.dataImported'), 'success');
       } catch {
         showToast(t('toasts.invalidFile'), 'error');
@@ -121,11 +119,11 @@ export default function SettingsScreen() {
 
   const handleExport = () => {
     try {
-      const { tasks, events, goals, habits, journalEntries, gratitudeEntries } = state;
+      const { tasks, events, goals, journalEntries } = state;
       const exportData = {
         exportedAt: new Date().toISOString(),
         version: '1.0.0',
-        tasks, events, goals, habits, journalEntries, gratitudeEntries,
+        tasks, events, goals, journalEntries,
       };
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url  = URL.createObjectURL(blob);
@@ -142,8 +140,6 @@ export default function SettingsScreen() {
 
   const [notifTasks,   setNotifTasks]   = useState(true);
   const [notifEvents,  setNotifEvents]  = useState(true);
-  const [notifMedit,   setNotifMedit]   = useState(true);
-  const [notifHabits,  setNotifHabits]  = useState(true);
 
   return (
     <>
@@ -360,13 +356,6 @@ export default function SettingsScreen() {
             sub="15 min antes y al momento"
             id="set-task-notif"
             right={<Switch checked={notifTasks && permStatus === 'granted'} onCheckedChange={setNotifTasks} id="sw-tasks" disabled={permStatus !== 'granted'} />}
-          />
-          <SettingRow
-            icon={Repeat2} iconBg="rgba(74,111,165,0.12)" iconColor="#4a6fa5"
-            label={t('settings.habitNotif')}
-            sub="8:00 PM"
-            id="set-habit-notif"
-            right={<Switch checked={notifHabits && permStatus === 'granted'} onCheckedChange={setNotifHabits} id="sw-habits" disabled={permStatus !== 'granted'} />}
           />
           <SettingRow
             icon={Bell} iconBg="var(--tertiary-container)" iconColor="var(--tertiary)"

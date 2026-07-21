@@ -1,8 +1,8 @@
 import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { localToday } from '../lib/utils';
 import { onAuthChange } from '../lib/authService';
-import { loadUserData, saveTask, deleteTask, saveHabit, saveEvent, deleteEvent,
-         saveGoal, saveJournalEntry, saveGratitudeEntry,
+import { loadUserData, saveTask, deleteTask, saveEvent, deleteEvent,
+         saveGoal, saveJournalEntry,
          markNotificationRead, markAllNotificationsRead, saveUserProfile,
          deleteNotification, deleteReadNotifications, saveNotification,
          saveSettings } from '../lib/firestoreService';
@@ -10,7 +10,6 @@ import {
   initFCM,
   scheduleTaskReminder,
   scheduleEventReminders,
-  scheduleHabitReminder,
   rescheduleAllReminders,
   cancelReminder,
   getCachedFCMToken,
@@ -23,29 +22,17 @@ import {
    ============================================ */
 export const SEED_DATA = {
   tasks:            [],
-  habits:           [],
   events:           [],
   goals:            [],
   journalEntries:   [],
-  gratitudeEntries: [],
   notifications:    [],
-  // Meditations and phrases are system content — kept in app code, not per-user Firestore
-  meditations:      [],
+  // Phrases are system content — kept in app code, not per-user Firestore
   phrases:          [],
 };
 
 /* ============================================
    SYSTEM CONTENT (same for all users, not stored in Firestore)
    ============================================ */
-export const SYSTEM_MEDITATIONS = [
-  { id: 'm1', title: 'Respiración para calmar la ansiedad', category: 'Ansiedad',      duration: 10, icon: 'wave',    description: 'Una práctica suave para calmar el sistema nervioso', plays: 0 },
-  { id: 'm2', title: 'Concentración profunda',              category: 'Concentración', duration: 15, icon: 'focus',   description: 'Aumenta tu enfoque y claridad mental', plays: 0 },
-  { id: 'm3', title: 'Relajación para dormir',              category: 'Dormir',        duration: 20, icon: 'sleep',   description: 'Prepara tu mente y cuerpo para un sueño reparador', plays: 0 },
-  { id: 'm4', title: 'Meditación de gratitud',              category: 'Gratitud',      duration: 8,  icon: 'flower',  description: 'Cultiva un corazón agradecido', plays: 0 },
-  { id: 'm5', title: 'Energía matutina',                    category: 'Energía',       duration: 12, icon: 'sun',     description: 'Activa tu energía positiva para el día', plays: 0 },
-  { id: 'm6', title: 'Respiración 4-7-8',                   category: 'Ansiedad',      duration: 5,  icon: 'breathe', description: 'Técnica de respiración para reducir el estrés', plays: 0 },
-];
-
 export const SYSTEM_PHRASES = [
   { id: 'p1', text: 'La calma es tu superpoder. Úsala todos los días.',          author: 'Mavia', emoji: '' },
   { id: 'p2', text: 'Pequeños pasos consistentes crean grandes cambios.',        author: 'Mavia', emoji: '🌿' },
@@ -62,12 +49,9 @@ export const SYSTEM_PHRASES = [
 const emptyDataState = {
   tasks:            [],
   events:           [],
-  habits:           [],
   goals:            [],
   journalEntries:   [],
-  gratitudeEntries: [],
   phrases:          [],
-  meditations:      [],
   notifications:    [],
 };
 
@@ -89,7 +73,6 @@ const defaultState = {
   toast:             null,
   // Data — user content starts empty; system content pre-loaded from constants
   ...emptyDataState,
-  meditations: SYSTEM_MEDITATIONS,
   phrases:     SYSTEM_PHRASES,
 };
 
@@ -117,7 +100,6 @@ function reducer(state, action) {
         },
         ...action.data,  // Firestore user data
         // Always keep system content (not stored in Firestore)
-        meditations: SYSTEM_MEDITATIONS,
         phrases:     SYSTEM_PHRASES,
       };
 
@@ -227,110 +209,11 @@ function reducer(state, action) {
       const merged   = [...state.goals, ...action.goals.filter(g => !existing.has(g.id))];
       return { ...state, goals: merged };
     }
-    case 'IMPORT_HABITS': {
-      const existing = new Set(state.habits.map(h => h.id));
-      const merged   = [...state.habits, ...action.habits.filter(h => !existing.has(h.id))];
-      return { ...state, habits: merged };
-    }
     case 'IMPORT_JOURNAL': {
       const existing = new Set(state.journalEntries.map(e => e.id));
       const merged   = [...state.journalEntries, ...action.entries.filter(e => !existing.has(e.id))];
       return { ...state, journalEntries: merged };
     }
-    case 'IMPORT_GRATITUDE': {
-      const existing = new Set(state.gratitudeEntries.map(e => e.id));
-      const merged   = [...state.gratitudeEntries, ...action.entries.filter(e => !existing.has(e.id))];
-      return { ...state, gratitudeEntries: merged };
-    }
-
-    /* ── Habits ── */
-    case 'ADD_HABIT':
-      return { ...state, habits: [...state.habits, {
-        ...action.habit,
-        id: action.habit.id || Date.now().toString(),
-        streak: 0,
-        weekData: Array(7).fill(false),
-        completedToday: false,
-        lastCompletedDate: null,
-      }]};
-
-    case 'TOGGLE_HABIT': {
-      const todayStr  = new Date().toLocaleDateString('en-CA');
-      const todayIdx  = (new Date().getDay() + 6) % 7; // Mon=0 … Sun=6
-
-      // Compute yesterday string for streak validation
-      const yest = new Date(); yest.setDate(yest.getDate() - 1);
-      const yesterdayStr = yest.toLocaleDateString('en-CA');
-
-      const habits = state.habits.map(h => {
-        if (h.id !== action.id) return h;
-        const wasCompleted = h.completedToday;
-        const newCompleted = !wasCompleted;
-        const weekData     = [...(h.weekData || Array(7).fill(false))];
-        weekData[todayIdx] = newCompleted;
-
-        // ── Real streak: uses lastCompletedDate to detect missed days ──
-        // Completing today:
-        //   - lastCompleted was YESTERDAY → streak + 1 (consecutive)
-        //   - lastCompleted was today already → keep (shouldn't happen, but guard)
-        //   - any gap → reset to 1
-        // Uncompleting: streak resets to 0
-        let newStreak;
-        if (!newCompleted) {
-          newStreak = 0;
-        } else {
-          const last = h.lastCompletedDate;
-          if (!last || last === yesterdayStr || last === todayStr) {
-            // consecutive or same day (re-toggle guard)
-            newStreak = last === todayStr ? (h.streak || 1) : (Number(h.streak) || 0) + 1;
-          } else {
-            // gap of 2+ days → streak broken, start fresh
-            newStreak = 1;
-          }
-        }
-
-        return {
-          ...h,
-          completedToday: newCompleted,
-          lastCompletedDate: newCompleted ? todayStr : h.lastCompletedDate,
-          streak: newStreak,
-          weekData,
-        };
-      });
-      return { ...state, habits };
-    }
-
-    case 'DAILY_RESET_HABITS': {
-      // Called on app load: if lastCompletedDate !== today (local), reset completedToday AND streak
-      const todayStr = new Date().toLocaleDateString('en-CA');
-      const habits = state.habits.map(h => {
-        if (h.lastCompletedDate === todayStr) return h; // completed today — keep everything
-        // Not completed today: reset daily flag AND set streak to 0
-        // (streak only counts if user completes the habit again today)
-        return { ...h, completedToday: false, streak: 0 };
-      });
-      return { ...state, habits };
-    }
-
-    case 'TOGGLE_HABIT_DAY': {
-      const habits = state.habits.map(h => {
-        if (h.id !== action.id) return h;
-        const weekData = [...(h.weekData || Array(7).fill(false))];
-        weekData[action.dayIdx] = !weekData[action.dayIdx];
-        return { ...h, weekData };
-      });
-      return { ...state, habits };
-    }
-    case 'UPDATE_HABIT_WATER': {
-      const habits = state.habits.map(h => h.id === action.id ? { ...h, current: action.current } : h);
-      return { ...state, habits };
-    }
-    case 'UPDATE_HABIT': {
-      const habits = state.habits.map(h => h.id === action.habit.id ? { ...h, ...action.habit } : h);
-      return { ...state, habits };
-    }
-    case 'DELETE_HABIT':
-      return { ...state, habits: state.habits.filter(h => h.id !== action.id) };
 
     /* ── Events ── */
     case 'ADD_EVENT':
@@ -366,18 +249,6 @@ function reducer(state, action) {
       return { ...state, journalEntries };
     }
 
-    /* ── Gratitude ── */
-    case 'ADD_GRATITUDE': {
-      const existing = state.gratitudeEntries.findIndex(e => e.date === action.entry.date);
-      let gratitudeEntries;
-      if (existing >= 0) {
-        gratitudeEntries = state.gratitudeEntries.map((e, i) => i === existing ? action.entry : e);
-      } else {
-        gratitudeEntries = [action.entry, ...state.gratitudeEntries];
-      }
-      return { ...state, gratitudeEntries };
-    }
-
     /* ── Notifications ── */
     case 'ADD_NOTIFICATION': {
       if (state.notifications.some(n => n.id === action.notification.id)) return state;
@@ -403,16 +274,14 @@ function reducer(state, action) {
     /* ── Real-time sync ── */
     // Replaced by visibilitychange polling — see AppProvider
     case 'SYNC_ALL':
-      // Merge fresh Firestore data into state (tasks, habits, events, goals, notifications)
+      // Merge fresh Firestore data into state (tasks, events, goals, notifications)
       return {
         ...state,
         tasks:            action.data.tasks            ?? state.tasks,
-        habits:           action.data.habits           ?? state.habits,
         events:           action.data.events           ?? state.events,
         goals:            action.data.goals            ?? state.goals,
         notifications:    action.data.notifications    ?? state.notifications,
         journalEntries:   action.data.journalEntries   ?? state.journalEntries,
-        gratitudeEntries: action.data.gratitudeEntries ?? state.gratitudeEntries,
       };
 
     default:
@@ -487,7 +356,6 @@ export function AppProvider({ children }) {
           .then(token => {
             if (token) dispatch({ type: 'SET_FCM_TOKEN', token });
             rescheduleAllReminders(_tasks, _uid, token || null);
-            scheduleHabitReminder(data.habits || [], _uid, token || null);
             scheduleEventReminders(
               (data.events || []).filter(e => e.date === localToday()),
               _uid,
@@ -531,42 +399,11 @@ export function AppProvider({ children }) {
           })
           .catch(() => {
             rescheduleAllReminders(_tasks, null, null);
-            scheduleHabitReminder(data.habits || [], null, null);
             scheduleEventReminders(
               (data.events || []).filter(e => e.date === localToday()),
               null, null
             );
           });
-        // Reset completedToday for habits that weren't completed today
-        dispatch({ type: 'DAILY_RESET_HABITS' });
-
-        // ── App usage streak ──
-        // Compute how many consecutive days the user has opened the app
-        const today        = localToday();
-        const lastLogin    = fsUser?.lastLoginDate || null;
-        const currentStreak = Number(fsUser?.appStreak) || 0;
-
-        let newAppStreak = currentStreak;
-        if (lastLogin === today) {
-          // Same day — keep streak unchanged
-          newAppStreak = currentStreak;
-        } else if (lastLogin) {
-          // Check if yesterday
-          const yesterday = new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          const yStr = yesterday.toLocaleDateString('en-CA');
-          newAppStreak = lastLogin === yStr ? currentStreak + 1 : 1;
-        } else {
-          // First login ever
-          newAppStreak = 1;
-        }
-
-        if (newAppStreak !== currentStreak || lastLogin !== today) {
-          dispatch({
-            type: 'UPDATE_USER',
-            updates: { appStreak: newAppStreak, lastLoginDate: today },
-          });
-        }
 
       } catch (err) {
         // Offline fallback: log in from Firebase Auth profile, data will
@@ -629,9 +466,7 @@ export function AppProvider({ children }) {
     const genId = (prefix) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
     let enrichedAction = action;
-    if (action.type === 'ADD_HABIT' && !action.habit?.id) {
-      enrichedAction = { ...action, habit: { ...action.habit, id: genId('h') } };
-    } else if (action.type === 'ADD_TASK' && !action.task?.id) {
+    if (action.type === 'ADD_TASK' && !action.task?.id) {
       enrichedAction = { ...action, task: { ...action.task, id: genId('t') } };
     } else if (action.type === 'ADD_EVENT' && !action.event?.id) {
       enrichedAction = { ...action, event: { ...action.event, id: genId('e') } };
@@ -713,75 +548,6 @@ export function AppProvider({ children }) {
           await deleteTask(uid, enrichedAction.id);
           cancelReminder(enrichedAction.id, uid); // Cancel local + delete Firestore docs
           break;
-
-        case 'ADD_HABIT':
-          await saveHabit(uid, enrichedAction.habit);
-          break;
-
-        case 'UPDATE_HABIT':
-          await saveHabit(uid, enrichedAction.habit);
-          break;
-
-        case 'DELETE_HABIT': {
-          try {
-            const { doc, deleteDoc } = await import('firebase/firestore');
-            const { db } = await import('../lib/firebase');
-            await deleteDoc(doc(db, 'users', uid, 'habits', enrichedAction.id));
-          } catch (e) {
-            console.warn('[Mavia] DELETE_HABIT Firestore error:', e.message);
-          }
-          break;
-        }
-
-        case 'TOGGLE_HABIT': {
-          // state = PRE-dispatch snapshot: h.completedToday = OLD value
-          const todayIdx = (new Date().getDay() + 6) % 7;
-          const h = state.habits.find(h => h.id === enrichedAction.id);
-          if (h) {
-            const todayStr     = new Date().toLocaleDateString('en-CA');
-            const yest2 = new Date(); yest2.setDate(yest2.getDate() - 1);
-            const yesterdayStr = yest2.toLocaleDateString('en-CA');
-            const newCompleted = !h.completedToday;
-            const weekData     = [...(h.weekData || Array(7).fill(false))];
-            weekData[todayIdx] = newCompleted;
-            // Mirror reducer streak logic: lastCompletedDate-based
-            let newStreak;
-            if (!newCompleted) {
-              newStreak = 0;
-            } else {
-              const last = h.lastCompletedDate;
-              if (!last || last === yesterdayStr || last === todayStr) {
-                newStreak = last === todayStr ? (h.streak || 1) : (Number(h.streak) || 0) + 1;
-              } else {
-                newStreak = 1;
-              }
-            }
-            await saveHabit(uid, {
-              ...h,
-              completedToday:    newCompleted,
-              lastCompletedDate: newCompleted ? todayStr : h.lastCompletedDate,
-              streak:            newStreak,
-              weekData,
-            });
-          }
-          break;
-        }
-
-        case 'TOGGLE_HABIT_DAY': {
-          const h = state.habits.find(h => h.id === enrichedAction.id);
-          if (h) {
-            const weekData = [...(h.weekData || Array(7).fill(false))];
-            weekData[enrichedAction.dayIdx] = !weekData[enrichedAction.dayIdx];
-            await saveHabit(uid, { ...h, weekData });
-          }
-          break;
-        }
-
-        case 'UPDATE_HABIT_WATER': {
-          const h = state.habits.find(h => h.id === enrichedAction.id);
-          if (h) await saveHabit(uid, { ...h, current: enrichedAction.current });
-          break;
-        }
 
         case 'ADD_EVENT': {
           const ev = enrichedAction.event;
@@ -952,10 +718,6 @@ export function AppProvider({ children }) {
 
         case 'ADD_JOURNAL':
           await saveJournalEntry(uid, enrichedAction.entry);
-          break;
-
-        case 'ADD_GRATITUDE':
-          await saveGratitudeEntry(uid, enrichedAction.entry);
           break;
 
         case 'ADD_NOTIFICATION': {

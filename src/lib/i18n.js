@@ -246,7 +246,7 @@ export const TRANSLATIONS = {
       mood:        'Estado de ánimo',
       entryTitle:  'Título',
       entryBody:   'Escribe aquí...',
-      saved:       'Entrada guardada',
+      saved:       'Nota guardada',
       moods: {
         happy:   'Feliz',
         calm:    'Tranquila',
