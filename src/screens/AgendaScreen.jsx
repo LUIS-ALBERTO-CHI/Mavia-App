@@ -1,252 +1,123 @@
-﻿import { useApp } from '../context/AppContext';
-import { useTranslation } from '../hooks/useTranslation';
-import PriorityBadge from '../components/PriorityBadge';
-import { formatTime12h } from '../lib/utils';
-
-const EVENT_COLORS = {
-  reunión:   { bg: '#EDE7F6', text: '#6B3FA0' },
-  personal:  { bg: '#FFD6EC', text: '#8E3F6D' },
-  formación: { bg: '#E8F5E4', text: '#3D6B35' },
-  trabajo:   { bg: '#FDF3DC', text: '#8A5A00' },
-  default:   { bg: '#F5F5F5', text: '#666' },
-};
+import { useApp } from '../context/AppContext';
+import { formatTime12h, localToday } from '../lib/utils';
+import { Check, Plus } from 'lucide-react';
+import Sticker from '../components/Sticker';
+import { DEFAULT_COLOR, formatAmount } from '../lib/entryStyle';
 
 export default function AgendaScreen() {
   const { state, dispatch, navigate, showToast } = useApp();
-  const { t } = useTranslation();
-  const today = new Date().toISOString().split('T')[0];
-  const todayEvents = state.events.filter(e => e.date === today).sort((a, b) => a.startTime.localeCompare(b.startTime));
-  const todayTasks  = state.tasks.filter(item => item.date === today && !t.completed).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  const today = localToday();
 
-  const allItems = [
-    ...todayEvents.map(e => ({ ...e, _type: 'event' })),
-    ...todayTasks.map(t => ({ ...t, _type: 'task', startTime: t.time })),
-  ].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+  const items = state.tasks
+    .filter(e => e.date === today)
+    .sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
 
   const formattedDate = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const toggle = (e, entry) => {
+    e.stopPropagation();
+    dispatch({ type: 'TOGGLE_TASK', id: entry.id });
+    if (!entry.completed) showToast(entry.amount ? '¡Pagado!' : '¡Hecho!', 'success');
+  };
 
   return (
     <>
       <style>{`
-        .agenda {
-          padding: var(--space-5) var(--space-4) var(--space-8);
-        }
-
+        .agenda { padding: var(--space-lg) var(--space-container) var(--space-8); max-width: 640px; margin: 0 auto; }
         .agenda-date-header {
-          font-family: var(--font-display);
-          font-size: var(--text-lg);
-          color: var(--color-text-muted);
-          font-style: italic;
-          margin-bottom: var(--space-6);
+          font-family: var(--font-display); font-size: var(--text-headline-md);
+          color: var(--heading); font-weight: 700; margin-bottom: var(--space-lg);
           text-transform: capitalize;
         }
-
-        .timeline {
-          display: flex;
-          flex-direction: column;
-          gap: 0;
-        }
-
-        .timeline-item {
-          display: flex;
-          gap: var(--space-3);
-          position: relative;
-        }
-
+        .timeline { display: flex; flex-direction: column; }
+        .timeline-item { display: flex; gap: var(--space-md); position: relative; }
         .timeline-item:not(:last-child)::after {
-          content: '';
-          position: absolute;
-          left: 38px;
-          top: 52px;
-          bottom: -8px;
-          width: 2px;
-          background: linear-gradient(to bottom, var(--rose-200), transparent);
+          content: ''; position: absolute; left: 64px; top: 40px; bottom: -4px;
+          width: 2px; background: linear-gradient(to bottom, var(--outline-variant), transparent);
         }
-
-        .timeline-time-col {
-          width: 56px;
-          padding-top: var(--space-4);
-          flex-shrink: 0;
-        }
-
-        .timeline-time {
-          font-size: var(--text-xs);
-          font-weight: 700;
-          color: var(--color-text-muted);
-          letter-spacing: 0.03em;
-          text-align: right;
-        }
-
+        .timeline-time-col { width: 52px; padding-top: 14px; flex-shrink: 0; }
+        .timeline-time { font-size: var(--text-label-sm); font-weight: 700; color: var(--on-surface-variant); text-align: right; line-height: 1.2; }
         .timeline-dot {
-          width: 16px;
-          height: 16px;
-          border-radius: var(--radius-full);
-          margin-top: var(--space-4);
-          flex-shrink: 0;
-          box-shadow: var(--shadow-sm);
-          border: 2px solid var(--color-surface);
+          width: 34px; height: 34px; border-radius: 11px; margin-top: 8px; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm);
         }
-
         .timeline-card {
-          flex: 1;
-          border-radius: var(--radius-xl);
-          padding: var(--space-4);
-          margin-bottom: var(--space-3);
+          flex: 1; border-radius: var(--radius-xl); padding: 12px 14px; margin-bottom: 12px;
+          transition: all var(--transition-spring); cursor: pointer; box-shadow: var(--shadow-card);
+          border-left: 5px solid; background: var(--surface-container-lowest);
+          display: flex; align-items: center; gap: 10px;
+        }
+        .timeline-card:active { transform: scale(0.98); }
+        .timeline-card.done { opacity: 0.65; }
+        .timeline-card-title { font-size: var(--text-body-md); font-weight: 600; color: var(--on-surface); line-height: 1.3; }
+        .timeline-card-title.done { text-decoration: line-through; opacity: 0.6; }
+        .timeline-card-meta { font-size: var(--text-label-sm); color: var(--on-surface-variant); margin-top: 2px; }
+        .agenda-check {
+          width: 26px; height: 26px; border-radius: 50%; border: 2px solid; background: none;
+          display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
           transition: all var(--transition-spring);
-          cursor: pointer;
-          box-shadow: var(--shadow-card);
         }
-
-        .timeline-card:active { transform: scale(0.97); }
-
-        .timeline-card-title {
-          font-size: var(--text-base);
-          font-weight: 600;
-          color: var(--color-text-dark);
-          margin-bottom: var(--space-1);
-        }
-
-        .timeline-card-meta {
-          font-size: var(--text-xs);
-          color: var(--color-text-muted);
-          display: flex;
-          align-items: center;
-          gap: var(--space-2);
-          flex-wrap: wrap;
-        }
-
-        .timeline-duration {
-          font-size: var(--text-xs);
-          font-weight: 600;
-          opacity: 0.7;
-        }
-
-        .timeline-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 3px;
-          padding: 2px var(--space-2);
-          border-radius: var(--radius-full);
-          font-size: 10px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-        }
-
-        .timeline-complete-btn {
-          margin-top: var(--space-3);
-          padding: var(--space-2) var(--space-4);
-          border-radius: var(--radius-full);
-          font-size: var(--text-xs);
-          font-weight: 600;
-          cursor: pointer;
-          border: 1.5px solid currentColor;
-          background: none;
-          transition: all var(--transition-fast);
-          display: inline-flex;
-          align-items: center;
-          gap: var(--space-1);
-        }
-
         .empty-agenda {
-          text-align: center;
-          padding: var(--space-12) var(--space-6);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: var(--space-4);
+          text-align: center; padding: var(--space-xxl) var(--space-lg);
+          display: flex; flex-direction: column; align-items: center; gap: var(--space-md);
         }
-
-        .empty-agenda-emoji {
-          font-size: 4rem;
-          animation: float 3s ease-in-out infinite;
-        }
-
-        .empty-agenda-title {
-          font-family: var(--font-display);
-          font-size: var(--text-2xl);
-          font-weight: 500;
-          color: var(--color-text-dark);
-        }
-
-        .empty-agenda-sub {
-          font-size: var(--text-sm);
-          color: var(--color-text-muted);
-          line-height: var(--leading-relaxed);
-          max-width: 260px;
+        .empty-agenda-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--heading); }
+        .empty-agenda-sub { font-size: var(--text-body-md); color: var(--on-surface-variant); line-height: 1.6; max-width: 280px; }
+        .agenda-add-btn {
+          display: inline-flex; align-items: center; gap: 6px; margin-top: 4px;
+          padding: 11px 22px; border-radius: 99px; background: var(--gradient-primary); color: #fff;
+          border: none; cursor: pointer; font-weight: 700; font-size: 14px;
         }
       `}</style>
 
       <div className="agenda">
         <p className="agenda-date-header">{formattedDate}</p>
 
-        {allItems.length === 0 ? (
+        {items.length === 0 ? (
           <div className="empty-agenda">
-            <div className="empty-agenda-emoji"></div>
+            <Sticker id="sun" size={72} />
             <div className="empty-agenda-title">Día libre</div>
-            <p className="empty-agenda-sub">Hoy tienes un espacio para respirar No hay eventos ni tareas programadas.</p>
-            <button className="btn btn-primary" onClick={() => navigate('createTask')} id="agenda-create">
-              + Agregar tarea
+            <p className="empty-agenda-sub">Hoy no tienes nada agendado. Toca abajo para añadir una entrada.</p>
+            <button className="agenda-add-btn" onClick={() => navigate('createEntry')} id="agenda-create">
+              <Plus size={16} /> Nueva entrada
             </button>
           </div>
         ) : (
           <div className="timeline">
-            {allItems.map((item, index) => {
-              const isEvent = item._type === 'event';
-              const colors = isEvent ? (EVENT_COLORS[item.type] || EVENT_COLORS.default) : { bg: item.color + '40', text: 'var(--color-text-dark)' };
-
+            {items.map(item => {
+              const color  = item.color || DEFAULT_COLOR;
+              const amount = formatAmount(item.amount);
               return (
-                <div key={item.id + item._type} className="timeline-item">
+                <div key={item.id} className="timeline-item">
                   <div className="timeline-time-col">
-                    <div className="timeline-time">{formatTime12h(item.startTime, '–')}</div>
+                    <div className="timeline-time">{item.time ? formatTime12h(item.time, '–') : 'Todo\nel día'}</div>
+                  </div>
+                  <div className="timeline-dot" style={{ background: item.sticker ? `${color}22` : color }}>
+                    {item.sticker
+                      ? <Sticker id={item.sticker} size={22} />
+                      : <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />}
                   </div>
                   <div
-                    className="timeline-dot"
-                    style={{ background: isEvent ? item.color : (item.color || 'var(--rose-300)') }}
-                  />
-                  <div
-                    className="timeline-card"
-                    style={{ background: colors.bg }}
-                    onClick={() => isEvent ? navigate('events') : navigate('taskDetail', { taskId: item.id })}
+                    className={`timeline-card${item.completed ? ' done' : ''}`}
+                    style={{ borderLeftColor: color }}
+                    onClick={() => navigate('entryDetail', { entryId: item.id })}
                   >
-                    <div className="timeline-card-title" style={{ color: colors.text }}>
-                      {item.title}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className={`timeline-card-title${item.completed ? ' done' : ''}`}>{item.title}</div>
+                      <div className="timeline-card-meta">
+                        {item.time ? formatTime12h(item.time, '') : 'Todo el día'}
+                        {amount && <span style={{ color, fontWeight: 700, marginLeft: 6 }}>· {amount}</span>}
+                      </div>
                     </div>
-                    <div className="timeline-card-meta">
-                      {isEvent ? (
-                        <>
-                          {item.endTime && (
-                            <span className="timeline-duration">{formatTime12h(item.startTime)} – {formatTime12h(item.endTime)}</span>
-                          )}
-                          {item.location && <span>📍 {item.location}</span>}
-                          <span
-                            className="timeline-badge"
-                            style={{ background: colors.text + '20', color: colors.text }}
-                          >
-                            {item.type}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <span>{item.category}</span>
-                          {item.priority && <PriorityBadge priority={item.priority} />}
-                        </>
-                      )}
-                    </div>
-                    {!isEvent && (
-                      <button
-                        className="timeline-complete-btn"
-                        style={{ color: colors.text || 'var(--color-primary-dark)' }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          dispatch({ type: 'TOGGLE_TASK', id: item.id });
-                          showToast('¡Tarea completada!', 'success');
-                        }}
-                        id={`agenda-complete-${item.id}`}
-                      >
-                        ✓ Completar
-                      </button>
-                    )}
+                    <button
+                      className="agenda-check"
+                      style={item.completed ? { background: color, borderColor: color } : { borderColor: color }}
+                      onClick={(e) => toggle(e, item)}
+                      aria-label={item.completed ? 'Marcar pendiente' : 'Marcar hecho'}
+                      id={`agenda-check-${item.id}`}
+                    >
+                      {item.completed && <Check size={14} strokeWidth={3} color="#fff" />}
+                    </button>
                   </div>
                 </div>
               );
@@ -254,8 +125,6 @@ export default function AgendaScreen() {
           </div>
         )}
       </div>
-
-
     </>
   );
 }

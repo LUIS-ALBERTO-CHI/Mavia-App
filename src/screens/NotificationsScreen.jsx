@@ -143,8 +143,8 @@ export default function NotificationsScreen() {
         .ntf-hero-title {
           font-family: var(--font-display);
           font-size: var(--text-headline-lg);
-          font-weight: 500;
-          color: var(--primary);
+          font-weight: 700;
+          color: var(--heading);
           line-height: 1.15;
           margin-bottom: 4px;
         }

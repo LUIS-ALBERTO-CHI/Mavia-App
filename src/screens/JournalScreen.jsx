@@ -73,8 +73,8 @@ export default function JournalScreen() {
         .jrn-hero-title {
           font-family: var(--font-display);
           font-size: var(--text-headline-lg);
-          font-weight: 500;
-          color: var(--primary);
+          font-weight: 700;
+          color: var(--heading);
           line-height: 1.15;
           margin-bottom: 6px;
         }
@@ -144,8 +144,8 @@ export default function JournalScreen() {
         .jrn-write-heading {
           font-family: var(--font-display);
           font-size: var(--text-headline-md);
-          font-weight: 500;
-          color: var(--primary);
+          font-weight: 700;
+          color: var(--heading);
           margin-bottom: var(--space-lg);
         }
 

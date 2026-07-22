@@ -200,8 +200,8 @@ export default function RegisterScreen() {
         .auth-brand-title {
           font-family: var(--font-display);
           font-size: var(--text-headline-lg-mobile);
-          font-weight: 500;
-          color: var(--primary);
+          font-weight: 700;
+          color: var(--heading);
           letter-spacing: -0.02em;
           line-height: 1.2;
           margin-bottom: var(--space-sm);

@@ -1,7 +1,6 @@
 import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
-import { localToday } from '../lib/utils';
 import { onAuthChange } from '../lib/authService';
-import { loadUserData, saveTask, deleteTask, saveEvent, deleteEvent,
+import { loadUserData, saveTask, deleteTask,
          saveGoal, saveJournalEntry,
          markNotificationRead, markAllNotificationsRead, saveUserProfile,
          deleteNotification, deleteReadNotifications, saveNotification,
@@ -9,11 +8,9 @@ import { loadUserData, saveTask, deleteTask, saveEvent, deleteEvent,
 import {
   initFCM,
   scheduleTaskReminder,
-  scheduleEventReminders,
   rescheduleAllReminders,
   cancelReminder,
   getCachedFCMToken,
-  parseTimeTo24h,
 } from '../lib/notificationService';
 
 /* ============================================
@@ -21,8 +18,7 @@ import {
    All user-content collections start empty.
    ============================================ */
 export const SEED_DATA = {
-  tasks:            [],
-  events:           [],
+  tasks:            [],   // "tasks" = entradas unificadas de la agenda
   goals:            [],
   journalEntries:   [],
   notifications:    [],
@@ -47,8 +43,7 @@ export const SYSTEM_PHRASES = [
    INITIAL STATE
    ============================================ */
 const emptyDataState = {
-  tasks:            [],
-  events:           [],
+  tasks:            [],   // "tasks" = entradas unificadas de la agenda
   goals:            [],
   journalEntries:   [],
   phrases:          [],
@@ -199,11 +194,6 @@ function reducer(state, action) {
       const merged   = [...state.tasks, ...action.tasks.filter(t => !existing.has(t.id))];
       return { ...state, tasks: merged };
     }
-    case 'IMPORT_EVENTS': {
-      const existing = new Set(state.events.map(e => e.id));
-      const merged   = [...state.events, ...action.events.filter(e => !existing.has(e.id))];
-      return { ...state, events: merged };
-    }
     case 'IMPORT_GOALS': {
       const existing = new Set(state.goals.map(g => g.id));
       const merged   = [...state.goals, ...action.goals.filter(g => !existing.has(g.id))];
@@ -214,14 +204,6 @@ function reducer(state, action) {
       const merged   = [...state.journalEntries, ...action.entries.filter(e => !existing.has(e.id))];
       return { ...state, journalEntries: merged };
     }
-
-    /* ── Events ── */
-    case 'ADD_EVENT':
-      return { ...state, events: [{ ...action.event, id: action.event.id || Date.now().toString() }, ...state.events] };
-    case 'UPDATE_EVENT':
-      return { ...state, events: state.events.map(e => e.id === action.event.id ? { ...e, ...action.event } : e) };
-    case 'DELETE_EVENT':
-      return { ...state, events: state.events.filter(e => e.id !== action.id) };
 
     /* ── Goals ── */
     case 'ADD_GOAL':
@@ -274,11 +256,10 @@ function reducer(state, action) {
     /* ── Real-time sync ── */
     // Replaced by visibilitychange polling — see AppProvider
     case 'SYNC_ALL':
-      // Merge fresh Firestore data into state (tasks, events, goals, notifications)
+      // Merge fresh Firestore data into state (tasks=entradas, goals, notifications)
       return {
         ...state,
         tasks:            action.data.tasks            ?? state.tasks,
-        events:           action.data.events           ?? state.events,
         goals:            action.data.goals            ?? state.goals,
         notifications:    action.data.notifications    ?? state.notifications,
         journalEntries:   action.data.journalEntries   ?? state.journalEntries,
@@ -356,11 +337,6 @@ export function AppProvider({ children }) {
           .then(token => {
             if (token) dispatch({ type: 'SET_FCM_TOKEN', token });
             rescheduleAllReminders(_tasks, _uid, token || null);
-            scheduleEventReminders(
-              (data.events || []).filter(e => e.date === localToday()),
-              _uid,
-              token || null
-            );
 
             // ── Foreground push → add to in-app notifications list ──
             import('firebase/messaging').then(({ onMessage }) => {
@@ -399,10 +375,6 @@ export function AppProvider({ children }) {
           })
           .catch(() => {
             rescheduleAllReminders(_tasks, null, null);
-            scheduleEventReminders(
-              (data.events || []).filter(e => e.date === localToday()),
-              null, null
-            );
           });
 
       } catch (err) {
@@ -468,8 +440,6 @@ export function AppProvider({ children }) {
     let enrichedAction = action;
     if (action.type === 'ADD_TASK' && !action.task?.id) {
       enrichedAction = { ...action, task: { ...action.task, id: genId('t') } };
-    } else if (action.type === 'ADD_EVENT' && !action.event?.id) {
-      enrichedAction = { ...action, event: { ...action.event, id: genId('e') } };
     } else if (action.type === 'ADD_GOAL' && !action.goal?.id) {
       enrichedAction = { ...action, goal: { ...action.goal, id: genId('g') } };
     }
@@ -548,148 +518,6 @@ export function AppProvider({ children }) {
           await deleteTask(uid, enrichedAction.id);
           cancelReminder(enrichedAction.id, uid); // Cancel local + delete Firestore docs
           break;
-
-        case 'ADD_EVENT': {
-          const ev = enrichedAction.event;
-          await saveEvent(uid, ev);
-
-          // ── Schedule event reminder via FCM (idempotent upsert — no duplicates) ──
-          if (ev.reminderOn !== false && ev.startTime) {
-            const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
-            const time24 = parseTimeTo24h(ev.startTime);
-
-            if (token && uid && time24) {
-              try {
-                const reminderStr = ev.reminder || '15 minutos antes';
-                let offsetMin = 15;
-                if (reminderStr.includes('30')) offsetMin = 30;
-                else if (reminderStr.includes('1 hora')) offsetMin = 60;
-                else if (reminderStr.includes('1 día')) offsetMin = 60 * 24;
-
-                const [hh, mm] = time24.split(':').map(Number);
-                const eventDt  = new Date(`${ev.date}T${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:00`);
-                const notifDt  = new Date(eventDt.getTime() - offsetMin * 60 * 1000);
-
-                if (notifDt > new Date()) {
-                  const notifDate = notifDt.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
-                  const notifTime = notifDt.toLocaleTimeString('es-MX', {
-                    timeZone: 'America/Mexico_City',
-                    hour: '2-digit', minute: '2-digit', hour12: false,
-                  });
-
-                  // ── Idempotent upsert: doc ID = evId_reminder_tokenSuffix ──
-                  const { getAuth } = await import('firebase/auth');
-                  const currentUser = getAuth().currentUser;
-                  if (currentUser) {
-                    const idToken = await currentUser.getIdToken();
-                    const PROJECT_ID = 'mavia-779df';
-                    const tokenHash = token.slice(-12);
-                    const docId = `${ev.id}_event-reminder_${tokenHash}`;
-                    const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/scheduledNotifications/${docId}`;
-                    await fetch(url, {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-                      body: JSON.stringify({
-                        fields: {
-                          uid:           { stringValue: uid },
-                          fcmToken:      { stringValue: token },
-                          title:         { stringValue: `${offsetMin < 60 ? `En ${offsetMin} minutos` : 'En 1 hora'}: ${ev.title}` },
-                          body:          { stringValue: ev.location ? `${ev.startTime} — ${ev.location}` : `Tu evento comienza a las ${ev.startTime}` },
-                          scheduledDate: { stringValue: notifDate },
-                          scheduledTime: { stringValue: notifTime },
-                          sent:          { booleanValue: false },
-                          taskId:        { stringValue: ev.id },
-                          notifType:     { stringValue: 'event-reminder' },
-                          data:          { mapValue: { fields: { eventId: { stringValue: ev.id }, type: { stringValue: 'event-reminder' } } } },
-                        },
-                      }),
-                    });
-                    console.log(`[Mavia] Recordatorio FCM (upsert) para "${ev.title}" a las ${notifDate} ${notifTime}`);
-                  }
-                }
-              } catch (err) {
-                console.warn('[Mavia] No se pudo programar recordatorio FCM del evento:', err.message);
-                scheduleEventReminders([ev]);
-              }
-            } else {
-              scheduleEventReminders([ev]);
-              if (!token) console.warn('[Mavia] Sin token FCM — recordatorio de evento solo local');
-            }
-          }
-          break;
-        }
-
-        case 'DELETE_EVENT': {
-          await deleteEvent(uid, enrichedAction.id);
-          // Also delete any pending FCM scheduled notification for this event
-          cancelReminder(enrichedAction.id, uid);
-          break;
-        }
-
-        case 'UPDATE_EVENT': {
-          // Persist updated event data
-          const ev = enrichedAction.event;
-          await saveEvent(uid, ev);
-
-          // Re-schedule reminder — same upsert as ADD_EVENT so old doc is overwritten
-          if (ev.reminderOn !== false && ev.startTime) {
-            const token  = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
-            const time24 = parseTimeTo24h(ev.startTime);
-
-            if (token && uid && time24) {
-              try {
-                const reminderStr = ev.reminder || '15 minutos antes';
-                let offsetMin = 15;
-                if (reminderStr.includes('30'))    offsetMin = 30;
-                else if (reminderStr.includes('1 hora')) offsetMin = 60;
-                else if (reminderStr.includes('1 día')) offsetMin = 60 * 24;
-
-                const [hh, mm] = time24.split(':').map(Number);
-                const eventDt  = new Date(`${ev.date}T${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:00`);
-                const notifDt  = new Date(eventDt.getTime() - offsetMin * 60 * 1000);
-
-                if (notifDt > new Date()) {
-                  const notifDate = notifDt.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
-                  const notifTime = notifDt.toLocaleTimeString('es-MX', {
-                    timeZone: 'America/Mexico_City',
-                    hour: '2-digit', minute: '2-digit', hour12: false,
-                  });
-
-                  const { getAuth } = await import('firebase/auth');
-                  const currentUser = getAuth().currentUser;
-                  if (currentUser) {
-                    const idToken   = await currentUser.getIdToken();
-                    const tokenHash = token.slice(-12);
-                    const docId = `${ev.id}_event-reminder_${tokenHash}`;
-                    const url = `https://firestore.googleapis.com/v1/projects/mavia-779df/databases/(default)/documents/scheduledNotifications/${docId}`;
-                    await fetch(url, {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-                      body: JSON.stringify({
-                        fields: {
-                          uid:           { stringValue: uid },
-                          fcmToken:      { stringValue: token },
-                          title:         { stringValue: `${offsetMin < 60 ? `En ${offsetMin} minutos` : 'En 1 hora'}: ${ev.title}` },
-                          body:          { stringValue: ev.location ? `${ev.startTime} — ${ev.location}` : `Tu evento comienza a las ${ev.startTime}` },
-                          scheduledDate: { stringValue: notifDate },
-                          scheduledTime: { stringValue: notifTime },
-                          sent:          { booleanValue: false },   // ← reset so cron sends again
-                          taskId:        { stringValue: ev.id },
-                          notifType:     { stringValue: 'event-reminder' },
-                          data:          { mapValue: { fields: { eventId: { stringValue: ev.id }, type: { stringValue: 'event-reminder' } } } },
-                        },
-                      }),
-                    });
-                    console.log(`[Mavia] Recordatorio FCM re-agendado (upsert) para "${ev.title}" a las ${notifDate} ${notifTime}`);
-                  }
-                }
-              } catch (err) {
-                console.warn('[Mavia] No se pudo re-agendar recordatorio FCM del evento:', err.message);
-              }
-            }
-          }
-          break;
-        }
 
         case 'ADD_GOAL':
           await saveGoal(uid, enrichedAction.goal);

@@ -2,9 +2,10 @@ import { useState, useRef, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
 import LottieIcon from '../components/LottieIcon';
-import { ChevronLeft, ChevronRight, Plus, Video, MapPin, Check, Calendar, AlignJustify,
-         Sun, Moon, Star, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Check, Calendar, AlignJustify, Clock, CalendarDays } from 'lucide-react';
 import { formatTime12h } from '../lib/utils';
+import Sticker from '../components/Sticker';
+import { DEFAULT_COLOR, formatAmount } from '../lib/entryStyle';
 
 const DAYS_ES   = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const DAYS_FULL = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -16,24 +17,6 @@ function getDaysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
 function getFirstDay(y, m)    { return new Date(y, m, 1).getDay(); }
 function pad(n)               { return String(n).padStart(2, '0'); }
 function toDS(y, m, d)        { return `${y}-${pad(m + 1)}-${pad(d)}`; }
-
-/* ── Category colours ── */
-const catColor = (cat) => {
-  if (!cat) return '#705765';
-  const c = cat.toLowerCase();
-  if (c.includes('market'))  return '#705765';
-  if (c.includes('espirit') || c.includes('spirit')) return '#695e37';
-  return '#546347';
-};
-const PRIORITY_COLOR = { alta: '#ba1a1a', media: '#695e37', baja: '#546347' };
-
-/* ── Icon for timeline bubble ── */
-const BubbleIcon = ({ item, size = 20 }) => {
-  const hour = parseInt((item.startTime || item.time || '09:00').split(':')[0], 10);
-  if (hour >= 6  && hour < 12) return <Sun  size={size} strokeWidth={2} />;
-  if (hour >= 20 || hour < 6)  return <Moon size={size} strokeWidth={2} />;
-  return <Star size={size} strokeWidth={2} />;
-};
 
 /* ── Touch-swipe hook ── */
 function useTouchSwipe(onLeft, onRight, threshold = 50) {
@@ -100,22 +83,18 @@ export default function CalendarScreen() {
     viewMode === 'month' ? prevMonth : prevWeek,
   );
 
-  /* ── Data helpers ── */
-  const eventsFor = (ds) => state.events.filter(e => e.date === ds);
-  const tasksFor  = (ds) => state.tasks.filter(t  => t.date === ds);
+  /* ── Data helpers (todo es una "entrada" en state.tasks) ── */
+  const entriesFor = (ds) => state.tasks.filter(e => e.date === ds);
 
   /* ── Selected day data ── */
   const selDS       = toDS(viewYear, viewMonth, selectedDay);
-  const selEvents   = eventsFor(selDS);
-  const selTasks    = tasksFor(selDS);
-  const pending     = selTasks.filter(t => !t.completed);
-  const done        = selTasks.filter(t =>  t.completed);
-  const totalItems  = selEvents.length + selTasks.length;
+  const selEntries  = entriesFor(selDS);
+  const pending     = selEntries.filter(e => !e.completed);
+  const done        = selEntries.filter(e =>  e.completed);
+  const totalItems  = selEntries.length;
   const loadColor   = totalItems === 0 ? 'var(--secondary)' : totalItems <= 3 ? 'var(--tertiary)' : 'var(--error)';
   const loadLabel   = totalItems === 0 ? 'Día libre'
-    : [pending.length > 0 && `${pending.length} tarea${pending.length !== 1 ? 's' : ''}`,
-       selEvents.length > 0 && `${selEvents.length} evento${selEvents.length !== 1 ? 's' : ''}`]
-      .filter(Boolean).join(' · ');
+    : `${totalItems} ${totalItems === 1 ? 'entrada' : 'entradas'}${done.length ? ` · ${done.length} hechas` : ''}`;
 
   /* ── Month grid ── */
   const isCurrentMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth();
@@ -130,13 +109,10 @@ export default function CalendarScreen() {
     return { date: d, ds: toDS(d.getFullYear(), d.getMonth(), d.getDate()) };
   });
 
-  /* ── Timeline items for selected day: merge events + tasks, sort by time ── */
-  const timelineItems = [
-    ...selEvents.map(e => ({ ...e, _type: 'event' })),
-    ...selTasks.map(t  => ({ ...t, _type: 'task'  })),
-  ].sort((a, b) => {
-    const ta = a.startTime || a.time || '99:99';
-    const tb = b.startTime || b.time || '99:99';
+  /* ── Timeline items for selected day: entradas ordenadas por hora ── */
+  const timelineItems = [...selEntries].sort((a, b) => {
+    const ta = a.time || '99:99';
+    const tb = b.time || '99:99';
     return ta.localeCompare(tb);
   });
 
@@ -165,8 +141,8 @@ export default function CalendarScreen() {
         }
         .cal-heading {
           font-family: var(--font-display);
-          font-size: var(--text-headline-lg); font-weight: 500;
-          color: var(--on-surface); line-height: 1.15;
+          font-size: var(--text-headline-lg); font-weight: 700;
+          color: var(--heading); line-height: 1.15;
         }
         .cal-heading span { color: var(--primary); }
         .cal-sub {
@@ -233,37 +209,51 @@ export default function CalendarScreen() {
         }
         .cal-day-label {
           font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
-          text-transform: uppercase; color: var(--outline-variant);
+          text-transform: uppercase; color: var(--on-surface-variant);
           padding: var(--space-xs) 0;
         }
         .cal-grid {
           display: grid; grid-template-columns: repeat(7, 1fr);
           gap: 1px; background: var(--outline-variant);
           border: 1px solid var(--outline-variant);
-          border-radius: 24px; overflow: hidden;
-          box-shadow: 0 8px 32px rgba(112,87,101,0.06);
+          border-radius: 20px; overflow: hidden;
+          box-shadow: var(--shadow-card);
         }
         .cal-cell {
           background: var(--surface-container-lowest);
-          aspect-ratio: 1 / 1.1; padding: 8px;
-          display: flex; flex-direction: column;
-          justify-content: space-between; cursor: pointer;
-          transition: background 0.18s; user-select: none;
+          min-height: 84px; padding: 5px 4px;
+          display: flex; flex-direction: column; gap: 3px;
+          cursor: pointer; transition: background 0.18s; user-select: none;
+          overflow: hidden;
         }
-        .cal-cell:hover { background: rgba(248,215,232,0.45); }
-        .cal-cell.is-other-month { background: rgba(245,243,241,0.4); opacity: 0.3; cursor: default; }
-        .cal-cell.is-other-month:hover { background: rgba(245,243,241,0.4); }
-        .cal-cell.is-selected { background: var(--primary-container) !important; box-shadow: inset 0 0 0 2px var(--primary); }
+        @media (min-width: 900px) { .cal-cell { min-height: 116px; padding: 7px 6px; } }
+        .cal-cell:hover { background: var(--surface-container-low); }
+        .cal-cell.is-other-month { background: var(--surface-container-low); opacity: 0.45; cursor: default; }
+        .cal-cell.is-selected { box-shadow: inset 0 0 0 2px var(--lime); }
+        .cal-cell-num {
+          font-size: 11px; font-weight: 700; color: var(--on-surface);
+          line-height: 1; align-self: flex-start;
+        }
         .cal-cell.is-today .cal-cell-num {
-          background: var(--primary); color: white;
-          border-radius: 50%; width: 22px; height: 22px;
+          background: var(--lime); color: var(--on-lime);
+          border-radius: 50%; width: 20px; height: 20px;
           display: flex; align-items: center; justify-content: center;
-          font-weight: 700;
         }
-        .cal-cell-num { font-size: 11px; font-weight: 500; color: var(--on-surface); line-height: 1; }
-        .cal-dots { display: flex; gap: 2px; flex-wrap: wrap; align-items: flex-end; }
-        .cal-dot  { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-        .cal-dot-overflow { font-size: 8px; font-weight: 700; color: var(--on-surface-variant); line-height: 6px; }
+        /* Chips = las "cajitas" que ella escribe en cada día */
+        .cal-chips { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+        .cal-chip {
+          display: flex; align-items: center; gap: 3px;
+          padding: 1px 4px 1px 3px; border-radius: 5px;
+          font-size: 9px; font-weight: 700; line-height: 1.3;
+          color: var(--on-surface); white-space: nowrap; overflow: hidden;
+          border-left: 3px solid;
+        }
+        @media (min-width: 900px) { .cal-chip { font-size: 11px; padding: 2px 6px 2px 5px; gap: 5px; } }
+        .cal-chip-title { overflow: hidden; text-overflow: ellipsis; }
+        .cal-chip.done { opacity: 0.5; }
+        .cal-chip.done .cal-chip-title { text-decoration: line-through; }
+        .cal-chip-more { font-size: 8px; font-weight: 700; color: var(--on-surface-variant); padding-left: 3px; }
+        @media (min-width: 900px) { .cal-chip-more { font-size: 10px; } }
 
         /* ═══ WEEK VIEW — Day strip + Timeline ═══ */
         .cal-week-container {
@@ -490,8 +480,8 @@ export default function CalendarScreen() {
           justify-content: space-between; margin-bottom: var(--space-md); gap: 8px;
         }
         .cal-detail-title {
-          font-family: var(--font-body); font-size: var(--text-headline-md);
-          font-weight: 700; color: var(--primary);
+          font-family: var(--font-display); font-size: var(--text-headline-md);
+          font-weight: 700; color: var(--heading);
         }
         .cal-detail-date { font-size: var(--text-label-sm); color: var(--on-surface-variant); margin-top: 2px; }
 
@@ -604,15 +594,9 @@ export default function CalendarScreen() {
                   const isToday    = isThisMonth && isCurrentMonth && cellDay === now.getDate();
                   const isSelected = isThisMonth && cellDay === selectedDay;
 
-                  let dots = [];
-                  if (isThisMonth) {
-                    const ds = toDS(viewYear, viewMonth, cellDay);
-                    eventsFor(ds).forEach(e => dots.push(catColor(e.category)));
-                    tasksFor(ds).filter(t => !t.completed)
-                      .forEach(t => dots.push(PRIORITY_COLOR[t.priority] || '#705765'));
-                  }
-                  const vis = dots.slice(0, 3);
-                  const ovf = dots.length - vis.length;
+                  const dayEntries = isThisMonth ? entriesFor(toDS(viewYear, viewMonth, cellDay)) : [];
+                  const visible  = dayEntries.slice(0, 3);
+                  const overflow = dayEntries.length - visible.length;
 
                   return (
                     <div
@@ -623,10 +607,22 @@ export default function CalendarScreen() {
                       id={isThisMonth ? `cal-cell-${cellDay}` : undefined}
                     >
                       <span className="cal-cell-num">{displayDay}</span>
-                      {vis.length > 0 && (
-                        <div className="cal-dots">
-                          {vis.map((c, i) => <span key={i} className="cal-dot" style={{ background: c }} />)}
-                          {ovf > 0 && <span className="cal-dot-overflow">+{ovf}</span>}
+                      {visible.length > 0 && (
+                        <div className="cal-chips">
+                          {visible.map((e, i) => {
+                            const c = e.color || DEFAULT_COLOR;
+                            return (
+                              <div
+                                key={e.id || i}
+                                className={`cal-chip${e.completed ? ' done' : ''}`}
+                                style={{ background: `${c}2e`, borderLeftColor: c }}
+                              >
+                                {e.sticker && <Sticker id={e.sticker} size={12} />}
+                                <span className="cal-chip-title">{e.title}</span>
+                              </div>
+                            );
+                          })}
+                          {overflow > 0 && <span className="cal-chip-more">+{overflow} más</span>}
                         </div>
                       )}
                     </div>
@@ -646,12 +642,7 @@ export default function CalendarScreen() {
                   const todayDS  = toDS(now.getFullYear(), now.getMonth(), now.getDate());
                   const isToday  = ds === todayDS;
                   const isSel    = ds === selDS;
-                  const evs      = eventsFor(ds);
-                  const tks      = tasksFor(ds).filter(t => !t.completed);
-                  const stripDots = [
-                    ...evs.map(e => catColor(e.category)),
-                    ...tks.map(t => PRIORITY_COLOR[t.priority] || '#705765'),
-                  ].slice(0, 3);
+                  const stripDots = entriesFor(ds).map(e => e.color || DEFAULT_COLOR).slice(0, 3);
 
                   return (
                     <div
@@ -693,11 +684,8 @@ export default function CalendarScreen() {
                     <LottieIcon name="wave" size={56} loop autoplay style={{ margin: '0 auto' }} />
                     <p>Día libre — perfecto para descansar o planificar algo nuevo.</p>
                     <div className="cal-tl-add-row">
-                      <button className="cal-add-btn" onClick={() => navigate('createTask')} id="cal-tl-add-task">
-                        <Plus size={15} /> Tarea
-                      </button>
-                      <button className="cal-add-btn" onClick={() => navigate('createEvent')} id="cal-tl-add-event">
-                        <Plus size={15} /> Evento
+                      <button className="cal-add-btn" onClick={() => navigate('createEntry', { date: selDS })} id="cal-tl-add">
+                        <Plus size={15} /> Nueva entrada
                       </button>
                     </div>
                   </div>
@@ -705,85 +693,47 @@ export default function CalendarScreen() {
                   <>
                     <div className="cal-tl-list" id="cal-tl-list">
                       {timelineItems.map((item, i) => {
-                        const isTask  = item._type === 'task';
                         const isDone  = item.completed;
-                        const time24  = item.startTime || item.time || null;
-                        const timeStr = fmt12(time24);
-                        const color   = isTask
-                          ? (PRIORITY_COLOR[item.priority] || '#705765')
-                          : catColor(item.category);
-
-                        /* Gap label between items */
-                        const prev = timelineItems[i - 1];
-                        const prevTime = prev ? (prev.startTime || prev.time) : null;
-                        const currTime = time24;
-                        let gapHours = 0;
-                        if (prevTime && currTime) {
-                          const [ph, pm] = prevTime.split(':').map(Number);
-                          const [ch, cm] = currTime.split(':').map(Number);
-                          gapHours = ((ch * 60 + cm) - (ph * 60 + pm)) / 60;
-                        }
+                        const timeStr = item.time ? fmt12(item.time) : 'Todo el día';
+                        const color   = item.color || DEFAULT_COLOR;
+                        const amount  = formatAmount(item.amount);
 
                         return (
                           <div key={item.id || i}>
-                            {/* Gap hint */}
-                            {i > 0 && gapHours >= 2 && (
-                              <div className="cal-tl-item">
-                                <div />
-                                <div className="cal-tl-gap">
-                                  {gapHours >= 3
-                                    ? `${Math.round(gapHours)}h libres · ¿Qué sigue?`
-                                    : 'Intervalo · respira'}
-                                </div>
-                              </div>
-                            )}
-
                             <div className="cal-tl-item" id={`cal-tl-${item.id || i}`}>
                               {/* Time */}
                               <div className="cal-tl-time">
-                                {timeStr.split(' ').map((part, pi) => (
-                                  <div key={pi}>{part}</div>
-                                ))}
+                                {item.time
+                                  ? timeStr.split(' ').map((part, pi) => (<div key={pi}>{part}</div>))
+                                  : <div style={{ fontSize: 10 }}>Todo<br/>el día</div>}
                               </div>
 
-                              {/* Bubble */}
+                              {/* Bubble con sticker */}
                               <div className="cal-tl-bubble" style={{ background: color }}>
-                                <BubbleIcon item={item} size={16} />
+                                {item.sticker
+                                  ? <Sticker id={item.sticker} size={20} />
+                                  : <CalendarDays size={15} strokeWidth={2} color="#fff" />}
                               </div>
 
                               {/* Content */}
                               <div className="cal-tl-content"
-                                onClick={() => isTask ? navigate('taskDetail', { taskId: item.id }) : navigate('events')}>
-                                <div className="cal-tl-label">
-                                  <Clock size={10} strokeWidth={2.5} />
-                                  {timeStr}
-                                  {isTask && item.category && (
-                                    <span style={{ color, marginLeft: 2 }}>· {item.category}</span>
-                                  )}
-                                </div>
+                                onClick={() => navigate('entryDetail', { entryId: item.id })}>
                                 <div className={`cal-tl-title${isDone ? ' done-line' : ''}`}>
                                   {item.title}
                                 </div>
-                                {item.location && (
-                                  <div className="cal-tl-meta">
-                                    <MapPin size={10} strokeWidth={2} />
-                                    {item.location}
-                                  </div>
+                                {amount && (
+                                  <div className="cal-tl-meta" style={{ color, fontWeight: 700 }}>{amount}</div>
                                 )}
                               </div>
 
-                              {/* Completion ring — only for tasks */}
-                              {isTask ? (
-                                <button
-                                  className={`cal-tl-ring${isDone ? ' is-done' : ''}`}
-                                  onClick={() => toggleTask(item.id)}
-                                  aria-label={isDone ? 'Marcar pendiente' : 'Marcar completada'}
-                                >
-                                  {isDone && <Check size={13} strokeWidth={3} color="white" />}
-                                </button>
-                              ) : (
-                                <div style={{ width: 24 }} />
-                              )}
+                              {/* Checkbox hecho/pagado (todas las entradas) */}
+                              <button
+                                className={`cal-tl-ring${isDone ? ' is-done' : ''}`}
+                                onClick={() => toggleTask(item.id)}
+                                aria-label={isDone ? 'Marcar pendiente' : 'Marcar hecho'}
+                              >
+                                {isDone && <Check size={13} strokeWidth={3} color="white" />}
+                              </button>
                             </div>
                           </div>
                         );
@@ -791,11 +741,8 @@ export default function CalendarScreen() {
                     </div>
 
                     <div className="cal-tl-add-row">
-                      <button className="cal-add-btn" onClick={() => navigate('createTask')} id="cal-tl-add-task">
-                        <Plus size={15} /> Tarea
-                      </button>
-                      <button className="cal-add-btn" onClick={() => navigate('createEvent')} id="cal-tl-add-event">
-                        <Plus size={15} /> Evento
+                      <button className="cal-add-btn" onClick={() => navigate('createEntry', { date: selDS })} id="cal-tl-add">
+                        <Plus size={15} /> Nueva entrada
                       </button>
                     </div>
                   </>
@@ -826,76 +773,46 @@ export default function CalendarScreen() {
                 </div>
               )}
 
-              {selEvents.length > 0 && (
-                <>
-                  <div className="cal-section-head">Eventos <span className="cal-section-line" /></div>
-                  <div className="cal-event-list">
-                    {selEvents.map((ev, i) => (
-                      <div key={ev.id||i} className="cal-event-row" onClick={() => navigate('events')}
-                        id={`cal-ev-${ev.id||i}`}>
-                        <span className="cal-event-time" style={{ color: catColor(ev.category) }}>
-                          {formatTime12h(ev.startTime, 'Todo el día')}
+              {selEntries.length > 0 && (
+                <div className="cal-event-list">
+                  {[...selEntries].sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99')).map((e, i) => {
+                    const color  = e.color || DEFAULT_COLOR;
+                    const amount = formatAmount(e.amount);
+                    return (
+                      <div key={e.id||i} className={`cal-event-row${e.completed ? ' cal-done-row' : ''}`}
+                        onClick={() => navigate('entryDetail', { entryId: e.id })} id={`cal-entry-${e.id||i}`}>
+                        <span style={{
+                          width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          background: e.sticker ? `${color}22` : color,
+                        }}>
+                          {e.sticker
+                            ? <Sticker id={e.sticker} size={20} />
+                            : <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />}
                         </span>
                         <div className="cal-event-body">
-                          <div className="cal-event-title">{ev.title}</div>
-                          {ev.location && (
-                            <div className="cal-event-meta"><MapPin size={10} strokeWidth={2} />{ev.location}</div>
-                          )}
-                          {ev.link && (
-                            <div className="cal-event-meta"><Video size={10} strokeWidth={2} />Unirse</div>
-                          )}
+                          <div className="cal-event-title" style={e.completed ? { textDecoration: 'line-through', opacity: 0.55 } : {}}>{e.title}</div>
+                          <div className="cal-event-meta">
+                            {e.time ? formatTime12h(e.time, '') : 'Todo el día'}
+                            {amount && <span style={{ color, fontWeight: 700, marginLeft: 6 }}>· {amount}</span>}
+                          </div>
                         </div>
+                        <button
+                          className={`cal-tl-ring${e.completed ? ' is-done' : ''}`}
+                          onClick={(ev) => { ev.stopPropagation(); toggleTask(e.id); }}
+                          aria-label={e.completed ? 'Marcar pendiente' : 'Marcar hecho'}
+                        >
+                          {e.completed && <Check size={12} strokeWidth={3} color="white" />}
+                        </button>
                       </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {pending.length > 0 && (
-                <>
-                  <div className="cal-section-head">Pendientes <span className="cal-section-line" /></div>
-                  <div className="cal-event-list">
-                    {pending.map((t, i) => (
-                      <div key={t.id||i} className="cal-event-row"
-                        onClick={() => navigate('taskDetail', { taskId: t.id })} id={`cal-task-${t.id||i}`}>
-                        <span className="cal-event-time" style={{ color: PRIORITY_COLOR[t.priority]||'#705765' }}>
-                          {formatTime12h(t.time, '—')}
-                        </span>
-                        <div className="cal-event-body">
-                          <div className="cal-event-title">{t.title}</div>
-                          {t.category && (
-                            <div className="cal-event-meta" style={{ color: catColor(t.category) }}>{t.category}</div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {done.length > 0 && (
-                <>
-                  <div className="cal-section-head">Completadas <span className="cal-section-line" /></div>
-                  <div className="cal-event-list">
-                    {done.map((t, i) => (
-                      <div key={t.id||i} className="cal-event-row cal-done-row"
-                        onClick={() => navigate('taskDetail', { taskId: t.id })}>
-                        <Check size={12} strokeWidth={2.5} color="var(--secondary)" style={{ marginTop: 3 }} />
-                        <div className="cal-event-body">
-                          <div className="cal-event-title">{t.title}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
+                    );
+                  })}
+                </div>
               )}
 
               <div className="cal-tl-add-row">
-                <button className="cal-add-btn" onClick={() => navigate('createTask')} id="cal-add-task">
-                  <Plus size={15} /> Tarea
-                </button>
-                <button className="cal-add-btn" onClick={() => navigate('createEvent')} id="cal-add-event">
-                  <Plus size={15} /> Evento
+                <button className="cal-add-btn" onClick={() => navigate('createEntry', { date: selDS })} id="cal-add-entry">
+                  <Plus size={15} /> Nueva entrada
                 </button>
               </div>
             </div>

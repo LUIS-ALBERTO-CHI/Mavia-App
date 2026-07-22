@@ -3,7 +3,7 @@
    Faithful replication of Stitch/Aura Marketing UI
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
 /* ============================================
@@ -35,74 +35,91 @@
    MD3 COLOR TOKENS — Exact from Stitch
    ============================================ */
 :root {
-  /* Primary (dusty mauve rose) */
-  --primary:                  #705765;
+  /* Primary (near-black — texto, iconos, estados activos, CTAs).
+     El COLOR de la marca vive en los rellenos: lima, lavanda, cielo. */
+  --primary:                  #23261d;
   --on-primary:               #ffffff;
-  --primary-container:        #f8d7e8;
-  --on-primary-container:     #755c6a;
-  --primary-fixed:            #fbdaeb;
-  --primary-fixed-dim:        #ddbece;
-  --on-primary-fixed:         #281621;
-  --on-primary-fixed-variant: #57404d;
-  --inverse-primary:          #ddbece;
+  --primary-container:        #e3f0a6;   /* lima suave (chips/realces) */
+  --on-primary-container:     #354611;
+  --primary-fixed:            #e3f0a6;
+  --primary-fixed-dim:        #cde488;
+  --on-primary-fixed:         #14160d;
+  --on-primary-fixed-variant: #354611;
+  --inverse-primary:          #c7e85c;
 
-  /* Secondary (sage green) */
-  --secondary:                #546347;
+  /* Secondary (lavanda / morado suave) */
+  --secondary:                #8a5cd8;
   --on-secondary:             #ffffff;
-  --secondary-container:      #d5e5c2;
-  --on-secondary-container:   #59674b;
-  --secondary-fixed:          #d8e8c5;
-  --secondary-fixed-dim:      #bcccaa;
-  --on-secondary-fixed:       #131f09;
-  --on-secondary-fixed-variant:#3d4b31;
+  --secondary-container:      #ead4f2;
+  --on-secondary-container:   #4a2d6b;
+  --secondary-fixed:          #ead4f2;
+  --secondary-fixed-dim:      #d6b8ea;
+  --on-secondary-fixed:       #24123a;
+  --on-secondary-fixed-variant:#4a2d6b;
 
-  /* Tertiary (warm gold/ochre) */
-  --tertiary:                 #695e37;
+  /* Tertiary (azul cielo) */
+  --tertiary:                 #3fb0d0;
   --on-tertiary:              #ffffff;
-  --tertiary-container:       #f0dfae;
-  --on-tertiary-container:    #6e623b;
-  --tertiary-fixed:           #f2e2b1;
-  --tertiary-fixed-dim:       #d5c697;
-  --on-tertiary-fixed:        #231b00;
-  --on-tertiary-fixed-variant:#504622;
+  --tertiary-container:       #ccedf5;
+  --on-tertiary-container:    #12546b;
+  --tertiary-fixed:           #ccedf5;
+  --tertiary-fixed-dim:       #a8dbec;
+  --on-tertiary-fixed:        #05242f;
+  --on-tertiary-fixed-variant:#12546b;
+
+  /* Acento lima (marca) + accesos de color */
+  --lime:                     #c7e85c;
+  --on-lime:                  #2a3610;
+  --lime-container:           #e6f3b8;
+  --blue:                     #3fb0d0;
+  --on-blue:                  #ffffff;
+  --blue-container:           #ccedf5;
+  --on-blue-container:        #12546b;
+  --purple:                   #8a5cd8;
+  --on-purple:                #ffffff;
+  --purple-container:         #ead4f2;
+  --on-purple-container:      #4a2d6b;
 
   /* Error */
-  --error:                    #ba1a1a;
+  --error:                    #e5484d;
   --on-error:                 #ffffff;
   --error-container:          #ffdad6;
   --on-error-container:       #93000a;
 
-  /* Surface */
-  --background:               #fbf9f7;
-  --on-background:            #1b1c1b;
-  --surface:                  #fbf9f7;
-  --surface-bright:           #fbf9f7;
-  --surface-dim:              #dbdad8;
-  --on-surface:               #1b1c1b;
+  /* Surface — blanco limpio + grises cálidos neutros */
+  --background:               #ffffff;
+  --on-background:            #1a1c15;
+  --surface:                  #ffffff;
+  --surface-bright:           #ffffff;
+  --surface-dim:              #ecefe2;
+  --on-surface:               #1a1c15;
   --surface-container-lowest: #ffffff;
-  --surface-container-low:    #f5f3f1;
-  --surface-container:        #efedec;
-  --surface-container-high:   #eae8e6;
-  --surface-container-highest:#e4e2e0;
-  --surface-variant:          #e4e2e0;
-  --on-surface-variant:       #4d4449;
-  --surface-tint:             #705765;
+  --surface-container-low:    #f7f8f0;
+  --surface-container:        #f1f3e9;
+  --surface-container-high:   #eaece0;
+  --surface-container-highest:#e3e6d8;
+  --surface-variant:          #eef0e5;
+  --on-surface-variant:       #5b5f52;
+  --surface-tint:             #7a9e2e;
 
   /* Outline */
-  --outline:                  #7f7479;
-  --outline-variant:          #d0c3c8;
+  --outline:                  #8f9384;
+  --outline-variant:          #e3e6d7;
 
   /* Inverse */
-  --inverse-surface:          #30302f;
-  --inverse-on-surface:       #f2f0ee;
+  --inverse-surface:          #2f312a;
+  --inverse-on-surface:       #f3f4ec;
 
-  /* App background */
-  --color-bg:                 #fdf6f9;
+  /* App background — lienzo salvia muy suave (tarjetas en blanco) */
+  --color-bg:                 #f3f5ea;
+
+  /* Headings — dark, color reserved for accents (cards, pills, buttons) */
+  --heading:                  #14160d;
 
   /* ============================================
      TYPOGRAPHY
      ============================================ */
-  --font-display:   'EB Garamond', Georgia, serif;
+  --font-display:   'Poppins', -apple-system, system-ui, sans-serif;
   --font-body:      'Plus Jakarta Sans', -apple-system, system-ui, sans-serif;
 
   /* Font sizes matching Stitch spec */
@@ -164,15 +181,15 @@
   --radius-2xl:  1.5rem;   /* 24px — main cards */
   --radius-full: 9999px;
 
-  /* Soft, tinted glow shadows — per spec: low opacity, large radius, pink tint */
-  --shadow-card:  0 4px 32px -8px rgba(112, 87, 101, 0.05), 0 1px 4px rgba(112, 87, 101, 0.04);
-  --shadow-glow:  0 20px 60px -20px rgba(112, 87, 101, 0.08);
-  --shadow-xs:    0 1px 3px rgba(112, 87, 101, 0.04);
-  --shadow-sm:    0 2px 8px rgba(112, 87, 101, 0.06);
-  --shadow-md:    0 4px 20px rgba(112, 87, 101, 0.08);
-  --shadow-lg:    0 8px 40px rgba(112, 87, 101, 0.12);
-  --shadow-nav:   0 -4px 24px rgba(0, 0, 0, 0.04);
-  --shadow-fab:   0 6px 24px rgba(112, 87, 101, 0.28);
+  /* Soft neutral shadows — low opacity, large radius */
+  --shadow-card:  0 4px 24px -8px rgba(40, 46, 24, 0.10), 0 1px 4px rgba(40, 46, 24, 0.05);
+  --shadow-glow:  0 16px 44px -20px rgba(40, 46, 24, 0.14);
+  --shadow-xs:    0 1px 3px rgba(40, 46, 24, 0.06);
+  --shadow-sm:    0 2px 8px rgba(40, 46, 24, 0.08);
+  --shadow-md:    0 6px 22px rgba(40, 46, 24, 0.10);
+  --shadow-lg:    0 10px 40px rgba(40, 46, 24, 0.16);
+  --shadow-nav:   0 -4px 24px rgba(0, 0, 0, 0.05);
+  --shadow-fab:   0 8px 22px rgba(40, 46, 24, 0.28);
 
   /* ============================================
      TRANSITIONS
@@ -219,8 +236,9 @@
   --color-overlay:       rgba(27, 28, 27, 0.40);
 
   /* Gradient aliases */
-  --gradient-primary: linear-gradient(135deg, var(--primary) 0%, #57404d 100%);
-  --gradient-soft:    linear-gradient(135deg, var(--primary-container) 0%, var(--tertiary-container) 100%);
+  --gradient-primary: linear-gradient(135deg, #34382b 0%, #1a1c15 100%);  /* CTA oscuro, texto blanco */
+  --gradient-lime:    linear-gradient(135deg, #d6f06a 0%, #bfe24f 100%);  /* FAB / acentos, contenido oscuro */
+  --gradient-soft:    linear-gradient(135deg, var(--lime-container) 0%, var(--secondary-container) 100%);
   --gradient-sage:    linear-gradient(135deg, var(--secondary-container) 0%, var(--secondary) 100%);
   --gradient-gold:    linear-gradient(135deg, var(--tertiary-fixed) 0%, var(--tertiary-fixed-dim) 100%);
   --gradient-app:     var(--color-bg);
@@ -247,47 +265,58 @@
    DARK MODE (MD3 dark scheme)
    ============================================ */
 .dark {
-  /* ── Primary ── */
-  --primary:               #ddbece;
-  --on-primary:            #281621;
-  --primary-container:     #57404d;
-  --on-primary-container:  #fbdaeb;
-  --primary-fixed:         #fbdaeb;
-  --primary-fixed-dim:     #ddbece;
+  /* ── Primary (near-white para texto/iconos/CTA) ── */
+  --primary:               #f2f4ea;
+  --on-primary:            #23261d;
+  --primary-container:     #3f4d14;   /* lima oscuro */
+  --on-primary-container:  #dcef9e;
+  --primary-fixed:         #e3f0a6;
+  --primary-fixed-dim:     #cde488;
 
-  /* ── Secondary ── */
-  --secondary:             #bcccaa;
-  --on-secondary:          #2d3424;
-  --secondary-container:   #3d4b31;
-  --on-secondary-container:#d5e5c2;
+  /* ── Secondary (lavanda) ── */
+  --secondary:             #d3b8ec;
+  --on-secondary:          #341a52;
+  --secondary-container:   #4a2d6b;
+  --on-secondary-container:#ead4f2;
 
-  /* ── Tertiary ── */
-  --tertiary:              #d5c697;
-  --on-tertiary:           #231b00;
-  --tertiary-container:    #504622;
-  --on-tertiary-container: #f2e2b1;
+  /* ── Tertiary (cielo) ── */
+  --tertiary:              #8fd3e8;
+  --on-tertiary:           #04303f;
+  --tertiary-container:    #14546b;
+  --on-tertiary-container: #ccedf5;
 
-  /* ── Surface / Background ── */
-  --background:               #131314;
-  --on-background:            #eae8e6;
-  --surface:                  #131314;
-  --on-surface:               #eae8e6;
-  --surface-dim:              #131314;
-  --surface-bright:           #3a393a;
-  --surface-container-lowest: #0e0e0f;
-  --surface-container-low:    #1c1b1c;
-  --surface-container:        #201f20;
-  --surface-container-high:   #2b2a2b;
-  --surface-container-highest:#363536;
-  --inverse-surface:          #f2f0ee;
-  --inverse-on-surface:       #1b1c1b;
+  /* ── Acentos extra ── */
+  --lime:                  #c7e85c;
+  --on-lime:               #2a3610;
+  --lime-container:        #3f4d14;
+  --blue:                  #8fd3e8;
+  --blue-container:        #14546b;
+  --on-blue-container:     #ccedf5;
+  --purple:                #d3b8ec;
+  --purple-container:      #4a2d6b;
+  --on-purple-container:   #ead4f2;
+
+  /* ── Surface / Background (carbón verdoso) ── */
+  --background:               #14150f;
+  --on-background:            #e9ebdf;
+  --surface:                  #14150f;
+  --on-surface:               #e9ebdf;
+  --surface-dim:              #14150f;
+  --surface-bright:           #363a2d;
+  --surface-container-lowest: #101109;
+  --surface-container-low:    #1c1e15;
+  --surface-container:        #202318;
+  --surface-container-high:   #2b2e21;
+  --surface-container-highest:#363a2b;
+  --inverse-surface:          #e9ebdf;
+  --inverse-on-surface:       #1a1c15;
 
   /* ── Outline / Variant ── */
-  --on-surface-variant:    #d0c3c8;
-  --outline:               #998e93;
-  --outline-variant:       #4d4449;
-  --surface-variant:       #4d4449;
-  --surface-tint:          #ddbece;
+  --on-surface-variant:    #c3c6b6;
+  --outline:               #8f9384;
+  --outline-variant:       #454a3a;
+  --surface-variant:       #454a3a;
+  --surface-tint:          #c7e85c;
 
   /* ── Error ── */
   --error:                 #ffb4ab;
@@ -296,12 +325,14 @@
   --on-error-container:    #ffdad6;
 
   /* ── Aliases ── */
-  --color-bg:              #131314;
+  --color-bg:              #14150f;
+  --heading:               #f2f4ea;
 
   /* ── Gradients (dark) ── */
-  --gradient-primary:   linear-gradient(135deg, #5c3d4f 0%, #2e1e28 100%);
-  --gradient-secondary: linear-gradient(135deg, #3d4b31 0%, #1e2618 100%);
-  --gradient-tertiary:  linear-gradient(135deg, #504622 0%, #261f00 100%);
+  --gradient-primary:   linear-gradient(135deg, #2b2e21 0%, #14150f 100%);
+  --gradient-lime:      linear-gradient(135deg, #d6f06a 0%, #bfe24f 100%);
+  --gradient-secondary: linear-gradient(135deg, #4a2d6b 0%, #2a1840 100%);
+  --gradient-tertiary:  linear-gradient(135deg, #14546b 0%, #08303f 100%);
 
   /* ── Shadows ── */
   --shadow-glow: 0 20px 40px -15px rgba(0,0,0,0.45);
@@ -639,8 +670,8 @@ a { text-decoration: none; color: inherit; }
 .topbar-brand {
   font-family: var(--font-display);
   font-size: var(--text-headline-lg-mobile);
-  font-weight: 500;
-  color: var(--primary);
+  font-weight: 600;
+  color: var(--heading);
   letter-spacing: -0.01em;
   line-height: 1;
 }
@@ -700,9 +731,9 @@ a { text-decoration: none; color: inherit; }
 }
 
 :root:not(.dark) .mobile-bottom-nav {
-  background: rgba(252, 250, 248, 0.92);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 28px rgba(40,46,24,0.14), 0 2px 8px rgba(40,46,24,0.06);
 }
 
 @media (min-width: 1024px) {
@@ -727,15 +758,22 @@ a { text-decoration: none; color: inherit; }
 }
 
 .bottom-nav-item.active {
-  color: #E07B4F;
+  color: var(--on-surface);
+}
+.bottom-nav-item.active .nav-icon {
+  background: var(--gradient-lime);
+  color: var(--on-lime);
+  border-radius: var(--radius-full);
+  padding: 7px;
+  box-shadow: 0 4px 12px rgba(150,180,40,0.45);
 }
 
 :root:not(.dark) .bottom-nav-item {
-  color: rgba(100, 92, 88, 0.85);
+  color: rgba(90, 95, 82, 0.9);
 }
 
 :root:not(.dark) .bottom-nav-item.active {
-  color: var(--primary); /* brand mauve per spec */
+  color: var(--on-surface);
 }
 
 .bottom-nav-item .nav-icon {
@@ -760,15 +798,15 @@ a { text-decoration: none; color: inherit; }
 .mobile-fab {
   width: 50px;
   height: 50px;
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--gradient-lime);
+  color: var(--on-lime);
   border-radius: var(--radius-full);
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  box-shadow: 0 6px 18px rgba(150, 180, 40, 0.5);
   transition: transform var(--transition-spring), box-shadow var(--transition-fast);
   pointer-events: auto;
   flex-shrink: 0;

@@ -98,7 +98,7 @@ export default function CreateGoalScreen() {
         .cg-title {
           font-family: var(--font-display);
           font-size: var(--text-headline-lg);
-          font-weight: 500; color: var(--primary);
+          font-weight: 700; color: var(--heading);
           margin-bottom: 6px;
         }
         .cg-sub {

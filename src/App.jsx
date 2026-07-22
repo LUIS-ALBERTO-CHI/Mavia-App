@@ -15,9 +15,8 @@ import SetupProfileScreen from './screens/SetupProfileScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import AgendaScreen from './screens/AgendaScreen';
 import CalendarScreen from './screens/CalendarScreen';
-import TasksScreen from './screens/TasksScreen';
-import CreateTaskScreen from './screens/CreateTaskScreen';
-import TaskDetailScreen from './screens/TaskDetailScreen';
+import CreateEntryScreen from './screens/CreateEntryScreen';
+import EntryDetailScreen from './screens/EntryDetailScreen';
 
 // Screens - Planning
 import GoalsScreen from './screens/GoalsScreen';
@@ -25,9 +24,6 @@ import CreateGoalScreen from './screens/CreateGoalScreen';
 import JournalScreen from './screens/JournalScreen';
 
 // Screens - Management
-import EventsScreen from './screens/EventsScreen';
-import EventDetailScreen from './screens/EventDetailScreen';
-import CreateEventScreen from './screens/CreateEventScreen';
 import RemindersScreen from './screens/RemindersScreen';
 
 // Screens - System
@@ -55,16 +51,18 @@ const SCREEN_MAP = {
   dashboard: DashboardScreen,
   agenda: AgendaScreen,
   calendar: CalendarScreen,
-  tasks: TasksScreen,
-  createTask: CreateTaskScreen,
-  taskDetail: TaskDetailScreen,
+  // Entrada unificada (reemplaza tareas + eventos)
+  createEntry: CreateEntryScreen,
+  entryDetail: EntryDetailScreen,
+  // Aliases de compatibilidad
+  createTask: CreateEntryScreen,
+  createEvent: CreateEntryScreen,
+  taskDetail: EntryDetailScreen,
+  eventDetail: EntryDetailScreen,
   goals: GoalsScreen,
   createGoal: CreateGoalScreen,
   notes: JournalScreen,
   journal: JournalScreen,
-  events: EventsScreen,
-  eventDetail: EventDetailScreen,
-  createEvent: CreateEventScreen,
   reminders: RemindersScreen,
   notifications: NotificationsScreen,
   profile: ProfileScreen,
@@ -78,36 +76,29 @@ const SCREEN_MAP = {
 const MAIN_NAV = [
   { id: 'dashboard', label: 'Inicio',     icon: 'dashboard'      },
   { id: 'calendar',  label: 'Calendario', icon: 'calendar_today'  },
-  { id: 'tasks',     label: 'Tareas',     icon: 'check_circle'    },
   { id: 'notes',     label: 'Notas',      icon: 'edit_note'       },
   { id: 'profile',   label: 'Perfil',     icon: 'person'          },
 ];
 
-// Screens that use the calendar FAB destination
-const CALENDAR_SCREENS = new Set(['calendar', 'events', 'createEvent', 'agenda']);
-
 // Screens that already have their own "Añadir" button — hide FAB to avoid confusion
 const SCREENS_WITH_OWN_ADD = new Set([
-  'goals', 'notes', 'journal', 'createTask', 'createEvent',
-  'createGoal', 'taskDetail', 'eventDetail', 'notifications',
+  'goals', 'notes', 'journal', 'createEntry', 'createTask', 'createEvent',
+  'createGoal', 'entryDetail', 'taskDetail', 'eventDetail', 'notifications',
   'search', 'profile', 'settings', 'reminders',
 ]);
 
 // Back-navigation screens (animate slide-back instead of slide-in)
-const DETAIL_SCREENS = new Set(['taskDetail', 'eventDetail', 'createTask', 'createEvent', 'createGoal']);
+const DETAIL_SCREENS = new Set(['entryDetail', 'taskDetail', 'eventDetail', 'createEntry', 'createTask', 'createEvent', 'createGoal']);
 
 const SCREEN_TITLES = {
   dashboard: 'Mavia',
   agenda: 'Agenda del día',
   calendar: 'Calendario',
-  tasks: 'Mis tareas',
-  createTask: 'Nueva tarea',
-  createEvent: 'Nuevo evento',
-  taskDetail: 'Detalle de tarea',
+  createEntry: 'Nueva entrada',
+  entryDetail: 'Entrada',
   goals: 'Objetivos',
   notes: 'Notas',
   journal: 'Notas',
-  events: 'Eventos',
   reminders: 'Recordatorios',
   notifications: 'Notificaciones',
   profile: 'Mi perfil',
@@ -200,7 +191,6 @@ function DesktopSidebar() {
         <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(208,195,200,0.2)', paddingTop: '0.75rem' }}>
           {[
             { id: 'agenda',        label: 'Agenda del día',  icon: 'today'         },
-            { id: 'events',        label: 'Eventos',         icon: 'event'         },
             { id: 'reminders',     label: 'Recordatorios',   icon: 'alarm'         },
             { id: 'goals',         label: 'Objetivos',       icon: 'flag'          },
             { id: 'notifications', label: 'Notificaciones',  icon: 'notifications', badge: unread },
@@ -236,11 +226,11 @@ function DesktopSidebar() {
       <div className="sidebar-footer">
         <button
           className="sidebar-cta"
-          onClick={() => navigate(CALENDAR_SCREENS.has(currentScreen) ? 'createEvent' : 'createTask')}
+          onClick={() => navigate('createEntry')}
           id="sidebar-cta"
         >
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
-          {CALENDAR_SCREENS.has(currentScreen) ? 'Nuevo Evento' : 'Nueva Tarea'}
+          Nueva Entrada
         </button>
       </div>
     </aside>
@@ -251,12 +241,11 @@ function DesktopSidebar() {
    MOBILE SIDE DRAWER  (hamburger → slide-from-left)
    ============================================ */
 const DRAWER_ITEMS = [
-  { id: 'agenda',     label: 'Agenda del día', icon: 'today',     section: 'Agenda',    color: '#705765' },
-  { id: 'events',     label: 'Eventos',        icon: 'event',     section: 'Agenda',    color: '#695e37' },
-  { id: 'reminders',  label: 'Recordatorios',  icon: 'alarm',     section: 'Agenda',    color: '#546347' },
-  { id: 'notes',      label: 'Notas',          icon: 'edit_note', section: 'Trabajo',   color: '#705765' },
-  { id: 'goals',      label: 'Objetivos',      icon: 'flag',      section: 'Trabajo',   color: '#695e37' },
-  { id: 'search',     label: 'Buscar',         icon: 'search',    section: 'General',   color: '#546347' },
+  { id: 'agenda',     label: 'Agenda del día', icon: 'today',     section: 'Agenda',    color: '#37a9d4' },
+  { id: 'reminders',  label: 'Recordatorios',  icon: 'alarm',     section: 'Agenda',    color: '#e0a72e' },
+  { id: 'notes',      label: 'Notas',          icon: 'edit_note', section: 'Trabajo',   color: '#ec4b8b' },
+  { id: 'goals',      label: 'Objetivos',      icon: 'flag',      section: 'Trabajo',   color: '#8a63d2' },
+  { id: 'search',     label: 'Buscar',         icon: 'search',    section: 'General',   color: '#3fa96b' },
 ];
 
 const SECTION_ORDER = ['Agenda', 'Trabajo', 'General'];
@@ -316,7 +305,7 @@ function MobileSideDrawer({ open, onClose }) {
         <div style={{
           position: 'relative',
           padding: '56px 22px 24px',
-          background: 'linear-gradient(160deg, #705765 0%, #57404d 55%, #3d2d38 100%)',
+          background: 'linear-gradient(160deg, #ff6fae 0%, #ec4b8b 55%, #c2306e 100%)',
           flexShrink: 0,
           overflow: 'hidden',
         }}>
@@ -615,23 +604,19 @@ function MobileBottomNav() {
   const BOTTOM_NAV = [
     { id: 'dashboard', label: 'Inicio',     icon: 'home'           },
     { id: 'calendar',  label: 'Calendario', icon: 'calendar_today'  },
-    { id: 'tasks',     label: 'Tareas',     icon: 'check_circle'    },
     { id: 'notes',     label: 'Notas',      icon: 'edit_note'       },
     { id: 'profile',   label: 'Perfil',     icon: 'person'          },
   ];
 
   const TAB_GROUPS = {
     dashboard: ['dashboard', 'agenda'],
-    calendar:  ['calendar', 'createEvent', 'events', 'eventDetail'],
-    tasks:     ['tasks', 'createTask', 'taskDetail', 'reminders'],
+    calendar:  ['calendar', 'createEntry', 'createTask', 'createEvent', 'entryDetail', 'taskDetail', 'eventDetail', 'reminders'],
     notes:     ['notes', 'journal'],
     profile:   ['profile', 'settings', 'notifications', 'search', 'goals', 'createGoal'],
   };
 
   const activeTab = Object.entries(TAB_GROUPS)
     .find(([, screens]) => screens.includes(currentScreen))?.[0] || 'dashboard';
-
-  const fabDest = CALENDAR_SCREENS.has(currentScreen) ? 'createEvent' : 'createTask';
 
   return (
     <div className="mobile-bottom-nav-wrapper">
@@ -654,9 +639,9 @@ function MobileBottomNav() {
         })}
       </nav>
 
-      {/* FAB */}
+      {/* FAB — siempre añade una entrada */}
       {!SCREENS_WITH_OWN_ADD.has(currentScreen) && (
-        <button className="mobile-fab" onClick={() => navigate(fabDest)} id="bnav-fab" aria-label="Crear">
+        <button className="mobile-fab" onClick={() => navigate('createEntry')} id="bnav-fab" aria-label="Crear entrada">
           <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>add</span>
         </button>
       )}

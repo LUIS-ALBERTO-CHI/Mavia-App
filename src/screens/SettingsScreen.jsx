@@ -97,7 +97,6 @@ export default function SettingsScreen() {
         if (!data.version) throw new Error('Formato inválido');
         // Restore each collection if present
         if (data.tasks)            dispatch({ type: 'IMPORT_TASKS',   tasks:   data.tasks });
-        if (data.events)           dispatch({ type: 'IMPORT_EVENTS',  events:  data.events });
         if (data.goals)            dispatch({ type: 'IMPORT_GOALS',   goals:   data.goals });
         if (data.journalEntries)   dispatch({ type: 'IMPORT_JOURNAL', entries: data.journalEntries });
         showToast(t('toasts.dataImported'), 'success');
@@ -119,11 +118,11 @@ export default function SettingsScreen() {
 
   const handleExport = () => {
     try {
-      const { tasks, events, goals, journalEntries } = state;
+      const { tasks, goals, journalEntries } = state;
       const exportData = {
         exportedAt: new Date().toISOString(),
         version: '1.0.0',
-        tasks, events, goals, journalEntries,
+        tasks, goals, journalEntries,
       };
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url  = URL.createObjectURL(blob);
@@ -156,8 +155,8 @@ export default function SettingsScreen() {
         .stg-hero-title {
           font-family: var(--font-display);
           font-size: var(--text-headline-lg);
-          font-weight: 500;
-          color: var(--primary);
+          font-weight: 700;
+          color: var(--heading);
           line-height: 1.15;
           margin-bottom: 6px;
         }

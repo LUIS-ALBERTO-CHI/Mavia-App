@@ -93,8 +93,8 @@ export default function RemindersScreen() {
         .rem-hero-title {
           font-family: var(--font-display);
           font-size: var(--text-headline-lg);
-          font-weight: 500;
-          color: var(--primary);
+          font-weight: 700;
+          color: var(--heading);
           line-height: 1.15;
           margin-bottom: 6px;
         }
@@ -432,7 +432,7 @@ export default function RemindersScreen() {
             <p className="rem-empty-sub">
               No hay recordatorios en esta categoría. Activa el recordatorio al crear una tarea.
             </p>
-            <Button variant="soft" onClick={() => navigate('createTask')} id="rem-create">
+            <Button variant="soft" onClick={() => navigate('createEntry')} id="rem-create">
               Crear Tarea con Recordatorio
             </Button>
           </div>
@@ -495,7 +495,7 @@ export default function RemindersScreen() {
                               <button
                                 className="rem-action-btn rem-action-edit"
                                 aria-label="Editar"
-                                onClick={() => navigate('taskDetail', { taskId: task.id })}
+                                onClick={() => navigate('entryDetail', { entryId: task.id })}
                                 id={`rem-edit-${task.id}`}
                               >
                                 <Edit2 size={18} strokeWidth={1.75} />
@@ -564,7 +564,7 @@ export default function RemindersScreen() {
                               <button
                                 className="rem-action-btn rem-action-edit"
                                 aria-label="Editar"
-                                onClick={() => navigate('taskDetail', { taskId: task.id })}
+                                onClick={() => navigate('entryDetail', { entryId: task.id })}
                                 id={`rem-up-edit-${task.id}`}
                               >
                                 <Edit2 size={17} strokeWidth={1.75} />

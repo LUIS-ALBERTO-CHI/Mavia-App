@@ -57,8 +57,8 @@ export default function SetupProfileScreen() {
         .sp-title {
           font-family: var(--font-display);
           font-size: 2rem;
-          font-weight: 500;
-          color: var(--primary);
+          font-weight: 700;
+          color: var(--heading);
           letter-spacing: -0.02em;
           margin-bottom: 0.5rem;
         }

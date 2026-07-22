@@ -31,8 +31,7 @@ const docRef   = (uid, col, id) => doc(db, 'users', uid, col, id);
  * are synced via subscribeToUserData.
  */
 export async function loadUserData(uid) {
-  const SUBCOLS = ['tasks', 'events', 'goals',
-                   'journalEntries', 'notifications'];
+  const SUBCOLS = ['tasks', 'goals', 'journalEntries', 'notifications'];
 
   const [profileSnap, ...snapshots] = await Promise.all([
     getDoc(userRef(uid)),
@@ -63,7 +62,7 @@ export async function loadUserData(uid) {
  * @returns {function} unsubscribe
  */
 export function subscribeToUserData(uid, onUpdate) {
-  const REALTIME_COLS = ['tasks', 'events', 'goals', 'notifications'];
+  const REALTIME_COLS = ['tasks', 'goals', 'notifications'];
 
   const unsubs = REALTIME_COLS.map(col =>
     onSnapshot(
@@ -106,7 +105,7 @@ export async function seedInitialData(uid, userProfile, seedData) {
   // Only seed collections for brand-new users
   if (!isNewUser) return;
 
-  const SUBCOLS = ['tasks', 'events', 'goals', 'journalEntries', 'notifications'];
+  const SUBCOLS = ['tasks', 'goals', 'journalEntries', 'notifications'];
 
   const batch = writeBatch(db);
   SUBCOLS.forEach(col => {
@@ -123,7 +122,7 @@ export async function seedInitialData(uid, userProfile, seedData) {
  * Use this to reset a user's demo data.
  */
 export async function resetUserData(uid, userProfile, seedData) {
-  const SUBCOLS = ['tasks', 'events', 'goals', 'journalEntries', 'notifications'];
+  const SUBCOLS = ['tasks', 'goals', 'journalEntries', 'notifications'];
 
   // Delete all documents in all subcollections (batched, max 500 per batch)
   for (const col of SUBCOLS) {
@@ -185,17 +184,6 @@ export async function saveTask(uid, task) {
 
 export async function deleteTask(uid, taskId) {
   await deleteDoc(docRef(uid, 'tasks', taskId));
-}
-
-// ─── Events ────────────────────────────────────────────────────────────────
-
-export async function saveEvent(uid, event) {
-  const { id, ...data } = event;
-  await setDoc(docRef(uid, 'events', id), data);
-}
-
-export async function deleteEvent(uid, eventId) {
-  await deleteDoc(docRef(uid, 'events', eventId));
 }
 
 // ─── Goals ─────────────────────────────────────────────────────────────────

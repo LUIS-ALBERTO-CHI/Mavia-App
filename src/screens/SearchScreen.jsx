@@ -15,8 +15,7 @@ function saveHistory(items) {
 }
 
 const CATEGORIES = [
-  { id: 'tasks',   label: 'Tareas',    icon: CheckCircle2, color: 'var(--primary)',   bg: 'var(--primary-container)'   },
-  { id: 'events',  label: 'Eventos',   icon: Calendar,     color: 'var(--secondary)', bg: 'var(--secondary-container)' },
+  { id: 'entries', label: 'Entradas',  icon: Calendar,     color: 'var(--primary)',   bg: 'var(--primary-container)'   },
   { id: 'journal', label: 'Notas',     icon: BookOpen,     color: '#695e37',          bg: '#FDF8EC'                     },
   { id: 'goals',   label: 'Objetivos', icon: Target,       color: 'var(--tertiary)',  bg: 'var(--tertiary-container)'   },
 ];
@@ -25,7 +24,7 @@ export default function SearchScreen() {
   const { state, navigate } = useApp();
   const { t } = useTranslation();
   const [query, setQuery]         = useState('');
-  const [activeCategory, setActiveCategory] = useState('tasks');
+  const [activeCategory, setActiveCategory] = useState('entries');
   const [history, setHistory]     = useState(loadHistory);
   const inputRef                  = useRef(null);
 
@@ -49,8 +48,7 @@ export default function SearchScreen() {
   const q = query.toLowerCase().trim();
 
   const results = {
-    tasks:   q ? state.tasks.filter(item => item.title.toLowerCase().includes(q) || item.category?.toLowerCase().includes(q)) : [],
-    events:  q ? state.events.filter(e => e.title.toLowerCase().includes(q) || e.location?.toLowerCase().includes(q)) : [],
+    entries: q ? state.tasks.filter(item => item.title.toLowerCase().includes(q) || item.note?.toLowerCase().includes(q)) : [],
     journal: q ? state.journalEntries.filter(e => e.content.toLowerCase().includes(q)) : [],
     goals:   q ? state.goals.filter(g => g.title.toLowerCase().includes(q) || g.category.toLowerCase().includes(q)) : [],
   };
@@ -73,8 +71,8 @@ export default function SearchScreen() {
         .srch-hero-title {
           font-family: var(--font-display);
           font-size: var(--text-headline-lg);
-          font-weight: 500;
-          color: var(--primary);
+          font-weight: 700;
+          color: var(--heading);
           line-height: 1.15;
           margin-bottom: 6px;
         }
@@ -301,7 +299,7 @@ export default function SearchScreen() {
 
         {/* ── Hero ── */}
         <h1 className="srch-hero-title">Buscar</h1>
-        <p className="srch-hero-sub">Encuentra tareas, eventos, notas y objetivos al instante.</p>
+        <p className="srch-hero-sub">Encuentra entradas, notas y objetivos al instante.</p>
 
         {/* ── Search bar ── */}
         <div className="srch-bar-wrap">
@@ -382,7 +380,7 @@ export default function SearchScreen() {
               <circle cx="60" cy="55" r="8" fill="var(--primary)" opacity="0.6" />
             </svg>
             <p className="empty-state-title">Busca lo que necesitas</p>
-            <p className="empty-state-sub">Tareas, eventos, notas y objetivos. Todo en un solo lugar.</p>
+            <p className="empty-state-sub">Entradas, notas y objetivos. Todo en un solo lugar.</p>
           </div>
         )}
 
@@ -417,8 +415,7 @@ export default function SearchScreen() {
                     key={item.id}
                     className="srch-result"
                     onClick={() => {
-                      if (cat === 'tasks')        navigate('taskDetail', { taskId: item.id });
-                      else if (cat === 'events')  navigate('events');
+                      if (cat === 'entries')      navigate('entryDetail', { entryId: item.id });
                       else if (cat === 'journal') navigate('notes');
                       else navigate('goals');
                     }}
@@ -435,27 +432,12 @@ export default function SearchScreen() {
                         {item.title || item.name || item.content?.slice(0, 70) + '…' || item.text?.slice(0, 70)}
                       </div>
                       <div className="srch-result-meta">
-                        {cat === 'tasks' && (
-                          <>
-                            <span className="srch-result-chip" style={{ background: 'var(--primary-container)', color: 'var(--on-primary-container)' }}>
-                              {item.category}
-                            </span>
-                            <span style={{ display:'flex', alignItems:'center', gap:3 }}>
-                              <Clock size={12} /> {item.date}
-                            </span>
-                            {item.completed && <span style={{ color: 'var(--secondary)', fontWeight: 600 }}>✓ Completada</span>}
-                          </>
-                        )}
-                        {cat === 'events' && (
+                        {cat === 'entries' && (
                           <>
                             <span style={{ display:'flex', alignItems:'center', gap:3 }}>
-                              <Clock size={12} /> {item.startTime}–{item.endTime}
+                              <Clock size={12} /> {item.time ? `${item.date} · ${item.time}` : item.date}
                             </span>
-                            {item.location && (
-                              <span style={{ display:'flex', alignItems:'center', gap:3 }}>
-                                <MapPin size={12} /> {item.location}
-                              </span>
-                            )}
+                            {item.completed && <span style={{ color: 'var(--secondary)', fontWeight: 600 }}>✓ {item.amount ? 'Pagado' : 'Hecho'}</span>}
                           </>
                         )}
                         {cat === 'journal' && (
