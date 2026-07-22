@@ -2,10 +2,11 @@ import { useApp } from '../context/AppContext';
 import { formatTime12h, localToday } from '../lib/utils';
 import { Check, Plus } from 'lucide-react';
 import Sticker from '../components/Sticker';
+import Mascot from '../components/Mascot';
 import { DEFAULT_COLOR, formatAmount } from '../lib/entryStyle';
 
 export default function AgendaScreen() {
-  const { state, dispatch, navigate, showToast } = useApp();
+  const { state, dispatch, navigate, showToast, openEntrySheet } = useApp();
   const today = localToday();
 
   const items = state.tasks
@@ -58,8 +59,8 @@ export default function AgendaScreen() {
           transition: all var(--transition-spring);
         }
         .empty-agenda {
-          text-align: center; padding: var(--space-xxl) var(--space-lg);
-          display: flex; flex-direction: column; align-items: center; gap: var(--space-md);
+          text-align: center; padding: var(--space-lg); min-height: 58vh;
+          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
         }
         .empty-agenda-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--heading); }
         .empty-agenda-sub { font-size: var(--text-body-md); color: var(--on-surface-variant); line-height: 1.6; max-width: 280px; }
@@ -75,12 +76,9 @@ export default function AgendaScreen() {
 
         {items.length === 0 ? (
           <div className="empty-agenda">
-            <Sticker id="sun" size={72} />
+            <Mascot size={250} />
             <div className="empty-agenda-title">Día libre</div>
-            <p className="empty-agenda-sub">Hoy no tienes nada agendado. Toca abajo para añadir una entrada.</p>
-            <button className="agenda-add-btn" onClick={() => navigate('createEntry')} id="agenda-create">
-              <Plus size={16} /> Nueva entrada
-            </button>
+            <p className="empty-agenda-sub">Hoy no tienes nada agendado. Toca ＋ para añadir una entrada.</p>
           </div>
         ) : (
           <div className="timeline">

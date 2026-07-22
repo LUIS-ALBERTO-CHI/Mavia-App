@@ -15,7 +15,6 @@ import SetupProfileScreen from './screens/SetupProfileScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import AgendaScreen from './screens/AgendaScreen';
 import CalendarScreen from './screens/CalendarScreen';
-import CreateEntryScreen from './screens/CreateEntryScreen';
 import EntryDetailScreen from './screens/EntryDetailScreen';
 
 // Screens - Planning
@@ -36,6 +35,7 @@ import NotFoundScreen from './screens/NotFoundScreen';
 // Components
 import ErrorBoundary from './components/ErrorBoundary';
 import OfflineBanner from './components/OfflineBanner';
+import CreateEntrySheet from './components/CreateEntrySheet';
 
 /* ============================================
    CONSTANTS
@@ -51,12 +51,8 @@ const SCREEN_MAP = {
   dashboard: DashboardScreen,
   agenda: AgendaScreen,
   calendar: CalendarScreen,
-  // Entrada unificada (reemplaza tareas + eventos)
-  createEntry: CreateEntryScreen,
+  // Detalle de entrada (crear/editar es un bottom sheet, no una pantalla)
   entryDetail: EntryDetailScreen,
-  // Aliases de compatibilidad
-  createTask: CreateEntryScreen,
-  createEvent: CreateEntryScreen,
   taskDetail: EntryDetailScreen,
   eventDetail: EntryDetailScreen,
   goals: GoalsScreen,
@@ -74,7 +70,6 @@ const SCREEN_MAP = {
    SIDEBAR NAV ITEMS
    ============================================ */
 const MAIN_NAV = [
-  { id: 'dashboard', label: 'Inicio',     icon: 'dashboard'      },
   { id: 'calendar',  label: 'Calendario', icon: 'calendar_today'  },
   { id: 'notes',     label: 'Notas',      icon: 'edit_note'       },
   { id: 'profile',   label: 'Perfil',     icon: 'person'          },
@@ -82,19 +77,17 @@ const MAIN_NAV = [
 
 // Screens that already have their own "Añadir" button — hide FAB to avoid confusion
 const SCREENS_WITH_OWN_ADD = new Set([
-  'goals', 'notes', 'journal', 'createEntry', 'createTask', 'createEvent',
-  'createGoal', 'entryDetail', 'taskDetail', 'eventDetail', 'notifications',
-  'search', 'profile', 'settings', 'reminders',
+  'goals', 'notes', 'journal', 'createGoal', 'entryDetail', 'taskDetail',
+  'eventDetail', 'notifications', 'search', 'profile', 'settings', 'reminders',
 ]);
 
 // Back-navigation screens (animate slide-back instead of slide-in)
-const DETAIL_SCREENS = new Set(['entryDetail', 'taskDetail', 'eventDetail', 'createEntry', 'createTask', 'createEvent', 'createGoal']);
+const DETAIL_SCREENS = new Set(['entryDetail', 'taskDetail', 'eventDetail', 'createGoal']);
 
 const SCREEN_TITLES = {
   dashboard: 'Mavia',
   agenda: 'Agenda del día',
   calendar: 'Calendario',
-  createEntry: 'Nueva entrada',
   entryDetail: 'Entrada',
   goals: 'Objetivos',
   notes: 'Notas',
@@ -146,7 +139,7 @@ function ConnDot() {
    DESKTOP SIDEBAR
    ============================================ */
 function DesktopSidebar() {
-  const { state, navigate, dispatch } = useApp();
+  const { state, navigate, dispatch, openEntrySheet } = useApp();
   const { currentScreen, user, notifications } = state;
   const unread = notifications.filter(n => !n.read).length;
   const online = useOnlineStatus();
@@ -226,7 +219,7 @@ function DesktopSidebar() {
       <div className="sidebar-footer">
         <button
           className="sidebar-cta"
-          onClick={() => navigate('createEntry')}
+          onClick={() => openEntrySheet()}
           id="sidebar-cta"
         >
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
@@ -598,19 +591,17 @@ function MobileTopBar({ onMenuOpen }) {
    MOBILE BOTTOM NAV  — clean 5 tabs
    ============================================ */
 function MobileBottomNav() {
-  const { state, navigate } = useApp();
+  const { state, navigate, openEntrySheet } = useApp();
   const { currentScreen } = state;
 
   const BOTTOM_NAV = [
-    { id: 'dashboard', label: 'Inicio',     icon: 'home'           },
     { id: 'calendar',  label: 'Calendario', icon: 'calendar_today'  },
     { id: 'notes',     label: 'Notas',      icon: 'edit_note'       },
     { id: 'profile',   label: 'Perfil',     icon: 'person'          },
   ];
 
   const TAB_GROUPS = {
-    dashboard: ['dashboard', 'agenda'],
-    calendar:  ['calendar', 'createEntry', 'createTask', 'createEvent', 'entryDetail', 'taskDetail', 'eventDetail', 'reminders'],
+    calendar:  ['calendar', 'dashboard', 'agenda', 'entryDetail', 'taskDetail', 'eventDetail', 'reminders'],
     notes:     ['notes', 'journal'],
     profile:   ['profile', 'settings', 'notifications', 'search', 'goals', 'createGoal'],
   };
@@ -641,7 +632,7 @@ function MobileBottomNav() {
 
       {/* FAB — siempre añade una entrada */}
       {!SCREENS_WITH_OWN_ADD.has(currentScreen) && (
-        <button className="mobile-fab" onClick={() => navigate('createEntry')} id="bnav-fab" aria-label="Crear entrada">
+        <button className="mobile-fab" onClick={() => openEntrySheet()} id="bnav-fab" aria-label="Crear entrada">
           <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>add</span>
         </button>
       )}
@@ -758,6 +749,9 @@ function AppContent() {
       <MobileBottomNav />
 
       <Toast />
+
+      {/* Bottom sheet: crear/editar entrada (overlay sobre la pantalla actual) */}
+      {state.entrySheet && <CreateEntrySheet />}
 
       {/* Offline/online status banner — floats above everything via Portal */}
       <OfflineBanner />

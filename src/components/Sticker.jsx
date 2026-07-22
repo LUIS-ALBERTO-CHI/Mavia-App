@@ -212,12 +212,31 @@ export const STICKERS = [
   { id: 'poop',     label: 'Popó' },
 ];
 
+/* IDs que son PNG propios (archivo en /public/stickers/<id>.png).
+   Para añadir stickers ilustrados: sube el PNG y agrega { id, label, png: true } a STICKERS. */
+const PNG_IDS = new Set(STICKERS.filter(s => s.png).map(s => s.id));
+
 /**
- * Renderiza un sticker por id. Fallback a estrella si no existe.
+ * Renderiza un sticker por id. Usa PNG si está marcado como png; si no, el SVG.
+ * Fallback a estrella si no existe.
  * @param {string} id    — id del sticker
  * @param {number} size  — tamaño en px (default 28)
  */
 export default function Sticker({ id, size = 28, className = '', style = {} }) {
+  // Sticker ilustrado propio (PNG). Recomendado 128×128 px, fondo transparente.
+  if (PNG_IDS.has(id)) {
+    return (
+      <img
+        src={`/stickers/${id}.png`}
+        width={size}
+        height={size}
+        alt=""
+        className={className}
+        style={{ display: 'block', flexShrink: 0, objectFit: 'contain', ...style }}
+        aria-hidden="true"
+      />
+    );
+  }
   const art = ART[id] || ART.star;
   return (
     <svg

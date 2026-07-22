@@ -66,6 +66,7 @@ const defaultState = {
   sideDrawerOpen:    false,
   activeFilter:      'Hoy',
   toast:             null,
+  entrySheet:        null,   // null | { entryId?, date? } → bottom sheet crear/editar entrada
   // Data — user content starts empty; system content pre-loaded from constants
   ...emptyDataState,
   phrases:     SYSTEM_PHRASES,
@@ -86,7 +87,7 @@ function reducer(state, action) {
         ...state,
         authLoading:     false,
         isAuthenticated: true,
-        currentScreen:   'dashboard',
+        currentScreen:   'calendar',
         screenHistory:   [],
         user: {
           ...state.user,
@@ -116,7 +117,7 @@ function reducer(state, action) {
     case 'COMPLETE_SETUP':
       return {
         ...state,
-        currentScreen:     'dashboard',
+        currentScreen:     'calendar',
         hasCompletedSetup: true,
         user: { ...state.user, ...action.user },
       };
@@ -130,7 +131,7 @@ function reducer(state, action) {
       };
 
     case 'SET_AUTHENTICATED':
-      return { ...state, isAuthenticated: action.value, currentScreen: action.value ? 'dashboard' : 'login' };
+      return { ...state, isAuthenticated: action.value, currentScreen: action.value ? 'calendar' : 'login' };
 
     case 'SET_FCM_TOKEN':
       return { ...state, fcmToken: action.token };
@@ -157,7 +158,7 @@ function reducer(state, action) {
     case 'GO_BACK': {
       const history = [...state.screenHistory];
       const prev = history.pop();
-      if (!prev) return { ...state, currentScreen: 'dashboard', screenHistory: [], screenParams: null };
+      if (!prev) return { ...state, currentScreen: 'calendar', screenHistory: [], screenParams: null };
       // Support both legacy string entries and new {screen, params} pairs
       const prevScreen = typeof prev === 'string' ? prev : prev.screen;
       const prevParams = typeof prev === 'string' ? null : (prev.params || null);
@@ -172,6 +173,8 @@ function reducer(state, action) {
     case 'SET_FILTER':      return { ...state, activeFilter: action.filter };
     case 'SHOW_TOAST':      return { ...state, toast: { message: action.message, type: action.toastType || 'default' } };
     case 'HIDE_TOAST':      return { ...state, toast: null };
+    case 'OPEN_ENTRY_SHEET':return { ...state, entrySheet: action.params || {} };
+    case 'CLOSE_ENTRY_SHEET':return { ...state, entrySheet: null };
     case 'UPDATE_USER':     return { ...state, user: { ...state.user, ...action.updates } };
 
     /* ── Tasks ── */
@@ -605,12 +608,17 @@ export function AppProvider({ children }) {
     setTimeout(() => dispatch({ type: 'HIDE_TOAST' }), 2800);
   };
 
+  const openEntrySheet  = (params = {}) => dispatch({ type: 'OPEN_ENTRY_SHEET', params });
+  const closeEntrySheet = ()            => dispatch({ type: 'CLOSE_ENTRY_SHEET' });
+
   const value = {
     state,
     dispatch: dispatchWithSync,  // replaces the raw dispatch everywhere
     navigate,
     goBack,
     showToast,
+    openEntrySheet,
+    closeEntrySheet,
   };
 
   return (

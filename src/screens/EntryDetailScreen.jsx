@@ -22,7 +22,7 @@ function formatDate(dateStr) {
  * Reemplaza TaskDetail + EventDetail.
  */
 export default function EntryDetailScreen() {
-  const { state, dispatch, navigate, goBack, showToast } = useApp();
+  const { state, dispatch, navigate, goBack, showToast, openEntrySheet } = useApp();
 
   const entryId = state.screenParams?.entryId || state.screenParams?.taskId || state.screenParams?.eventId || null;
   const entry   = entryId ? state.tasks.find(t => t.id === entryId) : null;
@@ -118,7 +118,7 @@ export default function EntryDetailScreen() {
         <div className="ed-topbar">
           <button className="ed-icon-btn" onClick={goBack} aria-label="Volver"><ArrowLeft size={20} /></button>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="ed-icon-btn" onClick={() => navigate('createEntry', { entryId: entry.id })} aria-label="Editar"><Pencil size={18} /></button>
+            <button className="ed-icon-btn" onClick={() => openEntrySheet({ entryId: entry.id })} aria-label="Editar"><Pencil size={18} /></button>
             <button className="ed-icon-btn danger" onClick={() => setConfirmDelete(true)} aria-label="Eliminar"><Trash2 size={18} /></button>
           </div>
         </div>

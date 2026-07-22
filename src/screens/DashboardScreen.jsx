@@ -32,7 +32,7 @@ const QUICK_LINKS = [
 ];
 
 export default function DashboardScreen() {
-  const { state, navigate, dispatch, showToast } = useApp();
+  const { state, navigate, dispatch, showToast, openEntrySheet } = useApp();
   const { t } = useTranslation();
   const { user, tasks } = state;
 
@@ -200,7 +200,7 @@ export default function DashboardScreen() {
             <div className="dash-empty">
               <span className="material-symbols-outlined" style={{ fontSize: '32px', opacity: 0.35 }}>event_available</span>
               <span style={{ fontSize: '13px', opacity: 0.7 }}>Nada agendado para hoy</span>
-              <button className="dash-add-btn" onClick={() => navigate('createEntry')} id="dash-add-entry">
+              <button className="dash-add-btn" onClick={() => openEntrySheet()} id="dash-add-entry">
                 <Plus size={16} /> Nueva entrada
               </button>
             </div>

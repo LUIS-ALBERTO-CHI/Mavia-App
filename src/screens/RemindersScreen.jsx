@@ -37,7 +37,7 @@ function dayLabel(dateStr) {
 }
 
 export default function RemindersScreen() {
-  const { state, dispatch, navigate, showToast } = useApp();
+  const { state, dispatch, navigate, showToast, openEntrySheet } = useApp();
   const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState('Todos');
   const [search, setSearch] = useState('');
@@ -432,7 +432,7 @@ export default function RemindersScreen() {
             <p className="rem-empty-sub">
               No hay recordatorios en esta categoría. Activa el recordatorio al crear una tarea.
             </p>
-            <Button variant="soft" onClick={() => navigate('createEntry')} id="rem-create">
+            <Button variant="soft" onClick={() => openEntrySheet()} id="rem-create">
               Crear Tarea con Recordatorio
             </Button>
           </div>
