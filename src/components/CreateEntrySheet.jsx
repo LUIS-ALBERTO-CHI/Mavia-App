@@ -13,13 +13,18 @@ import { HIGHLIGHTERS, DEFAULT_COLOR, REPEAT_OPTIONS, REMINDER_OFFSETS } from '.
  * Se muestra como overlay sobre la pantalla actual (state.entrySheet != null).
  */
 export default function CreateEntrySheet() {
-  const { state, dispatch, showToast, closeEntrySheet } = useApp();
+  const { state, dispatch, showToast, closeEntrySheet, addClient } = useApp();
 
   const params    = state.entrySheet || {};
   const entryId   = params.entryId || null;
   const editEntry = entryId ? state.tasks.find(t => t.id === entryId) : null;
   const isEdit    = !!editEntry;
   const paramDate = params.date || localToday();
+
+  const initialSpace = editEntry?.spaceId
+    || (params.spaceId)
+    || (state.currentSpaceId !== 'all' ? state.currentSpaceId : 'personal')
+    || 'personal';
 
   const [form, setForm] = useState(() => ({
     title:          editEntry?.title          || '',
@@ -33,13 +38,20 @@ export default function CreateEntrySheet() {
     reminder:       editEntry?.reminder       || false,
     reminderOffset: editEntry?.reminderOffset || 15,
     repeat:         editEntry?.repeat         || 'No repetir',
+    spaceId:        initialSpace,
+    client:         editEntry?.client         || '',
   }));
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  const spaces      = state.spaces || [];
+  const activeSpace = spaces.find(s => s.id === form.spaceId);
+  const spaceClients = activeSpace?.clients || [];
+
   const handleSave = () => {
     if (!form.title.trim()) { showToast('Escribe un título', 'error'); return; }
     const amountNum = form.amount.trim() === '' ? null : Number(form.amount.replace(/[^0-9.]/g, ''));
+    const isShared = form.spaceId && form.spaceId !== 'personal';
     const base = {
       title:  form.title.trim(),
       date:   form.date,
@@ -51,6 +63,8 @@ export default function CreateEntrySheet() {
       reminder: form.reminder,
       reminderOffset: form.reminderOffset,
       repeat: form.repeat,
+      spaceId: form.spaceId || 'personal',
+      client: isShared ? (form.client || '') : '',
     };
     if (isEdit) {
       dispatch({ type: 'UPDATE_TASK', task: { ...editEntry, ...base } });
@@ -184,6 +198,44 @@ export default function CreateEntrySheet() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Espacio + Cliente */}
+          <div className="es-card">
+            <div className="es-label"><span className="material-symbols-outlined">folder_shared</span>Espacio</div>
+            <div className="es-pills" style={{ marginTop: 0 }}>
+              <button type="button" className={`es-pill${form.spaceId === 'personal' ? ' sel' : ''}`} onClick={() => set('spaceId', 'personal')}>🔒 Personal</button>
+              {spaces.map(s => (
+                <button key={s.id} type="button" className={`es-pill${form.spaceId === s.id ? ' sel' : ''}`} onClick={() => set('spaceId', s.id)}>👥 {s.name}</button>
+              ))}
+            </div>
+
+            {form.spaceId && form.spaceId !== 'personal' && (
+              <>
+                <div className="es-label" style={{ marginTop: 16 }}><span className="material-symbols-outlined">sell</span>Cliente <span style={{ fontWeight: 500, color: 'var(--outline)' }}>· opcional</span></div>
+                <div className="es-pills" style={{ marginTop: 0 }}>
+                  <button type="button" className={`es-pill${!form.client ? ' sel' : ''}`} onClick={() => set('client', '')}>Sin cliente</button>
+                  {spaceClients.map(c => (
+                    <button key={c} type="button" className={`es-pill${form.client === c ? ' sel' : ''}`} onClick={() => set('client', c)}>{c}</button>
+                  ))}
+                </div>
+                <input
+                  className="es-input"
+                  style={{ paddingLeft: 16, marginTop: 10 }}
+                  placeholder="＋ Nuevo cliente y Enter"
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && e.target.value.trim()) {
+                      e.preventDefault();
+                      const name = e.target.value.trim();
+                      set('client', name);
+                      if (!spaceClients.includes(name)) addClient(form.spaceId, name).catch(() => {});
+                      e.target.value = '';
+                    }
+                  }}
+                  id="entry-new-client"
+                />
+              </>
+            )}
           </div>
 
           {/* Color */}

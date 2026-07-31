@@ -1,10 +1,13 @@
 import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
-import { onAuthChange } from '../lib/authService';
+import { onAuthChange, getCurrentUser } from '../lib/authService';
 import { loadUserData, saveTask, deleteTask,
          saveGoal, saveJournalEntry,
          markNotificationRead, markAllNotificationsRead, saveUserProfile,
          deleteNotification, deleteReadNotifications, saveNotification,
-         saveSettings } from '../lib/firestoreService';
+         saveSettings,
+         subscribePersonalTasks, subscribeUserSpaces, subscribeSpaceTasks,
+         getPendingInvites, createSpace, inviteToSpace, joinSpace, leaveSpace,
+         addSpaceClient, removeSpaceClient, saveSpaceTask, deleteSpaceTask } from '../lib/firestoreService';
 import {
   initFCM,
   scheduleTaskReminder,
@@ -67,6 +70,10 @@ const defaultState = {
   activeFilter:      'Hoy',
   toast:             null,
   entrySheet:        null,   // null | { entryId?, date? } → bottom sheet crear/editar entrada
+  // Espacios (agenda personal + compartidos)
+  spaces:            [],     // espacios compartidos donde el usuario es miembro
+  currentSpaceId:    (typeof localStorage !== 'undefined' && localStorage.getItem('mavia_space')) || 'personal',
+  pendingInvites:    [],     // espacios donde el email fue invitado y aún no es miembro
   // Data — user content starts empty; system content pre-loaded from constants
   ...emptyDataState,
   phrases:     SYSTEM_PHRASES,
@@ -175,6 +182,21 @@ function reducer(state, action) {
     case 'HIDE_TOAST':      return { ...state, toast: null };
     case 'OPEN_ENTRY_SHEET':return { ...state, entrySheet: action.params || {} };
     case 'CLOSE_ENTRY_SHEET':return { ...state, entrySheet: null };
+
+    /* ── Espacios ── */
+    case 'SET_SPACES':          return { ...state, spaces: action.spaces };
+    case 'SET_PENDING_INVITES': return { ...state, pendingInvites: action.invites };
+    case 'SET_CURRENT_SPACE':   return { ...state, currentSpaceId: action.spaceId };
+    case 'SYNC_PERSONAL_TASKS': {
+      // Reemplaza solo las entradas personales; conserva las de espacios
+      const others = state.tasks.filter(t => (t.spaceId || 'personal') !== 'personal');
+      return { ...state, tasks: [...others, ...action.tasks] };
+    }
+    case 'SYNC_SPACE_TASKS': {
+      // Reemplaza las entradas de un espacio concreto
+      const others = state.tasks.filter(t => t.spaceId !== action.spaceId);
+      return { ...state, tasks: [...others, ...action.tasks] };
+    }
     case 'UPDATE_USER':     return { ...state, user: { ...state.user, ...action.updates } };
 
     /* ── Tasks ── */
@@ -258,15 +280,21 @@ function reducer(state, action) {
 
     /* ── Real-time sync ── */
     // Replaced by visibilitychange polling — see AppProvider
-    case 'SYNC_ALL':
-      // Merge fresh Firestore data into state (tasks=entradas, goals, notifications)
+    case 'SYNC_ALL': {
+      // Merge fresh Firestore data. Las tareas del backup son personales:
+      // reemplaza solo las personales y conserva las de espacios compartidos.
+      const spaceTasks = state.tasks.filter(t => (t.spaceId || 'personal') !== 'personal');
+      const personalTasks = action.data.tasks
+        ? action.data.tasks.map(t => ({ ...t, spaceId: 'personal' }))
+        : state.tasks.filter(t => (t.spaceId || 'personal') === 'personal');
       return {
         ...state,
-        tasks:            action.data.tasks            ?? state.tasks,
+        tasks:            [...personalTasks, ...spaceTasks],
         goals:            action.data.goals            ?? state.goals,
         notifications:    action.data.notifications    ?? state.notifications,
         journalEntries:   action.data.journalEntries   ?? state.journalEntries,
       };
+    }
 
     default:
       return state;
@@ -285,6 +313,44 @@ export function AppProvider({ children }) {
   useEffect(() => {
     let currentUid = null;  // track the logged-in user's uid for re-syncs
 
+    // ── Realtime: tareas personales + espacios compartidos (sync en vivo) ──
+    const rt = { personal: null, spaces: null, tasks: {} };
+    const teardownRealtime = () => {
+      try { rt.personal?.(); } catch {}
+      try { rt.spaces?.(); } catch {}
+      Object.values(rt.tasks).forEach(fn => { try { fn(); } catch {} });
+      rt.personal = null; rt.spaces = null; rt.tasks = {};
+    };
+    const setupRealtime = (fbUser) => {
+      const uid = fbUser.uid;
+      // Tareas personales
+      rt.personal = subscribePersonalTasks(uid, (tasks) => dispatch({ type: 'SYNC_PERSONAL_TASKS', tasks }));
+      // Espacios del usuario + tareas de cada espacio
+      rt.spaces = subscribeUserSpaces(uid, (spaces) => {
+        dispatch({ type: 'SET_SPACES', spaces });
+        const ids = new Set(spaces.map(s => s.id));
+        Object.keys(rt.tasks).forEach(id => {
+          if (!ids.has(id)) {
+            try { rt.tasks[id](); } catch {}
+            delete rt.tasks[id];
+            dispatch({ type: 'SYNC_SPACE_TASKS', spaceId: id, tasks: [] });
+          }
+        });
+        spaces.forEach(s => {
+          if (!rt.tasks[s.id]) {
+            rt.tasks[s.id] = subscribeSpaceTasks(s.id, (tasks) => dispatch({ type: 'SYNC_SPACE_TASKS', spaceId: s.id, tasks }));
+          }
+        });
+      });
+      // Invitaciones pendientes por correo (una vez)
+      if (fbUser.email) {
+        getPendingInvites(fbUser.email).then(list => {
+          const pending = list.filter(sp => !(sp.memberUids || []).includes(uid));
+          dispatch({ type: 'SET_PENDING_INVITES', invites: pending });
+        }).catch(() => {});
+      }
+    };
+
     // ── Helper: load/reload all user data from Firestore ──
     const syncUserData = async (firebaseUser) => {
       if (!firebaseUser) return;
@@ -301,6 +367,7 @@ export function AppProvider({ children }) {
     const unsub = onAuthChange(async (firebaseUser) => {
       if (!firebaseUser) {
         currentUid = null;
+        teardownRealtime();
         dispatch({ type: 'SET_AUTH_LOADING', value: false });
         dispatch({ type: 'LOGOUT' });
         return;
@@ -312,6 +379,7 @@ export function AppProvider({ children }) {
       try {
         const firestoreData = await loadUserData(firebaseUser.uid);
         const { user: fsUser, settings, ...data } = firestoreData;
+        data.tasks = (data.tasks || []).map(t => ({ ...t, spaceId: 'personal' }));
 
         const displayName = firebaseUser.displayName || fsUser?.name || '';
         const firstName   = displayName.split(' ')[0] || firebaseUser.email.split('@')[0];
@@ -332,6 +400,9 @@ export function AppProvider({ children }) {
             language: settings?.language ?? 'es',
           },
         });
+
+        // ── Espacios + realtime (sync en vivo con la novia) ──
+        setupRealtime(firebaseUser);
 
         // ── Notifications ── wait for FCM token then reschedule all
         const _uid   = firebaseUser.uid;
@@ -395,16 +466,16 @@ export function AppProvider({ children }) {
                   photoURL: firebaseUser.photoURL || null },
           data: {},
         });
+        // Realtime igual funciona desde caché IndexedDB
+        setupRealtime(firebaseUser);
       }
     });
 
     // ── Sync helper using auth.currentUser directly ──
     const runSync = () => {
       if (!currentUid) return;
-      import('../lib/authService').then(({ getCurrentUser }) => {
-        const user = getCurrentUser?.();
-        if (user) syncUserData(user);
-      }).catch(() => {});
+      const user = getCurrentUser?.();
+      if (user) syncUserData(user);
     };
 
     // ── Visibility-based sync: fires immediately when returning to app ──
@@ -422,6 +493,7 @@ export function AppProvider({ children }) {
 
     return () => {
       unsub();
+      teardownRealtime();
       document.removeEventListener('visibilitychange', handleVisibility);
       clearInterval(pollTimer);
     };
@@ -454,27 +526,32 @@ export function AppProvider({ children }) {
     const uid = state.user?.uid;
     if (!uid) return;
 
+    // ── Ruteo por espacio: personal (users/{uid}/tasks) vs compartido (spaces/{id}/tasks) ──
+    const isSpaceEntry = (t) => !!(t && t.spaceId && t.spaceId !== 'personal');
+    const persistTask  = (t) => isSpaceEntry(t) ? saveSpaceTask(t.spaceId, t) : saveTask(uid, t);
+    const removeTask   = (t) => isSpaceEntry(t) ? deleteSpaceTask(t.spaceId, t.id) : deleteTask(uid, t.id);
+
     try {
       switch (enrichedAction.type) {
 
-        case 'ADD_TASK':
-          await saveTask(uid, enrichedAction.task);
-          if (enrichedAction.task.reminder) {
-            // state.fcmToken may not be set yet (initFCM is async) — fall back to localStorage cache
+        case 'ADD_TASK': {
+          const task = enrichedAction.task;
+          await persistTask(task);
+          if (task.reminder && !isSpaceEntry(task)) {
             const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
-            scheduleTaskReminder(enrichedAction.task, uid, token);
+            scheduleTaskReminder(task, uid, token);
           }
           break;
+        }
 
         case 'TOGGLE_TASK': {
           const existingTask = state.tasks.find(t => t.id === enrichedAction.id);
           if (existingTask) {
             const nowCompleted = !existingTask.completed;
-            await saveTask(uid, { ...existingTask, completed: nowCompleted });
-            // Cancel reminder when task is marked complete
-            if (nowCompleted) cancelReminder(enrichedAction.id);
+            await persistTask({ ...existingTask, completed: nowCompleted });
+            if (nowCompleted && !isSpaceEntry(existingTask)) cancelReminder(enrichedAction.id);
 
-            // ── Repeat logic: auto-create next occurrence ──
+            // ── Repeat logic: auto-create next occurrence (mismo espacio) ──
             if (nowCompleted && existingTask.repeat && existingTask.repeat !== 'No repetir' && existingTask.date) {
               const nextDate = (() => {
                 const d = new Date(existingTask.date + 'T00:00:00');
@@ -483,17 +560,16 @@ export function AppProvider({ children }) {
                 if (existingTask.repeat === 'Mensual')  d.setMonth(d.getMonth() + 1);
                 return d.toLocaleDateString('en-CA'); // YYYY-MM-DD
               })();
-              const nextId = `t_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
               const nextTask = {
                 ...existingTask,
-                id: nextId,
+                id: genId('t'),
                 date: nextDate,
                 completed: false,
                 createdAt: new Date().toISOString(),
               };
               dispatch({ type: 'ADD_TASK', task: nextTask });
-              await saveTask(uid, nextTask);
-              if (nextTask.reminder) {
+              await persistTask(nextTask);
+              if (nextTask.reminder && !isSpaceEntry(nextTask)) {
                 const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
                 scheduleTaskReminder(nextTask, uid, token);
               }
@@ -506,21 +582,29 @@ export function AppProvider({ children }) {
           const existingTask = state.tasks.find(t => t.id === enrichedAction.task?.id);
           if (existingTask) {
             const updated = { ...existingTask, ...enrichedAction.task };
-            await saveTask(uid, updated);
-            // Re-schedule reminder if settings changed
-            cancelReminder(updated.id);
-            if (updated.reminder && !updated.completed) {
-              const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
-              scheduleTaskReminder(updated, uid, token);
+            // Si cambió de espacio, borra la copia del espacio anterior
+            if ((existingTask.spaceId || 'personal') !== (updated.spaceId || 'personal')) {
+              await removeTask(existingTask);
+            }
+            await persistTask(updated);
+            if (!isSpaceEntry(updated)) {
+              cancelReminder(updated.id);
+              if (updated.reminder && !updated.completed) {
+                const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
+                scheduleTaskReminder(updated, uid, token);
+              }
             }
           }
           break;
         }
 
-        case 'DELETE_TASK':
-          await deleteTask(uid, enrichedAction.id);
-          cancelReminder(enrichedAction.id, uid); // Cancel local + delete Firestore docs
+        case 'DELETE_TASK': {
+          const existingTask = state.tasks.find(t => t.id === enrichedAction.id);
+          if (existingTask) await removeTask(existingTask);
+          else await deleteTask(uid, enrichedAction.id);
+          if (!existingTask || !isSpaceEntry(existingTask)) cancelReminder(enrichedAction.id, uid);
           break;
+        }
 
         case 'ADD_GOAL':
           await saveGoal(uid, enrichedAction.goal);
@@ -611,6 +695,38 @@ export function AppProvider({ children }) {
   const openEntrySheet  = (params = {}) => dispatch({ type: 'OPEN_ENTRY_SHEET', params });
   const closeEntrySheet = ()            => dispatch({ type: 'CLOSE_ENTRY_SHEET' });
 
+  /* ── Espacios compartidos ── */
+  const setCurrentSpace = (spaceId) => {
+    try { localStorage.setItem('mavia_space', spaceId); } catch {}
+    dispatch({ type: 'SET_CURRENT_SPACE', spaceId });
+  };
+  const createSharedSpace = async (name) => {
+    const uid = state.user?.uid;
+    if (!uid) return null;
+    const space = await createSpace(uid, { name, ownerName: state.user?.firstName || state.user?.name || '' });
+    setCurrentSpace(space.id);  // realtime lo agregará a state.spaces
+    return space;
+  };
+  const inviteEmail = async (spaceId, email) => {
+    await inviteToSpace(spaceId, email);
+  };
+  const acceptInvite = async (space) => {
+    const uid = state.user?.uid;
+    const email = state.user?.email;
+    if (!uid) return;
+    await joinSpace(space.id, uid, email);
+    dispatch({ type: 'SET_PENDING_INVITES', invites: state.pendingInvites.filter(s => s.id !== space.id) });
+    setCurrentSpace(space.id);  // realtime cargará sus entradas
+  };
+  const leaveSharedSpace = async (spaceId) => {
+    const uid = state.user?.uid;
+    if (!uid) return;
+    await leaveSpace(spaceId, uid);
+    if (state.currentSpaceId === spaceId) setCurrentSpace('personal');
+  };
+  const addClient    = async (spaceId, name) => { await addSpaceClient(spaceId, name); };
+  const removeClient = async (spaceId, name) => { await removeSpaceClient(spaceId, name); };
+
   const value = {
     state,
     dispatch: dispatchWithSync,  // replaces the raw dispatch everywhere
@@ -619,6 +735,13 @@ export function AppProvider({ children }) {
     showToast,
     openEntrySheet,
     closeEntrySheet,
+    setCurrentSpace,
+    createSharedSpace,
+    inviteEmail,
+    acceptInvite,
+    leaveSharedSpace,
+    addClient,
+    removeClient,
   };
 
   return (

@@ -3,18 +3,17 @@
    Estilo visual único para las "entradas" de la agenda.
    ============================================ */
 
-/** Colores de resaltador kawaii (como los marcadores de una agenda física) */
+/** Colores de resaltador — paleta fresa-limón */
 export const HIGHLIGHTERS = [
-  { id: 'pink',   hex: '#FF9DBB' },
-  { id: 'lavender',hex: '#B9A7F5' },
-  { id: 'mint',   hex: '#74D6AE' },
-  { id: 'yellow', hex: '#FFD86B' },
-  { id: 'sky',    hex: '#8CCDEB' },
-  { id: 'peach',  hex: '#FFB08A' },
-  { id: 'coral',  hex: '#FF7A8A' },
+  { id: 'teal',   hex: '#3B9890' },
+  { id: 'pink',   hex: '#E07C8E' },
+  { id: 'lime',   hex: '#A9BF53' },
+  { id: 'olive',  hex: '#718804' },
+  { id: 'mint',   hex: '#A0D8CD' },
+  { id: 'red',    hex: '#D33243' },
 ];
 
-export const DEFAULT_COLOR = '#FF9DBB';
+export const DEFAULT_COLOR = '#3B9890';
 
 /** Devuelve un color válido de la paleta (o el default) */
 export function normalizeColor(hex) {

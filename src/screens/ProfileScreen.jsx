@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
 import {
   Edit2, Moon, Globe, Bell, Shield, HelpCircle,
-  LogOut, ChevronRight, Check, X, Camera
+  LogOut, ChevronRight, Check, X, Camera, Users
 } from 'lucide-react';
 import { Switch } from '../components/ui/switch';
 import { Button } from '../components/ui/button';
@@ -620,6 +620,24 @@ export default function ProfileScreen() {
         {/* ── Sección Cuenta ── */}
         <p className="prof-section-label">Cuenta</p>
         <div className="prof-group">
+          {/* Espacios compartidos */}
+          <div className="prof-row" onClick={() => navigate('spaces')} id="prof-spaces">
+            <div className="prof-row-left">
+              <div className="prof-row-icon" style={{ background: 'var(--primary-container)' }}>
+                <Users size={18} color="var(--primary)" strokeWidth={1.75} />
+              </div>
+              <span className="prof-row-label">Espacios compartidos</span>
+            </div>
+            <div className="prof-row-right">
+              {(state.pendingInvites?.length > 0) && (
+                <span style={{ background: 'var(--primary)', color: 'var(--on-primary)', fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 99 }}>
+                  {state.pendingInvites.length}
+                </span>
+              )}
+              <ChevronRight size={16} color="var(--on-surface-variant)" />
+            </div>
+          </div>
+
           {/* Privacy */}
           <div className="prof-row" onClick={() => navigate('settings')} id="prof-privacy">
             <div className="prof-row-left">

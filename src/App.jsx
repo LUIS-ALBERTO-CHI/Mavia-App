@@ -21,6 +21,7 @@ import EntryDetailScreen from './screens/EntryDetailScreen';
 import GoalsScreen from './screens/GoalsScreen';
 import CreateGoalScreen from './screens/CreateGoalScreen';
 import JournalScreen from './screens/JournalScreen';
+import SpacesScreen from './screens/SpacesScreen';
 
 // Screens - Management
 import RemindersScreen from './screens/RemindersScreen';
@@ -59,6 +60,7 @@ const SCREEN_MAP = {
   createGoal: CreateGoalScreen,
   notes: JournalScreen,
   journal: JournalScreen,
+  spaces: SpacesScreen,
   reminders: RemindersScreen,
   notifications: NotificationsScreen,
   profile: ProfileScreen,
@@ -78,7 +80,7 @@ const MAIN_NAV = [
 // Screens that already have their own "Añadir" button — hide FAB to avoid confusion
 const SCREENS_WITH_OWN_ADD = new Set([
   'goals', 'notes', 'journal', 'createGoal', 'entryDetail', 'taskDetail',
-  'eventDetail', 'notifications', 'search', 'profile', 'settings', 'reminders',
+  'eventDetail', 'notifications', 'search', 'profile', 'settings', 'reminders', 'spaces',
 ]);
 
 // Back-navigation screens (animate slide-back instead of slide-in)
@@ -92,6 +94,7 @@ const SCREEN_TITLES = {
   goals: 'Objetivos',
   notes: 'Notas',
   journal: 'Notas',
+  spaces: 'Espacios',
   reminders: 'Recordatorios',
   notifications: 'Notificaciones',
   profile: 'Mi perfil',
@@ -603,7 +606,7 @@ function MobileBottomNav() {
   const TAB_GROUPS = {
     calendar:  ['calendar', 'dashboard', 'agenda', 'entryDetail', 'taskDetail', 'eventDetail', 'reminders'],
     notes:     ['notes', 'journal'],
-    profile:   ['profile', 'settings', 'notifications', 'search', 'goals', 'createGoal'],
+    profile:   ['profile', 'settings', 'notifications', 'search', 'goals', 'createGoal', 'spaces'],
   };
 
   const activeTab = Object.entries(TAB_GROUPS)

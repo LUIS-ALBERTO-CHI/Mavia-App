@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { ArrowLeft, Pencil, Trash2, Check, Clock, Bell, Repeat, CalendarDays } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Check, Clock, Bell, Repeat, CalendarDays, Users } from 'lucide-react';
 import { formatTime12h } from '../lib/utils';
 import Sticker from '../components/Sticker';
 import { formatAmount } from '../lib/entryStyle';
@@ -44,6 +44,9 @@ export default function EntryDetailScreen() {
   const done    = !!entry.completed;
   const amount  = formatAmount(entry.amount);
   const timeStr = entry.time ? formatTime12h(entry.time) : 'Todo el día';
+  const entrySpace = entry.spaceId && entry.spaceId !== 'personal'
+    ? (state.spaces || []).find(s => s.id === entry.spaceId)
+    : null;
 
   const toggleDone = () => {
     dispatch({ type: 'TOGGLE_TASK', id: entry.id });
@@ -142,6 +145,15 @@ export default function EntryDetailScreen() {
 
         {/* Detalles */}
         <div className="ed-rows">
+          {entrySpace && (
+            <div className="ed-row">
+              <div className="ed-row-icon"><Users size={17} /></div>
+              <div>
+                <div className="ed-row-label">Espacio</div>
+                <div className="ed-row-value">👥 {entrySpace.name}{entry.client ? ` · ${entry.client}` : ''}</div>
+              </div>
+            </div>
+          )}
           <div className="ed-row">
             <div className="ed-row-icon"><CalendarDays size={17} /></div>
             <div><div className="ed-row-label">Fecha</div><div className="ed-row-value">{formatDate(entry.date)}</div></div>

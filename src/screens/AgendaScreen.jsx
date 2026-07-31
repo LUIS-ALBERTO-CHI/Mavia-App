@@ -9,8 +9,9 @@ export default function AgendaScreen() {
   const { state, dispatch, navigate, showToast, openEntrySheet } = useApp();
   const today = localToday();
 
+  const csid = state.currentSpaceId || 'personal';
   const items = state.tasks
-    .filter(e => e.date === today)
+    .filter(e => e.date === today && (csid === 'all' || (e.spaceId || 'personal') === csid))
     .sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
 
   const formattedDate = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });

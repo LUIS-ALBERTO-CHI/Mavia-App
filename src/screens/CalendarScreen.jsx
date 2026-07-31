@@ -39,15 +39,20 @@ function useTouchSwipe(onLeft, onRight, threshold = 50) {
 }
 
 export default function CalendarScreen() {
-  const { state, navigate, dispatch, openEntrySheet } = useApp();
+  const { state, navigate, dispatch, openEntrySheet, setCurrentSpace } = useApp();
   const now = new Date();
   const todayDS = localToday();
+
+  const spaces         = state.spaces || [];
+  const currentSpaceId = state.currentSpaceId || 'personal';
+  const currentSpace   = spaces.find(s => s.id === currentSpaceId);
 
   const [viewYear,    setViewYear]    = useState(now.getFullYear());
   const [viewMonth,   setViewMonth]   = useState(now.getMonth());
   const [selectedDay, setSelectedDay] = useState(now.getDate());
   const [viewMode,    setViewMode]    = useState('month');
   const [slideDir,    setSlideDir]    = useState('');
+  const [clientFilter, setClientFilter] = useState('all');
 
   const slide = (dir, fn) => { setSlideDir(dir); setTimeout(() => { fn(); setSlideDir(''); }, 180); };
 
@@ -76,8 +81,10 @@ export default function CalendarScreen() {
 
   const swipe = useTouchSwipe(next, prev);
 
+  const spaceMatch  = (e) => currentSpaceId === 'all' ? true : (e.spaceId || 'personal') === currentSpaceId;
+  const clientMatch = (e) => clientFilter === 'all' ? true : e.client === clientFilter;
   const entriesFor = (ds) => state.tasks
-    .filter(e => e.date === ds)
+    .filter(e => e.date === ds && spaceMatch(e) && clientMatch(e))
     .sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
 
   /* ── Month grid math ── */
@@ -141,7 +148,7 @@ export default function CalendarScreen() {
 
   /* upcoming for LISTA */
   const upcoming = [...state.tasks]
-    .filter(e => e.date >= todayDS)
+    .filter(e => e.date >= todayDS && spaceMatch(e) && clientMatch(e))
     .sort((a, b) => (a.date + (a.time || '99:99')).localeCompare(b.date + (b.time || '99:99')));
   const upcomingByDate = upcoming.reduce((acc, e) => { (acc[e.date] ||= []).push(e); return acc; }, {});
 
@@ -164,7 +171,18 @@ export default function CalendarScreen() {
         .cal-icon-btn:hover { background: var(--surface-container); }
 
         /* ── Segmented control ── */
-        .cal-segs { display: flex; background: var(--surface-container); border-radius: 14px; padding: 4px; gap: 2px; margin-bottom: 16px; }
+        .cal-segs { display: flex; background: var(--surface-container); border-radius: 14px; padding: 4px; gap: 2px; margin-bottom: 12px; }
+
+        /* Selector de espacio */
+        .cal-spaces { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 10px; padding-bottom: 2px; }
+        .cal-spaces::-webkit-scrollbar { display: none; }
+        .cal-space { flex-shrink: 0; padding: 7px 14px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+        .cal-space.active { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
+        /* Filtro de clientes */
+        .cal-clients { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; margin-bottom: 14px; padding-bottom: 2px; }
+        .cal-clients::-webkit-scrollbar { display: none; }
+        .cal-client { flex-shrink: 0; padding: 5px 12px; border-radius: 99px; border: none; background: var(--surface-container); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 12px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+        .cal-client.active { background: var(--secondary-container); color: var(--on-secondary-container); }
         .cal-seg { flex: 1; padding: 9px 4px; border-radius: 10px; border: none; background: transparent; cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 800; letter-spacing: 0.03em; color: var(--on-surface-variant); transition: all var(--transition-fast); }
         .cal-seg.active { background: var(--primary); color: var(--on-primary); box-shadow: 0 2px 8px rgba(255,143,177,0.4); }
 
@@ -251,6 +269,27 @@ export default function CalendarScreen() {
             </button>
           ))}
         </div>
+
+        {/* ── Selector de espacio (solo si hay espacios compartidos) ── */}
+        {spaces.length > 0 && (
+          <div className="cal-spaces">
+            <button className={`cal-space${currentSpaceId === 'personal' ? ' active' : ''}`} onClick={() => { setCurrentSpace('personal'); setClientFilter('all'); }}>🔒 Personal</button>
+            {spaces.map(s => (
+              <button key={s.id} className={`cal-space${currentSpaceId === s.id ? ' active' : ''}`} onClick={() => { setCurrentSpace(s.id); setClientFilter('all'); }}>👥 {s.name}</button>
+            ))}
+            <button className={`cal-space${currentSpaceId === 'all' ? ' active' : ''}`} onClick={() => { setCurrentSpace('all'); setClientFilter('all'); }}>Todos</button>
+          </div>
+        )}
+
+        {/* ── Filtro por cliente (en un espacio compartido con clientes) ── */}
+        {currentSpace && (currentSpace.clients || []).length > 0 && (
+          <div className="cal-clients">
+            <button className={`cal-client${clientFilter === 'all' ? ' active' : ''}`} onClick={() => setClientFilter('all')}>Todos los clientes</button>
+            {currentSpace.clients.map(c => (
+              <button key={c} className={`cal-client${clientFilter === c ? ' active' : ''}`} onClick={() => setClientFilter(c)}>{c}</button>
+            ))}
+          </div>
+        )}
 
         <div className={`cal-view${slideDir ? ` slide-${slideDir}` : ''}`} {...swipe}>
 

@@ -7,7 +7,7 @@
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc,
   collection, getDocs, writeBatch, addDoc, query, limit,
-  where, serverTimestamp, onSnapshot, arrayUnion,
+  where, serverTimestamp, onSnapshot, arrayUnion, arrayRemove, deleteField,
 } from 'firebase/firestore';
 
 import { db } from './firebase';
@@ -178,12 +178,21 @@ export async function saveSettings(uid, settings) {
 // ─── Tasks ─────────────────────────────────────────────────────────────────
 
 export async function saveTask(uid, task) {
-  const { id, ...data } = task;
+  const { id, spaceId: _s, ...data } = task;   // no persistir spaceId ('personal' es implícito)
   await setDoc(docRef(uid, 'tasks', id), data);
 }
 
 export async function deleteTask(uid, taskId) {
   await deleteDoc(docRef(uid, 'tasks', taskId));
+}
+
+/** Suscripción en vivo a las tareas personales (etiquetadas spaceId='personal'). */
+export function subscribePersonalTasks(uid, cb) {
+  return onSnapshot(
+    colRef(uid, 'tasks'),
+    snap => cb(snap.docs.map(d => ({ id: d.id, spaceId: 'personal', ...d.data() }))),
+    err => console.warn('[Mavia] subscribePersonalTasks error:', err.message)
+  );
 }
 
 // ─── Goals ─────────────────────────────────────────────────────────────────
@@ -370,4 +379,103 @@ export async function saveNotification(uid, notif) {
   } catch (e) {
     console.warn('[Mavia] saveNotification error:', e.message);
   }
+}
+
+// ─── Shared Spaces ───────────────────────────────────────────────────────────
+// Top-level `spaces/{id}` with membership + `spaces/{id}/tasks` (entradas compartidas).
+// Invitación por correo: el owner agrega el email a `invitedEmails`; el invitado
+// se une agregando su uid a members/memberUids.
+
+const spaceRef     = (id) => doc(db, 'spaces', id);
+const spaceTaskCol = (id) => collection(db, 'spaces', id, 'tasks');
+const spaceTaskRef = (id, taskId) => doc(db, 'spaces', id, 'tasks', taskId);
+
+/** Crea un espacio compartido con el usuario como owner. Devuelve {id, ...}. */
+export async function createSpace(uid, { name, ownerName } = {}) {
+  const data = {
+    name:          name || 'Espacio compartido',
+    ownerUid:      uid,
+    ownerName:     ownerName || '',
+    members:       { [uid]: 'owner' },
+    memberUids:    [uid],
+    invitedEmails: [],
+    clients:       [],
+    createdAt:     new Date().toISOString(),
+  };
+  const ref = await addDoc(collection(db, 'spaces'), data);
+  return { id: ref.id, ...data };
+}
+
+/** Espacios donde el uid es miembro. */
+export async function getUserSpaces(uid) {
+  const q = query(collection(db, 'spaces'), where('memberUids', 'array-contains', uid));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+/** Suscripción en vivo a los espacios del usuario. */
+export function subscribeUserSpaces(uid, cb) {
+  const q = query(collection(db, 'spaces'), where('memberUids', 'array-contains', uid));
+  return onSnapshot(
+    q,
+    snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+    err => console.warn('[Mavia] subscribeUserSpaces error:', err.message)
+  );
+}
+
+/** Espacios a los que el email fue invitado (incluye donde ya es miembro; se filtra fuera). */
+export async function getPendingInvites(email) {
+  if (!email) return [];
+  const q = query(collection(db, 'spaces'), where('invitedEmails', 'array-contains', email.toLowerCase()));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+/** Invitar por correo: agrega el email a invitedEmails del espacio. */
+export async function inviteToSpace(spaceId, email) {
+  await updateDoc(spaceRef(spaceId), { invitedEmails: arrayUnion(email.trim().toLowerCase()) });
+}
+
+/** Unirse a un espacio (agrega solo el propio uid). Luego quita el email invitado. */
+export async function joinSpace(spaceId, uid, email) {
+  // 1) Add self as member (permitido por la regla de "invitado").
+  await updateDoc(spaceRef(spaceId), { memberUids: arrayUnion(uid), [`members.${uid}`]: 'member' });
+  // 2) Ya como miembro, limpiar el email de invitedEmails.
+  if (email) {
+    try { await updateDoc(spaceRef(spaceId), { invitedEmails: arrayRemove(email.trim().toLowerCase()) }); }
+    catch (e) { console.warn('[Mavia] joinSpace cleanup:', e.message); }
+  }
+}
+
+/** Salir de un espacio. */
+export async function leaveSpace(spaceId, uid) {
+  await updateDoc(spaceRef(spaceId), { memberUids: arrayRemove(uid), [`members.${uid}`]: deleteField() });
+}
+
+/** Clientes del espacio. */
+export async function addSpaceClient(spaceId, name) {
+  await updateDoc(spaceRef(spaceId), { clients: arrayUnion(name.trim()) });
+}
+export async function removeSpaceClient(spaceId, name) {
+  await updateDoc(spaceRef(spaceId), { clients: arrayRemove(name) });
+}
+
+/** Entradas del espacio compartido. */
+export async function saveSpaceTask(spaceId, task) {
+  const { id, spaceId: _s, ...data } = task;   // el spaceId es implícito por la ubicación
+  await setDoc(spaceTaskRef(spaceId, id), data);
+}
+export async function deleteSpaceTask(spaceId, taskId) {
+  await deleteDoc(spaceTaskRef(spaceId, taskId));
+}
+export async function getSpaceTasks(spaceId) {
+  const snap = await getDocs(spaceTaskCol(spaceId));
+  return snap.docs.map(d => ({ id: d.id, spaceId, ...d.data() }));
+}
+export function subscribeSpaceTasks(spaceId, cb) {
+  return onSnapshot(
+    spaceTaskCol(spaceId),
+    snap => cb(snap.docs.map(d => ({ id: d.id, spaceId, ...d.data() }))),
+    err => console.warn('[Mavia] subscribeSpaceTasks error:', err.message)
+  );
 }

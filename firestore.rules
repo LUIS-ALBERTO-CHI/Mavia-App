@@ -1,0 +1,71 @@
+rules_version = '2';
+
+// ============================================================
+//  MAVIA — Firestore Security Rules
+//  - users/{uid}/**            → privado del dueño
+//  - spaces/{id}              → espacios compartidos (membresía)
+//  - spaces/{id}/tasks/**     → entradas compartidas (solo miembros)
+//  - scheduledNotifications   → cron de recordatorios (autenticado)
+//  Despliegue:  firebase deploy --only firestore:rules
+//               (o pega este contenido en Firebase Console → Firestore → Rules)
+// ============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function myUid() {
+      return request.auth.uid;
+    }
+    function myEmail() {
+      return request.auth.token.email;
+    }
+
+    // ── Datos personales privados ──
+    match /users/{uid}/{document=**} {
+      allow read, write: if isSignedIn() && myUid() == uid;
+    }
+
+    // ── Espacios compartidos ──
+    match /spaces/{spaceId} {
+      function space() { return resource.data; }
+      function isMember() { return isSignedIn() && myUid() in space().memberUids; }
+      function isInvited() {
+        return isSignedIn() && myEmail() != null && myEmail() in space().invitedEmails;
+      }
+
+      allow read: if isMember() || isInvited();
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerUid == myUid()
+        && myUid() in request.resource.data.memberUids;
+
+      allow update: if isMember()
+        // ó un invitado uniéndose: agrega ÚNICAMENTE su propio uid
+        || (
+          isInvited()
+          && request.resource.data.ownerUid == space().ownerUid
+          && myUid() in request.resource.data.memberUids
+          && request.resource.data.memberUids.hasAll(space().memberUids)
+          && request.resource.data.memberUids.size() == space().memberUids.size() + 1
+        );
+
+      allow delete: if isSignedIn() && space().ownerUid == myUid();
+
+      // Entradas del espacio: solo miembros
+      match /tasks/{taskId} {
+        function members() {
+          return get(/databases/$(database)/documents/spaces/$(spaceId)).data.memberUids;
+        }
+        allow read, write: if isSignedIn() && myUid() in members();
+      }
+    }
+
+    // ── Notificaciones programadas (cron de recordatorios) ──
+    match /scheduledNotifications/{id} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

@@ -78,6 +78,13 @@ export function onAuthChange(callback) {
 }
 
 /* -----------------------------------------------
+   CURRENT USER (sincronía) — usado por el re-sync
+   ----------------------------------------------- */
+export function getCurrentUser() {
+  return auth.currentUser;
+}
+
+/* -----------------------------------------------
    PARSE FIREBASE ERROR → Spanish message
    ----------------------------------------------- */
 export function parseFirebaseError(code) {
