@@ -3,7 +3,7 @@
    Faithful replication of Stitch/Aura Marketing UI
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
 /* ============================================
@@ -134,7 +134,7 @@
   /* ============================================
      TYPOGRAPHY
      ============================================ */
-  --font-display:   'Nunito', -apple-system, system-ui, sans-serif;
+  --font-display:   'Fredoka', 'Nunito', -apple-system, system-ui, sans-serif;
   --font-body:      'Nunito', -apple-system, system-ui, sans-serif;
 
   /* Font sizes matching Stitch spec */
@@ -383,6 +383,16 @@ html {
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+}
+
+/* Accesibilidad: respeta a quien prefiere menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 body {

@@ -150,7 +150,7 @@ export default function EntryDetailScreen() {
               <div className="ed-row-icon"><Users size={17} /></div>
               <div>
                 <div className="ed-row-label">Espacio</div>
-                <div className="ed-row-value">👥 {entrySpace.name}{entry.client ? ` · ${entry.client}` : ''}</div>
+                <div className="ed-row-value">{entrySpace.name}{entry.client ? ` · ${entry.client}` : ''}</div>
               </div>
             </div>
           )}

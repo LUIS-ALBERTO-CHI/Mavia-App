@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
-import { ChevronLeft, ChevronRight, Search, Check, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Check, Plus, Lock, Users, LayoutGrid } from 'lucide-react';
 import { formatTime12h, localToday } from '../lib/utils';
 import Sticker from '../components/Sticker';
 import Mascot from '../components/Mascot';
@@ -178,7 +178,7 @@ export default function CalendarScreen() {
         /* Selector de espacio */
         .cal-spaces { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 10px; padding-bottom: 2px; }
         .cal-spaces::-webkit-scrollbar { display: none; }
-        .cal-space { flex-shrink: 0; padding: 7px 14px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+        .cal-space { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .cal-space.active { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
         /* Filtro de clientes */
         .cal-clients { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; margin-bottom: 14px; padding-bottom: 2px; }
@@ -276,11 +276,11 @@ export default function CalendarScreen() {
         {/* ── Selector de espacio (solo si hay espacios compartidos) ── */}
         {spaces.length > 0 && (
           <div className="cal-spaces">
-            <button className={`cal-space${currentSpaceId === 'personal' ? ' active' : ''}`} onClick={() => { setCurrentSpace('personal'); setClientFilter('all'); }}>🔒 Personal</button>
+            <button className={`cal-space${currentSpaceId === 'personal' ? ' active' : ''}`} onClick={() => { setCurrentSpace('personal'); setClientFilter('all'); }}><Lock size={13} strokeWidth={2.5} /> Personal</button>
             {spaces.map(s => (
-              <button key={s.id} className={`cal-space${currentSpaceId === s.id ? ' active' : ''}`} onClick={() => { setCurrentSpace(s.id); setClientFilter('all'); }}>👥 {s.name}</button>
+              <button key={s.id} className={`cal-space${currentSpaceId === s.id ? ' active' : ''}`} onClick={() => { setCurrentSpace(s.id); setClientFilter('all'); }}><Users size={14} strokeWidth={2.5} /> {s.name}</button>
             ))}
-            <button className={`cal-space${currentSpaceId === 'all' ? ' active' : ''}`} onClick={() => { setCurrentSpace('all'); setClientFilter('all'); }}>Todos</button>
+            <button className={`cal-space${currentSpaceId === 'all' ? ' active' : ''}`} onClick={() => { setCurrentSpace('all'); setClientFilter('all'); }}><LayoutGrid size={13} strokeWidth={2.5} /> Todos</button>
           </div>
         )}
 

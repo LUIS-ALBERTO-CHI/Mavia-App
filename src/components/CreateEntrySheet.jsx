@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
-import { Check, DollarSign, Bell, Repeat, Clock, X } from 'lucide-react';
+import { Check, DollarSign, Bell, Repeat, Clock, X, Lock, Users } from 'lucide-react';
 import { DatePicker } from './ui/date-picker';
 import { TimePicker } from './ui/time-picker';
 import { localToday } from '../lib/utils';
@@ -143,7 +143,7 @@ export default function CreateEntrySheet() {
         .es-toggle.on::after { transform: translateX(20px); }
 
         .es-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-        .es-pill { padding: 7px 14px; border-radius: 99px; cursor: pointer; font-size: 13px; font-weight: 700; font-family: var(--font-body); border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); transition: all var(--transition-fast); }
+        .es-pill { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 99px; cursor: pointer; font-size: 13px; font-weight: 700; font-family: var(--font-body); border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); transition: all var(--transition-fast); }
         .es-pill.sel { border-color: var(--primary); background: var(--primary-container); color: var(--on-primary-container); }
 
         .es-money-wrap { position: relative; }
@@ -204,9 +204,9 @@ export default function CreateEntrySheet() {
           <div className="es-card">
             <div className="es-label"><span className="material-symbols-outlined">folder_shared</span>Espacio</div>
             <div className="es-pills" style={{ marginTop: 0 }}>
-              <button type="button" className={`es-pill${form.spaceId === 'personal' ? ' sel' : ''}`} onClick={() => set('spaceId', 'personal')}>🔒 Personal</button>
+              <button type="button" className={`es-pill${form.spaceId === 'personal' ? ' sel' : ''}`} onClick={() => set('spaceId', 'personal')}><Lock size={13} strokeWidth={2.5} /> Personal</button>
               {spaces.map(s => (
-                <button key={s.id} type="button" className={`es-pill${form.spaceId === s.id ? ' sel' : ''}`} onClick={() => set('spaceId', s.id)}>👥 {s.name}</button>
+                <button key={s.id} type="button" className={`es-pill${form.spaceId === s.id ? ' sel' : ''}`} onClick={() => set('spaceId', s.id)}><Users size={14} strokeWidth={2.5} /> {s.name}</button>
               ))}
             </div>
 
