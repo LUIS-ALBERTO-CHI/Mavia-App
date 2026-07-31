@@ -191,7 +191,7 @@ export default function CreateGoalScreen() {
           <label className="cg-label" htmlFor="cg-title">Título del objetivo</label>
           <Input
             id="cg-title"
-            placeholder="Ej. Lanzar mi primer curso online"
+            placeholder="Ej. Cerrar 3 clientes nuevos este trimestre"
             value={form.title}
             onChange={e => set('title', e.target.value)}
             autoFocus

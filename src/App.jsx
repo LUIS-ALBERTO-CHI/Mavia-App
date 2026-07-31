@@ -90,7 +90,7 @@ const SCREEN_TITLES = {
   dashboard: 'Mavia',
   agenda: 'Agenda del día',
   calendar: 'Calendario',
-  entryDetail: 'Entrada',
+  entryDetail: 'Detalle',
   goals: 'Objetivos',
   notes: 'Notas',
   journal: 'Notas',
@@ -226,7 +226,7 @@ function DesktopSidebar() {
           id="sidebar-cta"
         >
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
-          Nueva Entrada
+          Agregar
         </button>
       </div>
     </aside>
@@ -635,7 +635,7 @@ function MobileBottomNav() {
 
       {/* FAB — siempre añade una entrada */}
       {!SCREENS_WITH_OWN_ADD.has(currentScreen) && (
-        <button className="mobile-fab" onClick={() => openEntrySheet()} id="bnav-fab" aria-label="Crear entrada">
+        <button className="mobile-fab" onClick={() => openEntrySheet()} id="bnav-fab" aria-label="Agregar">
           <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>add</span>
         </button>
       )}

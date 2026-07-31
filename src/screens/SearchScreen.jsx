@@ -15,7 +15,7 @@ function saveHistory(items) {
 }
 
 const CATEGORIES = [
-  { id: 'entries', label: 'Entradas',  icon: Calendar,     color: 'var(--primary)',   bg: 'var(--primary-container)'   },
+  { id: 'entries', label: 'Agenda',    icon: Calendar,     color: 'var(--primary)',   bg: 'var(--primary-container)'   },
   { id: 'journal', label: 'Notas',     icon: BookOpen,     color: '#695e37',          bg: '#FDF8EC'                     },
   { id: 'goals',   label: 'Objetivos', icon: Target,       color: 'var(--tertiary)',  bg: 'var(--tertiary-container)'   },
 ];
@@ -299,7 +299,7 @@ export default function SearchScreen() {
 
         {/* ── Hero ── */}
         <h1 className="srch-hero-title">Buscar</h1>
-        <p className="srch-hero-sub">Encuentra entradas, notas y objetivos al instante.</p>
+        <p className="srch-hero-sub">Encuentra en tu agenda, notas y objetivos al instante.</p>
 
         {/* ── Search bar ── */}
         <div className="srch-bar-wrap">
@@ -380,7 +380,7 @@ export default function SearchScreen() {
               <circle cx="60" cy="55" r="8" fill="var(--primary)" opacity="0.6" />
             </svg>
             <p className="empty-state-title">Busca lo que necesitas</p>
-            <p className="empty-state-sub">Entradas, notas y objetivos. Todo en un solo lugar.</p>
+            <p className="empty-state-sub">Agenda, notas y objetivos. Todo en un solo lugar.</p>
           </div>
         )}
 

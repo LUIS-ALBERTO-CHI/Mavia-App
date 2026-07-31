@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
-import { Check, DollarSign, Bell, Repeat, Clock, X, Lock, Users } from 'lucide-react';
+import { Check, DollarSign, Bell, Repeat, Clock, X, Lock, Users, Plus } from 'lucide-react';
 import { DatePicker } from './ui/date-picker';
 import { TimePicker } from './ui/time-picker';
 import { localToday } from '../lib/utils';
@@ -43,6 +43,7 @@ export default function CreateEntrySheet() {
   }));
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const spaces      = state.spaces || [];
   const activeSpace = spaces.find(s => s.id === form.spaceId);
@@ -68,10 +69,10 @@ export default function CreateEntrySheet() {
     };
     if (isEdit) {
       dispatch({ type: 'UPDATE_TASK', task: { ...editEntry, ...base } });
-      showToast('Entrada actualizada', 'success');
+      showToast('Guardado', 'success');
     } else {
       dispatch({ type: 'ADD_TASK', task: { ...base, completed: false } });
-      showToast('¡Entrada creada!', 'success');
+      showToast('¡Agregado!', 'success');
     }
     closeEntrySheet();
   };
@@ -105,13 +106,24 @@ export default function CreateEntrySheet() {
         .es-label { display: flex; align-items: center; gap: 6px; font-size: var(--text-label-md); font-weight: 700; color: var(--on-surface); margin-bottom: 10px; }
         .es-label .material-symbols-outlined { font-size: 18px; }
 
-        .es-head-row { display: flex; align-items: center; gap: 14px; }
+        .es-head-row { display: flex; align-items: flex-start; gap: 14px; }
+        .es-sticker-pick { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; flex-shrink: 0; padding: 0; }
         .es-sticker-btn {
-          width: 62px; height: 62px; border-radius: 20px; display: flex; align-items: center; justify-content: center;
-          border: 2px dashed var(--outline-variant); background: var(--surface-container); cursor: pointer; flex-shrink: 0;
+          width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+          background: var(--gradient-primary); box-shadow: var(--shadow-md); flex-shrink: 0;
+          transition: transform var(--transition-fast);
         }
-        .es-sticker-btn.has { border-style: solid; }
-        .es-sticker-hint { font-size: 9px; font-weight: 700; color: var(--outline); text-align: center; line-height: 1.1; }
+        .es-sticker-pick:active .es-sticker-btn { transform: scale(0.92); }
+        .es-sticker-btn.has { box-shadow: var(--shadow-card); }
+        .es-sticker-cap { font-family: var(--font-body); font-size: 13px; font-weight: 800; color: var(--heading); }
+
+        /* Selector de pegatinas (modal) */
+        .es-pick-backdrop { position: fixed; inset: 0; z-index: 9997; background: rgba(40,36,60,0.42); backdrop-filter: blur(8px) saturate(160%); -webkit-backdrop-filter: blur(8px) saturate(160%); animation: fadeIn 0.18s ease both; }
+        .es-pick { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9998; max-height: 76dvh; display: flex; flex-direction: column; background: var(--surface-container-lowest); border-radius: 24px 24px 0 0; box-shadow: 0 -8px 40px -8px rgba(40,36,60,0.3), 0 -1px 0 rgba(255,255,255,0.5) inset; animation: esUp 0.34s cubic-bezier(0.22,1,0.36,1) both; margin: 0 auto; max-width: 640px; }
+        .es-pick-grid { overflow-y: auto; padding: 4px 20px calc(env(safe-area-inset-bottom,0px) + 20px); display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        @media (min-width: 480px) { .es-pick-grid { grid-template-columns: repeat(5, 1fr); } }
+        .es-pick-grid .es-sticker-cell { background: var(--surface-container-low); border-radius: 18px; }
+
         .es-title-input {
           flex: 1; width: 100%; background: transparent; border: none;
           border-bottom: 2px solid var(--outline-variant);
@@ -159,10 +171,10 @@ export default function CreateEntrySheet() {
       `}</style>
 
       <div className="es-backdrop" onClick={closeEntrySheet} />
-      <div className="es-sheet" role="dialog" aria-modal="true" aria-label={isEdit ? 'Editar entrada' : 'Nueva entrada'}>
+      <div className="es-sheet" role="dialog" aria-modal="true" aria-label={isEdit ? 'Editar' : 'Agregar al calendario'}>
         <div className="es-handle" />
         <div className="es-head">
-          <span className="es-title">{isEdit ? 'Editar entrada' : 'Nueva entrada'}</span>
+          <span className="es-title">{isEdit ? 'Editar' : 'Agregar al calendario'}</span>
           <button className="es-close" onClick={closeEntrySheet} aria-label="Cerrar"><X size={18} /></button>
         </div>
 
@@ -170,33 +182,21 @@ export default function CreateEntrySheet() {
           {/* Sticker + título */}
           <div className="es-card">
             <div className="es-head-row">
-              <button
-                type="button"
-                className={`es-sticker-btn${form.sticker ? ' has' : ''}`}
-                onClick={() => set('sticker', form.sticker ? null : STICKERS[0].id)}
-                style={form.sticker ? { borderColor: form.color } : {}}
-                aria-label="Elegir sticker"
-              >
-                {form.sticker ? <Sticker id={form.sticker} size={40} /> : <span className="es-sticker-hint">+<br/>sticker</span>}
-              </button>
               <input
                 className="es-title-input"
-                placeholder="Ej. Pagar tarjeta, Cumple Luis…"
+                placeholder="Ej. Publicar campaña, Junta con cliente…"
                 value={form.title}
                 onChange={e => set('title', e.target.value)}
                 autoFocus
                 id="entry-title"
               />
-            </div>
-            <div className="es-sticker-grid">
-              <button type="button" className={`es-sticker-cell${!form.sticker ? ' sel' : ''}`} onClick={() => set('sticker', null)} aria-label="Sin sticker">
-                <span className="es-sticker-none">—</span>
+              <button type="button" className="es-sticker-pick" onClick={() => setPickerOpen(true)} aria-label="Elegir sticker">
+                <span className={`es-sticker-btn${form.sticker ? ' has' : ''}`}
+                  style={form.sticker ? { background: form.color } : {}}>
+                  {form.sticker ? <Sticker id={form.sticker} size={38} /> : <Plus size={26} strokeWidth={2.5} color="#fff" />}
+                </span>
+                <span className="es-sticker-cap">Sticker</span>
               </button>
-              {STICKERS.map(s => (
-                <button key={s.id} type="button" className={`es-sticker-cell${form.sticker === s.id ? ' sel' : ''}`} onClick={() => set('sticker', s.id)} aria-label={s.label} title={s.label}>
-                  <Sticker id={s.id} size={30} />
-                </button>
-              ))}
             </div>
           </div>
 
@@ -280,7 +280,7 @@ export default function CreateEntrySheet() {
           {/* Nota */}
           <div className="es-card">
             <div className="es-label"><span className="material-symbols-outlined">notes</span>Nota <span style={{ fontWeight: 500, color: 'var(--outline)' }}>· opcional</span></div>
-            <textarea className="es-note" placeholder="Detalles, contexto, cliente…" value={form.note} onChange={e => set('note', e.target.value)} id="entry-note" />
+            <textarea className="es-note" placeholder="Brief, entregables, links, notas de la reunión…" value={form.note} onChange={e => set('note', e.target.value)} id="entry-note" />
           </div>
 
           {/* Recordatorio */}
@@ -314,10 +314,36 @@ export default function CreateEntrySheet() {
         <div className="es-save-bar">
           <button className="es-save-btn" onClick={handleSave} id="entry-save">
             <Check size={20} strokeWidth={3} />
-            {isEdit ? 'Guardar cambios' : 'Crear entrada'}
+            {isEdit ? 'Guardar cambios' : 'Agregar'}
           </button>
         </div>
       </div>
+
+      {/* Selector de pegatinas (modal) */}
+      {pickerOpen && (
+        <>
+          <div className="es-pick-backdrop" onClick={() => setPickerOpen(false)} />
+          <div className="es-pick" role="dialog" aria-modal="true" aria-label="Elegir sticker">
+            <div className="es-handle" />
+            <div className="es-head">
+              <span className="es-title">Stickers</span>
+              <button className="es-close" onClick={() => setPickerOpen(false)} aria-label="Cerrar"><X size={18} /></button>
+            </div>
+            <div className="es-pick-grid">
+              <button type="button" className={`es-sticker-cell${!form.sticker ? ' sel' : ''}`}
+                onClick={() => { set('sticker', null); setPickerOpen(false); }} aria-label="Sin sticker">
+                <span className="es-sticker-none">Sin<br/>sticker</span>
+              </button>
+              {STICKERS.map(s => (
+                <button key={s.id} type="button" className={`es-sticker-cell${form.sticker === s.id ? ' sel' : ''}`}
+                  onClick={() => { set('sticker', s.id); setPickerOpen(false); }} aria-label={s.label} title={s.label}>
+                  <Sticker id={s.id} size={46} />
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </>,
     document.body
   );

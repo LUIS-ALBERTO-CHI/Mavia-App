@@ -32,7 +32,7 @@ export default function EntryDetailScreen() {
   if (!entry) {
     return (
       <div style={{ padding: 'var(--space-xl)', textAlign: 'center', maxWidth: 480, margin: '0 auto' }}>
-        <p style={{ color: 'var(--on-surface-variant)', marginBottom: 'var(--space-lg)' }}>Entrada no encontrada.</p>
+        <p style={{ color: 'var(--on-surface-variant)', marginBottom: 'var(--space-lg)' }}>No se encontró.</p>
         <button className="btn" onClick={() => navigate('calendar')} style={{ background: 'var(--primary)', color: '#fff', padding: '10px 20px', borderRadius: 99, border: 'none' }}>
           Ir al calendario
         </button>
@@ -54,7 +54,7 @@ export default function EntryDetailScreen() {
   };
   const handleDelete = () => {
     dispatch({ type: 'DELETE_TASK', id: entry.id });
-    showToast('Entrada eliminada');
+    showToast('Eliminado');
     goBack();
   };
 
@@ -187,7 +187,7 @@ export default function EntryDetailScreen() {
         {/* Confirmar borrado */}
         {confirmDelete && (
           <div className="ed-del-banner">
-            <span className="ed-del-text">¿Eliminar esta entrada?</span>
+            <span className="ed-del-text">¿Eliminar esto?</span>
             <div className="ed-del-actions">
               <button className="ed-del-btn" style={{ background: 'transparent', color: 'var(--on-error-container)' }} onClick={() => setConfirmDelete(false)}>Cancelar</button>
               <button className="ed-del-btn" style={{ background: 'var(--error)', color: '#fff' }} onClick={handleDelete}>Eliminar</button>

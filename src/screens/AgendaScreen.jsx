@@ -79,7 +79,7 @@ export default function AgendaScreen() {
           <div className="empty-agenda">
             <Mascot size={250} />
             <div className="empty-agenda-title">Día libre</div>
-            <p className="empty-agenda-sub">Hoy no tienes nada agendado. Toca ＋ para añadir una entrada.</p>
+            <p className="empty-agenda-sub">Hoy no tienes nada agendado. Toca ＋ para agregar algo.</p>
           </div>
         ) : (
           <div className="timeline">

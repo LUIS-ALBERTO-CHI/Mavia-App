@@ -529,7 +529,7 @@ export default function ProfileScreen() {
             <span className="prof-stat-num" style={{ color: 'var(--tertiary)' }}>
               {totalEntries}
             </span>
-            <span className="prof-stat-label">Entradas</span>
+            <span className="prof-stat-label">En calendario</span>
           </div>
           <div className="prof-stat-card">
             <span className="prof-stat-num" style={{ color: 'var(--primary)' }}>
