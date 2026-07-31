@@ -1,7 +1,7 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { ChevronLeft, ChevronRight, Search, Check, Plus, Lock, Users, LayoutGrid } from 'lucide-react';
-import { formatTime12h, localToday } from '../lib/utils';
+import { localToday } from '../lib/utils';
 import Sticker from '../components/Sticker';
 import Mascot from '../components/Mascot';
 import { DEFAULT_COLOR, formatAmount } from '../lib/entryStyle';
@@ -39,7 +39,7 @@ function useTouchSwipe(onLeft, onRight, threshold = 50) {
 }
 
 export default function CalendarScreen() {
-  const { state, navigate, dispatch, openEntrySheet, setCurrentSpace } = useApp();
+  const { state, navigate, dispatch, openEntrySheet, setCurrentSpace, setSelectedDate } = useApp();
   const now = new Date();
   const todayDS = localToday();
 
@@ -58,6 +58,9 @@ export default function CalendarScreen() {
 
   const selDate = new Date(viewYear, viewMonth, selectedDay);
   const selDS   = toDS(viewYear, viewMonth, selectedDay);
+
+  /* El día activo alimenta el ＋ global (agenda de papel: agrega en el día seleccionado) */
+  useEffect(() => { setSelectedDate(selDS); }, [selDS]);
 
   /* ── Navegación por unidad de la vista ── */
   const prevMonth = () => slide('right', () => {
@@ -116,16 +119,14 @@ export default function CalendarScreen() {
     return (
       <div className={`cal-row${e.completed ? ' done' : ''}`} style={{ borderLeftColor: color, background: `${color}26` }}
         onClick={() => navigate('entryDetail', { entryId: e.id })} id={`cal-row-${e.id}`}>
-        <span className="cal-row-ico" style={{ background: color }}>
-          {e.sticker ? <Sticker id={e.sticker} size={22} /> : <span className="cal-row-dot" />}
-        </span>
+        <span className="cal-row-bullet" style={{ background: color }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className={`cal-row-title${e.completed ? ' done' : ''}`}>{e.title}</div>
-          <div className="cal-row-meta">
-            {e.time ? formatTime12h(e.time, '') : 'Todo el día'}
-            {amount && <span style={{ color, fontWeight: 800, marginLeft: 6 }}>· {amount}</span>}
-          </div>
+          {amount && (
+            <div className="cal-row-meta"><span style={{ color, fontWeight: 800 }}>{amount}</span></div>
+          )}
         </div>
+        {e.sticker && <Sticker id={e.sticker} size={42} className="cal-card-sticker" />}
         <button className={`cal-check${e.completed ? ' on' : ''}`}
           style={e.completed ? { background: color, borderColor: color } : { borderColor: color }}
           onClick={(ev) => { ev.stopPropagation(); toggle(e.id); }}
@@ -235,8 +236,8 @@ export default function CalendarScreen() {
         .cal-cell { transition: background var(--transition-fast), transform 0.1s ease; }
         .cal-cell:active:not(.other) { background: var(--surface-container); }
         .cal-row.done { opacity: 0.62; }
-        .cal-row-ico { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .cal-row-dot { width: 9px; height: 9px; border-radius: 50%; background: #fff; }
+        .cal-row-bullet { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .cal-card-sticker { flex-shrink: 0; margin-left: 4px; }
         .cal-row-title { font-size: var(--text-body-md); font-weight: 700; color: var(--on-surface); line-height: 1.3; }
         .cal-row-title.done { text-decoration: line-through; opacity: 0.6; }
         .cal-row-meta { font-size: var(--text-label-sm); color: var(--on-surface-variant); margin-top: 2px; }

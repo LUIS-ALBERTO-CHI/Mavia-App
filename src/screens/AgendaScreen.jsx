@@ -1,5 +1,5 @@
 import { useApp } from '../context/AppContext';
-import { formatTime12h, localToday } from '../lib/utils';
+import { localToday } from '../lib/utils';
 import { Check, Plus } from 'lucide-react';
 import Sticker from '../components/Sticker';
 import Mascot from '../components/Mascot';
@@ -31,26 +31,17 @@ export default function AgendaScreen() {
           color: var(--heading); font-weight: 700; margin-bottom: var(--space-lg);
           text-transform: capitalize;
         }
-        .timeline { display: flex; flex-direction: column; }
-        .timeline-item { display: flex; gap: var(--space-md); position: relative; }
-        .timeline-item:not(:last-child)::after {
-          content: ''; position: absolute; left: 64px; top: 40px; bottom: -4px;
-          width: 2px; background: linear-gradient(to bottom, var(--outline-variant), transparent);
-        }
-        .timeline-time-col { width: 52px; padding-top: 14px; flex-shrink: 0; }
-        .timeline-time { font-size: var(--text-label-sm); font-weight: 700; color: var(--on-surface-variant); text-align: right; line-height: 1.2; }
-        .timeline-dot {
-          width: 34px; height: 34px; border-radius: 11px; margin-top: 8px; flex-shrink: 0;
-          display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm);
-        }
+        .timeline { display: flex; flex-direction: column; gap: 10px; }
         .timeline-card {
-          flex: 1; border-radius: var(--radius-xl); padding: 12px 14px; margin-bottom: 12px;
+          border-radius: var(--radius-xl); padding: 12px 14px;
           transition: all var(--transition-spring); cursor: pointer; box-shadow: var(--shadow-card);
           border-left: 5px solid; background: var(--surface-container-lowest);
-          display: flex; align-items: center; gap: 10px;
+          display: flex; align-items: center; gap: 11px;
         }
         .timeline-card:active { transform: scale(0.98); }
         .timeline-card.done { opacity: 0.65; }
+        .agenda-bullet { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .agenda-sticker { flex-shrink: 0; margin-left: 4px; }
         .timeline-card-title { font-size: var(--text-body-md); font-weight: 600; color: var(--on-surface); line-height: 1.3; }
         .timeline-card-title.done { text-decoration: line-through; opacity: 0.6; }
         .timeline-card-meta { font-size: var(--text-label-sm); color: var(--on-surface-variant); margin-top: 2px; }
@@ -87,37 +78,29 @@ export default function AgendaScreen() {
               const color  = item.color || DEFAULT_COLOR;
               const amount = formatAmount(item.amount);
               return (
-                <div key={item.id} className="timeline-item">
-                  <div className="timeline-time-col">
-                    <div className="timeline-time">{item.time ? formatTime12h(item.time, '–') : 'Todo\nel día'}</div>
+                <div
+                  key={item.id}
+                  className={`timeline-card${item.completed ? ' done' : ''}`}
+                  style={{ borderLeftColor: color, background: `${color}26` }}
+                  onClick={() => navigate('entryDetail', { entryId: item.id })}
+                >
+                  <span className="agenda-bullet" style={{ background: color }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className={`timeline-card-title${item.completed ? ' done' : ''}`}>{item.title}</div>
+                    {amount && (
+                      <div className="timeline-card-meta"><span style={{ color, fontWeight: 700 }}>{amount}</span></div>
+                    )}
                   </div>
-                  <div className="timeline-dot" style={{ background: color }}>
-                    {item.sticker
-                      ? <Sticker id={item.sticker} size={22} />
-                      : <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />}
-                  </div>
-                  <div
-                    className={`timeline-card${item.completed ? ' done' : ''}`}
-                    style={{ borderLeftColor: color, background: `${color}26` }}
-                    onClick={() => navigate('entryDetail', { entryId: item.id })}
+                  {item.sticker && <Sticker id={item.sticker} size={42} className="agenda-sticker" />}
+                  <button
+                    className="agenda-check"
+                    style={item.completed ? { background: color, borderColor: color } : { borderColor: color }}
+                    onClick={(e) => toggle(e, item)}
+                    aria-label={item.completed ? 'Marcar pendiente' : 'Marcar hecho'}
+                    id={`agenda-check-${item.id}`}
                   >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className={`timeline-card-title${item.completed ? ' done' : ''}`}>{item.title}</div>
-                      <div className="timeline-card-meta">
-                        {item.time ? formatTime12h(item.time, '') : 'Todo el día'}
-                        {amount && <span style={{ color, fontWeight: 700, marginLeft: 6 }}>· {amount}</span>}
-                      </div>
-                    </div>
-                    <button
-                      className="agenda-check"
-                      style={item.completed ? { background: color, borderColor: color } : { borderColor: color }}
-                      onClick={(e) => toggle(e, item)}
-                      aria-label={item.completed ? 'Marcar pendiente' : 'Marcar hecho'}
-                      id={`agenda-check-${item.id}`}
-                    >
-                      {item.completed && <Check size={14} strokeWidth={3} color="#fff" />}
-                    </button>
-                  </div>
+                    {item.completed && <Check size={14} strokeWidth={3} color="#fff" />}
+                  </button>
                 </div>
               );
             })}

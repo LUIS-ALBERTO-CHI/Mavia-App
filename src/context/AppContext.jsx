@@ -70,6 +70,7 @@ const defaultState = {
   activeFilter:      'Hoy',
   toast:             null,
   entrySheet:        null,   // null | { entryId?, date? } → bottom sheet crear/editar entrada
+  selectedDate:      null,   // yyyy-mm-dd → día activo del calendario (lo usa el ＋ al agregar)
   // Espacios (agenda personal + compartidos)
   spaces:            [],     // espacios compartidos donde el usuario es miembro
   currentSpaceId:    (typeof localStorage !== 'undefined' && localStorage.getItem('mavia_space')) || 'personal',
@@ -182,6 +183,7 @@ function reducer(state, action) {
     case 'HIDE_TOAST':      return { ...state, toast: null };
     case 'OPEN_ENTRY_SHEET':return { ...state, entrySheet: action.params || {} };
     case 'CLOSE_ENTRY_SHEET':return { ...state, entrySheet: null };
+    case 'SET_SELECTED_DATE':return { ...state, selectedDate: action.date };
 
     /* ── Espacios ── */
     case 'SET_SPACES':          return { ...state, spaces: action.spaces };
@@ -692,8 +694,10 @@ export function AppProvider({ children }) {
     setTimeout(() => dispatch({ type: 'HIDE_TOAST' }), 2800);
   };
 
-  const openEntrySheet  = (params = {}) => dispatch({ type: 'OPEN_ENTRY_SHEET', params });
+  // Al agregar, el día por defecto es el seleccionado en el calendario (agenda de papel)
+  const openEntrySheet  = (params = {}) => dispatch({ type: 'OPEN_ENTRY_SHEET', params: { date: state.selectedDate || undefined, ...params } });
   const closeEntrySheet = ()            => dispatch({ type: 'CLOSE_ENTRY_SHEET' });
+  const setSelectedDate = (date)        => dispatch({ type: 'SET_SELECTED_DATE', date });
 
   /* ── Espacios compartidos ── */
   const setCurrentSpace = (spaceId) => {
@@ -735,6 +739,7 @@ export function AppProvider({ children }) {
     showToast,
     openEntrySheet,
     closeEntrySheet,
+    setSelectedDate,
     setCurrentSpace,
     createSharedSpace,
     inviteEmail,

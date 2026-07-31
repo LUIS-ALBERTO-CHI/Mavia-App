@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
-import { Check, DollarSign, Bell, Repeat, Clock, X, Lock, Users, Plus } from 'lucide-react';
-import { DatePicker } from './ui/date-picker';
-import { TimePicker } from './ui/time-picker';
+import { Check, DollarSign, Bell, Repeat, X, Lock, Users, Plus } from 'lucide-react';
 import { localToday } from '../lib/utils';
+
+const DAYS_FULL  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MONTHS_LOW = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function formatDayLabel(ds) {
+  if (!ds) return '';
+  const d = new Date(ds + 'T00:00:00');
+  return `${DAYS_FULL[d.getDay()]} ${d.getDate()} de ${MONTHS_LOW[d.getMonth()]}`;
+}
 import Sticker, { STICKERS, STICKER_CATEGORIES } from './Sticker';
 import { HIGHLIGHTERS, DEFAULT_COLOR, REPEAT_OPTIONS, REMINDER_OFFSETS } from '../lib/entryStyle';
 
@@ -57,7 +63,7 @@ export default function CreateEntrySheet() {
     const base = {
       title:  form.title.trim(),
       date:   form.date,
-      time:   form.allDay ? '' : form.time,
+      time:   '',
       color:  form.color,
       sticker: form.sticker,
       note:   form.note.trim(),
@@ -154,6 +160,7 @@ export default function CreateEntrySheet() {
         .es-color.sel { border-color: var(--on-surface); }
 
         .es-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .es-date-fixed { font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 800; color: var(--primary); text-transform: capitalize; }
         .es-toggle { position: relative; width: 46px; height: 26px; border-radius: 99px; border: none; cursor: pointer; flex-shrink: 0; transition: background var(--transition-fast); }
         .es-toggle.on { background: var(--primary); } .es-toggle.off { background: var(--surface-variant); }
         .es-toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: transform var(--transition-spring); }
@@ -255,22 +262,12 @@ export default function CreateEntrySheet() {
             </div>
           </div>
 
-          {/* Fecha y hora */}
+          {/* Día (fijo, viene del calendario) */}
           <div className="es-card">
-            <div className="es-label"><span className="material-symbols-outlined">event</span>Fecha</div>
-            <DatePicker value={form.date} onChange={d => set('date', d)} id="entry-date" />
-            <div className="es-row" style={{ marginTop: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Clock size={16} color="var(--on-surface-variant)" />
-                <span style={{ fontSize: 'var(--text-body-md)', color: 'var(--on-surface)' }}>Todo el día</span>
-              </div>
-              <button type="button" className={`es-toggle ${form.allDay ? 'on' : 'off'}`} onClick={() => set('allDay', !form.allDay)} aria-label="Todo el día" />
+            <div className="es-row">
+              <div className="es-label" style={{ marginBottom: 0 }}><span className="material-symbols-outlined">event</span>Día</div>
+              <span className="es-date-fixed">{formatDayLabel(form.date)}</span>
             </div>
-            {!form.allDay && (
-              <div style={{ marginTop: 16 }}>
-                <TimePicker value={form.time || null} onChange={t => set('time', t)} id="entry-time" defaultTime="09:00" />
-              </div>
-            )}
           </div>
 
           {/* Monto */}
