@@ -200,9 +200,9 @@ export default function CalendarScreen() {
 
         /* ── Month grid — enmarcado como tarjeta ── */
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--cal-line); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow-card); background: var(--surface-container-lowest); }
-        .cal-cell { border-right: 1px solid var(--cal-line); border-bottom: 1px solid var(--cal-line); min-height: 92px; padding: 6px 5px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; overflow: hidden; transition: background var(--transition-fast); }
+        .cal-cell { border-right: 1px solid var(--cal-line); border-bottom: 1px solid var(--cal-line); min-height: 104px; padding: 6px 5px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; overflow: hidden; transition: background var(--transition-fast); }
         .cal-cell:nth-child(7n) { border-right: none; }
-        @media (min-width: 900px) { .cal-cell { min-height: 122px; padding: 8px 7px; } }
+        @media (min-width: 900px) { .cal-cell { min-height: 128px; padding: 8px 7px; } }
         .cal-cell:hover { background: var(--surface-container-low); }
         .cal-cell.other { color: var(--outline); cursor: default; }
         .cal-cell.other .cal-num { color: var(--outline); opacity: 0.55; }
@@ -218,6 +218,11 @@ export default function CalendarScreen() {
         .cal-chip.done .cal-chip-t { text-decoration: line-through; }
         .cal-chip-more { font-size: 8px; font-weight: 800; color: var(--on-surface-variant); padding-left: 3px; }
         @media (min-width: 900px) { .cal-chip-more { font-size: 10px; } }
+
+        /* Stickers agrupados al fondo de la casilla (máx 3) */
+        .cal-stickers { margin-top: auto; display: flex; align-items: flex-end; justify-content: center; gap: 1px; padding-top: 3px; }
+        .cal-stickers > * { flex-shrink: 0; }
+        @media (min-width: 900px) { .cal-stickers { gap: 3px; } }
 
         /* ── Rows (lista/semana/día) ── */
         .cal-list { display: flex; flex-direction: column; gap: 9px; }
@@ -314,6 +319,7 @@ export default function CalendarScreen() {
                   const dayEntries  = isThisMonth ? entriesFor(toDS(viewYear, viewMonth, cellDay)) : [];
                   const visible     = dayEntries.slice(0, 3);
                   const overflow    = dayEntries.length - visible.length;
+                  const stickers    = dayEntries.filter(e => e.sticker).slice(-3);   // máx 3, el nuevo reemplaza al anterior
                   return (
                     <div key={idx}
                       className={['cal-cell', !isThisMonth ? 'other' : '', isToday ? 'today' : '', isSel ? 'sel' : ''].filter(Boolean).join(' ')}
@@ -326,12 +332,16 @@ export default function CalendarScreen() {
                             const c = e.color || DEFAULT_COLOR;
                             return (
                               <div key={e.id || i} className={`cal-chip${e.completed ? ' done' : ''}`} style={{ background: c }}>
-                                {e.sticker && <Sticker id={e.sticker} size={12} />}
                                 <span className="cal-chip-t">{e.title}</span>
                               </div>
                             );
                           })}
                           {overflow > 0 && <span className="cal-chip-more">+{overflow} más</span>}
+                        </div>
+                      )}
+                      {stickers.length > 0 && (
+                        <div className="cal-stickers">
+                          {stickers.map((e, i) => <Sticker key={e.id || i} id={e.sticker} size={22} />)}
                         </div>
                       )}
                     </div>
