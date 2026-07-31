@@ -15,7 +15,7 @@ const AVATAR_COLORS_DARK = ['#57404d', '#3d4b31', '#504622', '#4a4060'];
 export default function ProfileScreen() {
   const { state, dispatch, navigate, showToast } = useApp();
   const { t } = useTranslation();
-  const { user, tasks, events, goals, journalEntries, darkMode } = state;
+  const { user, tasks, goals, journalEntries, darkMode } = state;
 
   const [editing,    setEditing]    = useState(false);
   const [uploading,  setUploading]  = useState(false);
@@ -25,7 +25,7 @@ export default function ProfileScreen() {
   /* Stats — agenda focused */
   const completedTasks = tasks.filter(task => task.completed).length;
   const pendingTasks   = tasks.filter(task => !task.completed).length;
-  const totalEvents    = events.length;
+  const totalEntries   = tasks.length;
   const totalNotes     = (journalEntries || []).length;
 
   const handleSave = () => {
@@ -525,9 +525,9 @@ export default function ProfileScreen() {
           </div>
           <div className="prof-stat-card">
             <span className="prof-stat-num" style={{ color: 'var(--tertiary)' }}>
-              {totalEvents}
+              {totalEntries}
             </span>
-            <span className="prof-stat-label">Eventos</span>
+            <span className="prof-stat-label">Entradas</span>
           </div>
           <div className="prof-stat-card">
             <span className="prof-stat-num" style={{ color: 'var(--primary)' }}>

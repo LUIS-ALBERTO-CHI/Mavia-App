@@ -32,6 +32,9 @@ export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
     tabManager: persistentMultipleTabManager(),
   }),
+  // Auto-detecta cuándo usar long-polling (redes/proxies/adblockers que rompen
+  // el canal WebChannel de tiempo real → evita el error "Listen/channel ERR_FAILED").
+  experimentalAutoDetectLongPolling: true,
 });
 
 
