@@ -35,101 +35,101 @@
    MD3 COLOR TOKENS — Exact from Stitch
    ============================================ */
 :root {
-  /* ── PALETA TIE-DYE ──
-     6 pasteles bien distribuidos: morado (marca) + rosa + aqua + amarillo
-     + rosa suave + verde, sobre lavanda muy claro. Texto índigo oscuro. */
+  /* ── PALETA MENTRY (pasteles suaves) ──
+     Periwinkle + lila + rosa + menta + amarillo + azul, sobre blanco.
+     Texto gris suave (sin negro). */
 
-  /* Primary — SPIRAL (morado) */
-  --primary:                  #a98cd3;
+  /* Primary — lila/periwinkle (texto/CTA/activos) */
+  --primary:                  #8478c8;
   --on-primary:               #ffffff;
-  --primary-container:        #e9def5;
-  --on-primary-container:     #4e3a75;
-  --primary-fixed:            #e9def5;
-  --primary-fixed-dim:        #d3bff0;
-  --on-primary-fixed:         #2f1f52;
-  --on-primary-fixed-variant: #4e3a75;
-  --inverse-primary:          #c9b3ec;
+  --primary-container:        #e6e1f7;
+  --on-primary-container:     #4a3d7a;
+  --primary-fixed:            #e6e1f7;
+  --primary-fixed-dim:        #cfc4f0;
+  --on-primary-fixed:         #2c1f52;
+  --on-primary-fixed-variant: #4a3d7a;
+  --inverse-primary:          #c4b8f0;
 
-  /* Secondary — SNOCONE (rosa fuerte) */
-  --secondary:                #e86bb0;
+  /* Secondary — rosa suave */
+  --secondary:                #e888b6;
   --on-secondary:             #ffffff;
-  --secondary-container:      #fbd6ec;
-  --on-secondary-container:   #97316e;
-  --secondary-fixed:          #fbd6ec;
-  --secondary-fixed-dim:      #f6b3da;
-  --on-secondary-fixed:       #611242;
-  --on-secondary-fixed-variant:#97316e;
+  --secondary-container:      #fbd6e6;
+  --on-secondary-container:   #8a3862;
+  --secondary-fixed:          #fbd6e6;
+  --secondary-fixed-dim:      #f6b3d2;
+  --on-secondary-fixed:       #5e1a3e;
+  --on-secondary-fixed-variant:#8a3862;
 
-  /* Tertiary — BUBBLES (aqua) */
-  --tertiary:                 #6cc7cf;
+  /* Tertiary — menta */
+  --tertiary:                 #6bbd8e;
   --on-tertiary:              #ffffff;
-  --tertiary-container:       #d6f1f3;   /* aqua claro */
-  --on-tertiary-container:    #1e6469;
-  --tertiary-fixed:           #d6f1f3;
-  --tertiary-fixed-dim:       #ace3e8;
-  --on-tertiary-fixed:        #05393d;
-  --on-tertiary-fixed-variant:#1e6469;
+  --tertiary-container:       #d6efdb;
+  --on-tertiary-container:    #2f7550;
+  --tertiary-fixed:           #d6efdb;
+  --tertiary-fixed-dim:       #b2e2bd;
+  --on-tertiary-fixed:        #0d3a24;
+  --on-tertiary-fixed-variant:#2f7550;
 
-  /* Acentos de la paleta tie-dye */
-  --lime:                     #a98cd3;   /* acento de marca (FAB, hoy, nav) = morado */
-  --on-lime:                  #ffffff;
-  --lime-container:           #e9def5;
-  --cream:                    #f1ec6e;   /* LEMONADE amarillo */
-  --on-cream:                 #5a561a;
-  --mint:                     #ace3e8;   /* BUBBLES aqua */
-  --on-mint:                  #1e6469;
-  --green:                    #abd96e;   /* PICNIC verde */
-  --on-green:                 #3f5417;
-  --green-container:          #ecf6d4;
-  --sky:                      #ace3e8;   /* aqua (alias) */
-  --on-sky:                   #1e6469;
-  --pink:                     #f3aad4;   /* CABANA rosa suave */
-  --on-pink:                  #8a3f6c;
-  --pink-container:           #fbdcee;
-  --blue:                     #6cc7cf;   /* aqua (alias) */
+  /* Acentos de la paleta Mentry */
+  --lime:                     #a9b4e8;   /* periwinkle — FAB, hoy, nav */
+  --on-lime:                  #2e3560;
+  --lime-container:           #e2e5f7;
+  --cream:                    #f5e07a;   /* amarillo suave */
+  --on-cream:                 #6b5a10;
+  --mint:                     #a8dba8;   /* menta */
+  --on-mint:                  #2f6a3f;
+  --green:                    #a8dba8;   /* verde suave */
+  --on-green:                 #2f6a3f;
+  --green-container:          #d6efd8;
+  --sky:                      #a9d6f0;   /* azul claro */
+  --on-sky:                   #235e77;
+  --pink:                     #f5aecb;   /* rosa */
+  --on-pink:                  #8a3862;
+  --pink-container:           #fbdcea;
+  --blue:                     #7cb8e0;
   --on-blue:                  #ffffff;
-  --blue-container:           #d6f1f3;
-  --on-blue-container:        #1e6469;
-  --purple:                   #a98cd3;   /* morado (alias) */
+  --blue-container:           #d6ebf7;
+  --on-blue-container:        #235e77;
+  --purple:                   #c9a9e0;   /* lila */
   --on-purple:                #ffffff;
-  --purple-container:         #e9def5;
-  --on-purple-container:      #4e3a75;
+  --purple-container:         #eeddf7;
+  --on-purple-container:      #5a3a7a;
 
-  /* Error — rosa fuerte oscurecido */
-  --error:                    #e14d6a;
+  /* Error — rosa/rojo suave */
+  --error:                    #e2557a;
   --on-error:                 #ffffff;
-  --error-container:          #ffdae0;
-  --on-error-container:       #8a1830;
+  --error-container:          #ffdae4;
+  --on-error-container:       #8a1a3c;
 
-  /* Surface — tarjetas blancas sobre lavanda muy claro */
-  --background:               #f8f4fd;
-  --on-background:            #3a3850;
-  --surface:                  #f8f4fd;
+  /* Surface — tarjetas blancas sobre blanco-lavanda muy claro */
+  --background:               #fcfbff;
+  --on-background:            #5a5568;
+  --surface:                  #fcfbff;
   --surface-bright:           #ffffff;
-  --surface-dim:              #ece4f5;
-  --on-surface:               #3a3850;   /* índigo oscuro, no negro */
+  --surface-dim:              #eeecf6;
+  --on-surface:               #5a5568;   /* gris suave, sin negro */
   --surface-container-lowest: #ffffff;
-  --surface-container-low:    #f4eefb;
-  --surface-container:        #ede4f6;
-  --surface-container-high:   #e6dcf2;
-  --surface-container-highest:#ddd0ec;
-  --surface-variant:          #ede4f6;
-  --on-surface-variant:       #8985a0;
-  --surface-tint:             #a98cd3;
+  --surface-container-low:    #f6f4fc;
+  --surface-container:        #efedf7;
+  --surface-container-high:   #e8e4f2;
+  --surface-container-highest:#e0daee;
+  --surface-variant:          #efedf7;
+  --on-surface-variant:       #918da3;
+  --surface-tint:             #8478c8;
 
   /* Outline */
-  --outline:                  #b0a8c2;
-  --outline-variant:          #e4dcf0;
+  --outline:                  #b6b1c6;
+  --outline-variant:          #e8e4f2;
 
   /* Inverse */
-  --inverse-surface:          #322f45;
-  --inverse-on-surface:       #f4eefb;
+  --inverse-surface:          #35314a;
+  --inverse-on-surface:       #f5f1fc;
 
-  /* App background — lavanda muy claro */
-  --color-bg:                 #ece6f6;
+  /* App background — blanco-lavanda muy claro */
+  --color-bg:                 #f4f2fb;
 
-  /* Headings — índigo oscuro (títulos bold) */
-  --heading:                  #322f4d;
+  /* Headings — gris-lila oscuro (títulos bold, sin negro) */
+  --heading:                  #45415c;
 
   /* ============================================
      TYPOGRAPHY
@@ -204,7 +204,7 @@
   --shadow-md:    0 6px 20px rgba(120, 90, 110, 0.09);
   --shadow-lg:    0 10px 34px rgba(120, 90, 110, 0.13);
   --shadow-nav:   0 -4px 24px rgba(120, 90, 110, 0.06);
-  --shadow-fab:   0 8px 22px rgba(169, 140, 211, 0.45);
+  --shadow-fab:   0 8px 22px rgba(140, 150, 220, 0.42);
 
   /* ============================================
      TRANSITIONS
@@ -251,8 +251,8 @@
   --color-overlay:       rgba(27, 28, 27, 0.40);
 
   /* Gradient aliases */
-  --gradient-primary: linear-gradient(135deg, #b89ae0 0%, #a98cd3 100%);  /* CTA morado, texto blanco */
-  --gradient-lime:    linear-gradient(135deg, #b98ce0 0%, #e86bb0 100%);  /* FAB / hoy / nav: morado → rosa (tie-dye) */
+  --gradient-primary: linear-gradient(135deg, #9488d4 0%, #8478c8 100%);  /* CTA lila, texto blanco */
+  --gradient-lime:    linear-gradient(135deg, #b0bced 0%, #cbabe4 100%);  /* FAB / hoy / nav: periwinkle → lila */
   --gradient-soft:    linear-gradient(135deg, var(--lime-container) 0%, var(--secondary-container) 100%);
   --gradient-sage:    linear-gradient(135deg, var(--secondary-container) 0%, var(--secondary) 100%);
   --gradient-gold:    linear-gradient(135deg, var(--tertiary-fixed) 0%, var(--tertiary-fixed-dim) 100%);
@@ -280,70 +280,70 @@
    DARK MODE (MD3 dark scheme)
    ============================================ */
 .dark {
-  /* ── Primary (morado claro) ── */
-  --primary:               #c9b3ec;
-  --on-primary:            #2f1f52;
-  --primary-container:     #4a3775;
-  --on-primary-container:  #e9def5;
-  --primary-fixed:         #e9def5;
-  --primary-fixed-dim:     #c9b3ec;
+  /* ── Primary (lila claro) ── */
+  --primary:               #c4b8f0;
+  --on-primary:            #2c1f52;
+  --primary-container:     #453a72;
+  --on-primary-container:  #e6e1f7;
+  --primary-fixed:         #e6e1f7;
+  --primary-fixed-dim:     #c4b8f0;
 
   /* ── Secondary (rosa) ── */
-  --secondary:             #f6a8d3;
-  --on-secondary:          #611242;
-  --secondary-container:   #8a2f66;
-  --on-secondary-container:#fbd6ec;
+  --secondary:             #f6a8cc;
+  --on-secondary:          #5e1a3e;
+  --secondary-container:   #7a3358;
+  --on-secondary-container:#fbd6e6;
 
-  /* ── Tertiary (aqua) ── */
-  --tertiary:              #8fd6dc;
-  --on-tertiary:           #05393d;
-  --tertiary-container:    #1e5a5f;
-  --on-tertiary-container: #d6f1f3;
+  /* ── Tertiary (menta) ── */
+  --tertiary:              #97d6a8;
+  --on-tertiary:           #0d3a24;
+  --tertiary-container:    #2b6444;
+  --on-tertiary-container: #d6efdb;
 
   /* ── Acentos de la paleta ── */
-  --lime:                  #c9b3ec;
-  --on-lime:               #2f1f52;
-  --lime-container:        #4a3775;
-  --cream:                 #6b6620;
-  --on-cream:              #f1ec6e;
-  --mint:                  #1e5a5f;
-  --on-mint:               #d6f1f3;
-  --green:                 #c3dd8e;
-  --on-green:              #2a3a08;
-  --green-container:       #4a5e1c;
-  --sky:                   #1e5a5f;
-  --on-sky:                #d6f1f3;
-  --pink:                  #f6a8d3;
-  --on-pink:               #611242;
-  --pink-container:        #8a2f66;
-  --blue:                  #8fd6dc;
-  --blue-container:        #1e5a5f;
-  --on-blue-container:     #d6f1f3;
-  --purple:                #c9b3ec;
-  --purple-container:      #4a3775;
-  --on-purple-container:   #e9def5;
+  --lime:                  #a9b4e8;
+  --on-lime:               #2e3560;
+  --lime-container:        #3a4270;
+  --cream:                 #6b5a10;
+  --on-cream:              #f5e07a;
+  --mint:                  #2b6444;
+  --on-mint:               #d6efdb;
+  --green:                 #97d6a8;
+  --on-green:              #0d3a24;
+  --green-container:       #2b6444;
+  --sky:                   #1d5568;
+  --on-sky:                #d6ebf7;
+  --pink:                  #f6a8cc;
+  --on-pink:               #5e1a3e;
+  --pink-container:        #7a3358;
+  --blue:                  #8fc4ec;
+  --blue-container:        #1d5568;
+  --on-blue-container:     #d6ebf7;
+  --purple:                #d3b3ec;
+  --purple-container:      #4a3070;
+  --on-purple-container:   #eeddf7;
 
-  /* ── Surface / Background (índigo muy oscuro) ── */
-  --background:               #17151e;
-  --on-background:            #e8e4f0;
-  --surface:                  #17151e;
-  --on-surface:               #e8e4f0;
-  --surface-dim:              #17151e;
-  --surface-bright:           #37344a;
-  --surface-container-lowest: #131119;
-  --surface-container-low:    #1f1d29;
-  --surface-container:        #24222f;
-  --surface-container-high:   #2e2b3b;
-  --surface-container-highest:#383548;
-  --inverse-surface:          #e8e4f0;
-  --inverse-on-surface:       #17151e;
+  /* ── Surface / Background (violeta muy oscuro) ── */
+  --background:               #16151c;
+  --on-background:            #e7e4ee;
+  --surface:                  #16151c;
+  --on-surface:               #e7e4ee;
+  --surface-dim:              #16151c;
+  --surface-bright:           #363348;
+  --surface-container-lowest: #121118;
+  --surface-container-low:    #1e1c26;
+  --surface-container:        #23212c;
+  --surface-container-high:   #2d2b38;
+  --surface-container-highest:#373344;
+  --inverse-surface:          #e7e4ee;
+  --inverse-on-surface:       #16151c;
 
   /* ── Outline / Variant ── */
-  --on-surface-variant:    #c0bcd0;
-  --outline:               #928da3;
-  --outline-variant:       #423f52;
-  --surface-variant:       #423f52;
-  --surface-tint:          #c9b3ec;
+  --on-surface-variant:    #bfbccb;
+  --outline:               #8e8b9c;
+  --outline-variant:       #423f4e;
+  --surface-variant:       #423f4e;
+  --surface-tint:          #c4b8f0;
 
   /* ── Error ── */
   --error:                 #ff9aad;
@@ -352,12 +352,12 @@
   --on-error-container:    #ffdae0;
 
   /* ── Aliases ── */
-  --color-bg:              #121019;
-  --heading:               #f2eefb;
+  --color-bg:              #101018;
+  --heading:               #f4f1fb;
 
   /* ── Gradients (dark) ── */
-  --gradient-primary:   linear-gradient(135deg, #b89ae0 0%, #a98cd3 100%);
-  --gradient-lime:      linear-gradient(135deg, #b98ce0 0%, #e86bb0 100%);
+  --gradient-primary:   linear-gradient(135deg, #9483d4 0%, #7b68c0 100%);
+  --gradient-lime:      linear-gradient(135deg, #b0bced 0%, #cbabe4 100%);
   --gradient-secondary: linear-gradient(135deg, #4a3a7a 0%, #2a1840 100%);
   --gradient-tertiary:  linear-gradient(135deg, #14546b 0%, #08303f 100%);
 
@@ -802,7 +802,7 @@ a { text-decoration: none; color: inherit; }
   color: var(--on-lime);
   border-radius: var(--radius-full);
   padding: 7px;
-  box-shadow: 0 4px 12px rgba(169,140,211,0.45);
+  box-shadow: 0 4px 12px rgba(140,150,220,0.45);
 }
 
 :root:not(.dark) .bottom-nav-item {
@@ -843,7 +843,7 @@ a { text-decoration: none; color: inherit; }
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 18px rgba(169,140,211,0.5);
+  box-shadow: 0 6px 18px rgba(140,150,220,0.5);
   transition: transform var(--transition-spring), box-shadow var(--transition-fast);
   pointer-events: auto;
   flex-shrink: 0;

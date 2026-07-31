@@ -91,14 +91,14 @@ export default function AgendaScreen() {
                   <div className="timeline-time-col">
                     <div className="timeline-time">{item.time ? formatTime12h(item.time, '–') : 'Todo\nel día'}</div>
                   </div>
-                  <div className="timeline-dot" style={{ background: item.sticker ? `${color}22` : color }}>
+                  <div className="timeline-dot" style={{ background: color }}>
                     {item.sticker
                       ? <Sticker id={item.sticker} size={22} />
                       : <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />}
                   </div>
                   <div
                     className={`timeline-card${item.completed ? ' done' : ''}`}
-                    style={{ borderLeftColor: color }}
+                    style={{ borderLeftColor: color, background: `${color}26` }}
                     onClick={() => navigate('entryDetail', { entryId: item.id })}
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>

@@ -114,9 +114,9 @@ export default function CalendarScreen() {
     const color  = e.color || DEFAULT_COLOR;
     const amount = formatAmount(e.amount);
     return (
-      <div className={`cal-row${e.completed ? ' done' : ''}`} style={{ borderLeftColor: color }}
+      <div className={`cal-row${e.completed ? ' done' : ''}`} style={{ borderLeftColor: color, background: `${color}26` }}
         onClick={() => navigate('entryDetail', { entryId: e.id })} id={`cal-row-${e.id}`}>
-        <span className="cal-row-ico" style={{ background: e.sticker ? `${color}2e` : color }}>
+        <span className="cal-row-ico" style={{ background: color }}>
           {e.sticker ? <Sticker id={e.sticker} size={22} /> : <span className="cal-row-dot" />}
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -186,7 +186,7 @@ export default function CalendarScreen() {
         .cal-client { flex-shrink: 0; padding: 5px 12px; border-radius: 99px; border: none; background: var(--surface-container); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 12px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .cal-client.active { background: var(--secondary-container); color: var(--on-secondary-container); }
         .cal-seg { flex: 1; padding: 9px 4px; border-radius: 10px; border: none; background: transparent; cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 800; letter-spacing: 0.03em; color: var(--on-surface-variant); transition: all var(--transition-fast); }
-        .cal-seg.active { background: var(--primary); color: var(--on-primary); box-shadow: 0 2px 8px rgba(169,140,211,0.4); }
+        .cal-seg.active { background: var(--primary); color: var(--on-primary); box-shadow: 0 2px 8px rgba(140,150,220,0.3); }
 
         /* ── Slide anim ── */
         .cal-view { transition: opacity 0.18s ease, transform 0.18s ease; }
@@ -211,8 +211,8 @@ export default function CalendarScreen() {
         .cal-cell.today .cal-num { color: var(--error); font-weight: 800; }
 
         .cal-chips { display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
-        .cal-chip { display: flex; align-items: center; gap: 3px; padding: 2px 5px 2px 4px; border-radius: 6px; font-size: 10px; font-weight: 800; line-height: 1.25; color: var(--on-surface); white-space: nowrap; overflow: hidden; border-left: 3px solid; }
-        @media (min-width: 900px) { .cal-chip { font-size: 11.5px; padding: 3px 7px 3px 6px; gap: 5px; } }
+        .cal-chip { display: flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 7px; font-size: 10px; font-weight: 800; line-height: 1.3; color: #3d3a4e; white-space: nowrap; overflow: hidden; }
+        @media (min-width: 900px) { .cal-chip { font-size: 11.5px; padding: 3px 8px; gap: 5px; } }
         .cal-chip-t { overflow: hidden; text-overflow: ellipsis; }
         .cal-chip.done { opacity: 0.5; }
         .cal-chip.done .cal-chip-t { text-decoration: line-through; }
@@ -250,7 +250,7 @@ export default function CalendarScreen() {
         .cal-empty-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 99px; background: var(--gradient-primary); color: #fff; border: none; cursor: pointer; font-weight: 800; font-size: 14px; }
       `}</style>
 
-      <div className="cal" style={{ '--cal-line': 'rgba(90,95,70,0.14)' }}>
+      <div className="cal" style={{ '--cal-line': 'rgba(130,120,170,0.16)' }}>
         {/* ── Topbar ── */}
         <div className="cal-top">
           <div className="cal-month-nav">
@@ -321,7 +321,7 @@ export default function CalendarScreen() {
                           {visible.map((e, i) => {
                             const c = e.color || DEFAULT_COLOR;
                             return (
-                              <div key={e.id || i} className={`cal-chip${e.completed ? ' done' : ''}`} style={{ background: `${c}2e`, borderLeftColor: c }}>
+                              <div key={e.id || i} className={`cal-chip${e.completed ? ' done' : ''}`} style={{ background: c }}>
                                 {e.sticker && <Sticker id={e.sticker} size={12} />}
                                 <span className="cal-chip-t">{e.title}</span>
                               </div>

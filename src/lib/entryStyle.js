@@ -3,17 +3,17 @@
    Estilo visual único para las "entradas" de la agenda.
    ============================================ */
 
-/** Colores de resaltador — paleta fresa-limón */
+/** Colores de resaltador — paleta Mentry (pasteles suaves de estados de ánimo) */
 export const HIGHLIGHTERS = [
-  { id: 'teal',   hex: '#3B9890' },
-  { id: 'pink',   hex: '#E07C8E' },
-  { id: 'lime',   hex: '#A9BF53' },
-  { id: 'olive',  hex: '#718804' },
-  { id: 'mint',   hex: '#A0D8CD' },
-  { id: 'red',    hex: '#D33243' },
+  { id: 'periwinkle', hex: '#A9B4E8' },
+  { id: 'lilac',      hex: '#C9A9E0' },
+  { id: 'pink',       hex: '#F5AECB' },
+  { id: 'mint',       hex: '#A8DBA8' },
+  { id: 'yellow',     hex: '#F5E07A' },
+  { id: 'blue',       hex: '#A9D6F0' },
 ];
 
-export const DEFAULT_COLOR = '#3B9890';
+export const DEFAULT_COLOR = '#A9B4E8';
 
 /** Devuelve un color válido de la paleta (o el default) */
 export function normalizeColor(hex) {
