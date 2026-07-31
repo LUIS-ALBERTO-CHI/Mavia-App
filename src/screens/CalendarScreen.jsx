@@ -173,7 +173,7 @@ export default function CalendarScreen() {
         .cal-icon-btn:hover { background: var(--surface-container); }
 
         /* ── Segmented control ── */
-        .cal-segs { display: flex; background: var(--surface-container); border-radius: 14px; padding: 4px; gap: 2px; margin-bottom: 12px; }
+        .cal-segs { display: flex; background: var(--surface-container); border-radius: 13px; padding: 3px; gap: 2px; margin-bottom: 12px; box-shadow: inset 0 1px 3px rgba(90,80,130,0.07); }
 
         /* Selector de espacio */
         .cal-spaces { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 10px; padding-bottom: 2px; }
@@ -186,7 +186,7 @@ export default function CalendarScreen() {
         .cal-client { flex-shrink: 0; padding: 5px 12px; border-radius: 99px; border: none; background: var(--surface-container); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 12px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .cal-client.active { background: var(--secondary-container); color: var(--on-secondary-container); }
         .cal-seg { flex: 1; padding: 9px 4px; border-radius: 10px; border: none; background: transparent; cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 800; letter-spacing: 0.03em; color: var(--on-surface-variant); transition: all var(--transition-fast); }
-        .cal-seg.active { background: var(--primary); color: var(--on-primary); box-shadow: 0 2px 8px rgba(140,150,220,0.3); }
+        .cal-seg.active { background: var(--primary); color: var(--on-primary); box-shadow: 0 1px 2px rgba(90,80,130,0.14), 0 3px 8px -2px rgba(140,150,220,0.4); }
 
         /* ── Slide anim ── */
         .cal-view { transition: opacity 0.18s ease, transform 0.18s ease; }
@@ -225,6 +225,10 @@ export default function CalendarScreen() {
         .cal-date-head:first-child { margin-top: 4px; }
         .cal-row { display: flex; align-items: center; gap: 11px; background: var(--surface-container-lowest); border-radius: 16px; border-left: 5px solid; box-shadow: var(--shadow-card); padding: 11px 13px; cursor: pointer; transition: box-shadow var(--transition-fast); }
         .cal-row:hover { box-shadow: var(--shadow-md); }
+        .cal-row { transition: box-shadow var(--transition-fast), transform 0.14s var(--ease-spring); }
+        .cal-row:active { transform: scale(0.985); }
+        .cal-cell { transition: background var(--transition-fast), transform 0.1s ease; }
+        .cal-cell:active:not(.other) { background: var(--surface-container); }
         .cal-row.done { opacity: 0.62; }
         .cal-row-ico { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .cal-row-dot { width: 9px; height: 9px; border-radius: 50%; background: #fff; }

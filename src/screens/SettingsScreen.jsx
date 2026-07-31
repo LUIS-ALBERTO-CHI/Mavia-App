@@ -193,9 +193,9 @@ export default function SettingsScreen() {
         /* ── Group card ── */
         .stg-group {
           background: var(--surface-container-lowest);
-          border-radius: var(--radius-2xl);
-          border: 1px solid rgba(208,195,200,0.12);
-          box-shadow: 0 4px 20px rgba(112,87,101,0.04);
+          border-radius: 18px;
+          border: 0.5px solid var(--outline-variant);
+          box-shadow: var(--shadow-card);
           overflow: hidden;
         }
 
@@ -204,15 +204,15 @@ export default function SettingsScreen() {
           display: flex;
           align-items: center;
           gap: var(--space-md);
-          padding: var(--space-md) var(--space-lg);
-          border-bottom: 1px solid rgba(208,195,200,0.1);
+          padding: 13px 16px;
+          border-bottom: 0.5px solid var(--outline-variant);
           transition: background var(--transition-fast);
         }
         .stg-row:last-child { border-bottom: none; }
         .stg-row.clickable { cursor: pointer; }
-        .stg-row.clickable:hover { background: rgba(248,215,232,0.08); }
-        .stg-row.clickable:active { background: rgba(248,215,232,0.15); }
-        .stg-row.danger:hover { background: rgba(186,26,26,0.05); }
+        .stg-row.clickable:hover { background: var(--surface-container-low); }
+        .stg-row.clickable:active { background: var(--surface-container); }
+        .stg-row.danger:hover { background: var(--error-container); }
 
         .stg-icon {
           width: 38px;

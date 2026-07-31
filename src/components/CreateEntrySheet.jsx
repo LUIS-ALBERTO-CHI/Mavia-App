@@ -81,21 +81,21 @@ export default function CreateEntrySheet() {
       <style>{`
         .es-backdrop {
           position: fixed; inset: 0; z-index: 9995;
-          background: rgba(74,74,90,0.35);
-          backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+          background: rgba(40,36,60,0.38);
+          backdrop-filter: blur(6px) saturate(160%); -webkit-backdrop-filter: blur(6px) saturate(160%);
           animation: fadeIn 0.2s ease both;
         }
         .es-sheet {
           position: fixed; left: 0; right: 0; bottom: 0; z-index: 9996;
           max-height: 92dvh; display: flex; flex-direction: column;
           background: var(--surface-container-lowest);
-          border-radius: 28px 28px 0 0;
-          box-shadow: 0 -12px 48px rgba(120,90,110,0.22);
-          animation: esUp 0.32s cubic-bezier(0.22,1,0.36,1) both;
+          border-radius: 24px 24px 0 0;
+          box-shadow: 0 -8px 40px -8px rgba(40,36,60,0.28), 0 -1px 0 rgba(255,255,255,0.5) inset;
+          animation: esUp 0.36s cubic-bezier(0.22,1,0.36,1) both;
           margin: 0 auto; max-width: 640px;
         }
         @keyframes esUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .es-handle { width: 40px; height: 5px; border-radius: 99px; background: var(--outline-variant); margin: 10px auto 4px; flex-shrink: 0; }
+        .es-handle { width: 38px; height: 5px; border-radius: 99px; background: rgba(120,110,150,0.4); margin: 10px auto 4px; flex-shrink: 0; }
         .es-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 20px 8px; flex-shrink: 0; }
         .es-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; color: var(--heading); }
         .es-close { width: 34px; height: 34px; border-radius: 50%; background: var(--surface-container); border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; }

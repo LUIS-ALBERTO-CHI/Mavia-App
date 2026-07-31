@@ -214,25 +214,27 @@ export default function ProfileScreen() {
 
         .prof-group {
           background: var(--surface-container-lowest);
-          border-radius: 28px;
+          border-radius: 18px;
           overflow: hidden;
-          border: 1px solid rgba(208,195,200,0.2);
-          box-shadow: 0 2px 12px rgba(112,87,101,0.05);
-          margin-bottom: var(--space-xl);
+          border: 0.5px solid var(--outline-variant);
+          box-shadow: var(--shadow-card);
+          margin-bottom: var(--space-lg);
         }
 
         .prof-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: var(--space-md) var(--space-lg);
+          padding: 13px 16px;
           cursor: pointer;
           transition: background var(--transition-fast);
           gap: var(--space-md);
         }
 
         .prof-row:hover { background: var(--surface-container-low); }
-        .prof-row + .prof-row { border-top: 1px solid rgba(208,195,200,0.1); }
+        .prof-row:active { background: var(--surface-container); }
+        /* Separador hairline "inset" (no llega al borde izquierdo del icono) */
+        .prof-row + .prof-row { border-top: 0.5px solid var(--outline-variant); }
 
         .prof-row-left {
           display: flex;
