@@ -184,8 +184,8 @@ const ART = {
   ),
 };
 
-/** Lista ordenada para el picker: id + etiqueta accesible */
-export const STICKERS = [
+/* Set base propio (SVG, sin copyright) */
+const SVG_STICKERS = [
   { id: 'heart',    label: 'Corazón' },
   { id: 'star',     label: 'Estrella' },
   { id: 'sparkle',  label: 'Brillo' },
@@ -212,22 +212,36 @@ export const STICKERS = [
   { id: 'poop',     label: 'Popó' },
 ];
 
-/* IDs que son PNG propios (archivo en /public/stickers/<id>.png).
-   Para añadir stickers ilustrados: sube el PNG y agrega { id, label, png: true } a STICKERS. */
-const PNG_IDS = new Set(STICKERS.filter(s => s.png).map(s => s.id));
+/* ── Stickers personalizados (PNG) ──────────────────────────────────
+   Suelta tus PNG en  src/assets/stickers/  (256×256, fondo transparente).
+   Se detectan SOLOS: el nombre del archivo es el id y la etiqueta.
+   Ej.  gato-feliz.png  →  id "gato-feliz", etiqueta "Gato Feliz".
+   Aparecen PRIMERO en el selector, antes del set base. */
+const CUSTOM_URLS = import.meta.glob('../assets/stickers/*.png', { eager: true, query: '?url', import: 'default' });
+const prettify = (id) => id.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+const CUSTOM = Object.keys(CUSTOM_URLS)
+  .map(p => { const id = p.split('/').pop().replace(/\.png$/i, ''); return { id, label: prettify(id), url: CUSTOM_URLS[p] }; })
+  .sort((a, b) => a.id.localeCompare(b.id));
+const CUSTOM_MAP = Object.fromEntries(CUSTOM.map(s => [s.id, s.url]));
+
+/** Lista para el picker: primero tus PNG personalizados, luego el set base SVG */
+export const STICKERS = [
+  ...CUSTOM.map(({ id, label }) => ({ id, label, custom: true })),
+  ...SVG_STICKERS,
+];
 
 /**
- * Renderiza un sticker por id. Usa PNG si está marcado como png; si no, el SVG.
+ * Renderiza un sticker por id. Usa el PNG personalizado si existe; si no, el SVG base.
  * Fallback a estrella si no existe.
  * @param {string} id    — id del sticker
  * @param {number} size  — tamaño en px (default 28)
  */
 export default function Sticker({ id, size = 28, className = '', style = {} }) {
-  // Sticker ilustrado propio (PNG). Recomendado 128×128 px, fondo transparente.
-  if (PNG_IDS.has(id)) {
+  const customUrl = CUSTOM_MAP[id];
+  if (customUrl) {
     return (
       <img
-        src={`/stickers/${id}.png`}
+        src={customUrl}
         width={size}
         height={size}
         alt=""

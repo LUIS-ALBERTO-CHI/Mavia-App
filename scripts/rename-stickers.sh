@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Renombra SOLO los PNG "crudos" (nombres de ChatGPT/descarga con espacios,
+# comas o parentesis) de src/assets/stickers/ a  <tema>-01.png, -02.png, ...
+# Los que ya estan limpios NO se tocan, y la numeracion del tema CONTINUA.
+#
+# Uso:
+#   bash scripts/rename-stickers.sh          # tema por defecto: "gato"
+#   bash scripts/rename-stickers.sh capibara # otro tema
+set -euo pipefail
+
+DEST="src/assets/stickers"
+PREFIX="${1:-gato}"
+
+# "limpio" = solo minusculas, numeros y guiones (ej. gato-01.png, cafe.png)
+is_clean() { [[ "$1" =~ ^[a-z0-9]+(-[a-z0-9]+)*\.png$ ]]; }
+
+# Reune los PNG con nombre CRUDO, en orden natural (1),(2),...,(10)
+mapfile -t messy < <(
+  find "$DEST" -maxdepth 1 -type f -iname '*.png' -printf '%f\n' \
+    | while IFS= read -r name; do is_clean "$name" || printf '%s\n' "$name"; done \
+    | sort -V
+)
+
+if [ "${#messy[@]}" -eq 0 ]; then
+  echo "No hay PNG nuevos por renombrar en $DEST."
+  exit 0
+fi
+
+# Indice mas alto que ya exista para este tema, para continuar
+start=0
+while IFS= read -r existing; do
+  num="${existing#${PREFIX}-}"; num="${num%.png}"
+  if [[ "$num" =~ ^[0-9]+$ ]] && (( 10#$num > start )); then start=$((10#$num)); fi
+done < <(find "$DEST" -maxdepth 1 -type f -name "${PREFIX}-*.png" -printf '%f\n' 2>/dev/null || true)
+
+# Paso 1: crudos -> temporales (evita colisiones)
+n=0
+for f in "${messy[@]}"; do
+  n=$((n+1))
+  mv -f -- "$DEST/$f" "$DEST/__tmp_$n.png"
+done
+
+# Paso 2: temporales -> final, continuando la numeracion del tema
+i=$start
+while IFS= read -r f; do
+  i=$((i+1))
+  printf -v num "%02d" "$i"
+  mv -f -- "$f" "$DEST/$PREFIX-$num.png"
+  echo "  $PREFIX-$num.png"
+done < <(find "$DEST" -maxdepth 1 -type f -name '__tmp_*.png' | sort -V)
+
+echo "Listo: $n sticker(s) -> $PREFIX-$(printf '%02d' $((start+1))) .. $PREFIX-$(printf '%02d' $i)"
