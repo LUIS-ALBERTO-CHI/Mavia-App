@@ -5,7 +5,7 @@ import { Check, DollarSign, Bell, Repeat, Clock, X, Lock, Users, Plus } from 'lu
 import { DatePicker } from './ui/date-picker';
 import { TimePicker } from './ui/time-picker';
 import { localToday } from '../lib/utils';
-import Sticker, { STICKERS } from './Sticker';
+import Sticker, { STICKERS, STICKER_CATEGORIES } from './Sticker';
 import { HIGHLIGHTERS, DEFAULT_COLOR, REPEAT_OPTIONS, REMINDER_OFFSETS } from '../lib/entryStyle';
 
 /**
@@ -44,6 +44,7 @@ export default function CreateEntrySheet() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [stickerCat, setStickerCat] = useState(STICKER_CATEGORIES[0]?.id || null);
 
   const spaces      = state.spaces || [];
   const activeSpace = spaces.find(s => s.id === form.spaceId);
@@ -120,6 +121,10 @@ export default function CreateEntrySheet() {
         /* Selector de pegatinas (modal) */
         .es-pick-backdrop { position: fixed; inset: 0; z-index: 9997; background: rgba(40,36,60,0.42); backdrop-filter: blur(8px) saturate(160%); -webkit-backdrop-filter: blur(8px) saturate(160%); animation: fadeIn 0.18s ease both; }
         .es-pick { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9998; max-height: 76dvh; display: flex; flex-direction: column; background: var(--surface-container-lowest); border-radius: 24px 24px 0 0; box-shadow: 0 -8px 40px -8px rgba(40,36,60,0.3), 0 -1px 0 rgba(255,255,255,0.5) inset; animation: esUp 0.34s cubic-bezier(0.22,1,0.36,1) both; margin: 0 auto; max-width: 640px; }
+        .es-pick-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 20px 10px; flex-shrink: 0; }
+        .es-pick-tabs::-webkit-scrollbar { display: none; }
+        .es-pick-tab { flex-shrink: 0; padding: 8px 16px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+        .es-pick-tab.sel { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
         .es-pick-grid { overflow-y: auto; padding: 4px 20px calc(env(safe-area-inset-bottom,0px) + 20px); display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
         @media (min-width: 480px) { .es-pick-grid { grid-template-columns: repeat(5, 1fr); } }
         .es-pick-grid .es-sticker-cell { background: var(--surface-container-low); border-radius: 18px; }
@@ -329,12 +334,20 @@ export default function CreateEntrySheet() {
               <span className="es-title">Stickers</span>
               <button className="es-close" onClick={() => setPickerOpen(false)} aria-label="Cerrar"><X size={18} /></button>
             </div>
+            {STICKER_CATEGORIES.length > 1 && (
+              <div className="es-pick-tabs">
+                {STICKER_CATEGORIES.map(c => (
+                  <button key={c.id} type="button" className={`es-pick-tab${stickerCat === c.id ? ' sel' : ''}`}
+                    onClick={() => setStickerCat(c.id)}>{c.label}</button>
+                ))}
+              </div>
+            )}
             <div className="es-pick-grid">
               <button type="button" className={`es-sticker-cell${!form.sticker ? ' sel' : ''}`}
                 onClick={() => { set('sticker', null); setPickerOpen(false); }} aria-label="Sin sticker">
                 <span className="es-sticker-none">Sin<br/>sticker</span>
               </button>
-              {STICKERS.map(s => (
+              {STICKERS.filter(s => s.category === stickerCat).map(s => (
                 <button key={s.id} type="button" className={`es-sticker-cell${form.sticker === s.id ? ' sel' : ''}`}
                   onClick={() => { set('sticker', s.id); setPickerOpen(false); }} aria-label={s.label} title={s.label}>
                   <Sticker id={s.id} size={46} />

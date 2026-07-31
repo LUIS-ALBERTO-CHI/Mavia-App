@@ -184,51 +184,36 @@ const ART = {
   ),
 };
 
-/* Set base propio (SVG, sin copyright) */
-const SVG_STICKERS = [
-  { id: 'heart',    label: 'Corazón' },
-  { id: 'star',     label: 'Estrella' },
-  { id: 'sparkle',  label: 'Brillo' },
-  { id: 'check',    label: 'Hecho' },
-  { id: 'money',    label: 'Dinero' },
-  { id: 'shopping', label: 'Compras' },
-  { id: 'gift',     label: 'Regalo' },
-  { id: 'cake',     label: 'Pastel' },
-  { id: 'balloon',  label: 'Globo' },
-  { id: 'cat',      label: 'Gato' },
-  { id: 'dog',      label: 'Perro' },
-  { id: 'paw',      label: 'Patita' },
-  { id: 'flower',   label: 'Flor' },
-  { id: 'plane',    label: 'Viaje' },
-  { id: 'camera',   label: 'Foto' },
-  { id: 'video',    label: 'Video' },
-  { id: 'coffee',   label: 'Café' },
-  { id: 'music',    label: 'Música' },
-  { id: 'calendar', label: 'Fecha' },
-  { id: 'alarm',    label: 'Alarma' },
-  { id: 'fire',     label: 'Fuego' },
-  { id: 'sun',      label: 'Sol' },
-  { id: 'moon',     label: 'Luna' },
-  { id: 'poop',     label: 'Popó' },
-];
-
 /* ── Stickers personalizados (PNG) ──────────────────────────────────
-   Suelta tus PNG en  src/assets/stickers/  (256×256, fondo transparente).
-   Se detectan SOLOS: el nombre del archivo es el id y la etiqueta.
-   Ej.  gato-feliz.png  →  id "gato-feliz", etiqueta "Gato Feliz".
-   Aparecen PRIMERO en el selector, antes del set base. */
-const CUSTOM_URLS = import.meta.glob('../assets/stickers/*.png', { eager: true, query: '?url', import: 'default' });
-const prettify = (id) => id.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+   Suelta tus PNG en subcarpetas de  src/assets/stickers/<categoria>/
+   (256×256, fondo transparente). Se detectan SOLOS:
+     • la CARPETA es la categoría (una pestaña en el selector)
+     • el NOMBRE del archivo es el id y la etiqueta
+   Ej.  stickers/gatos/gato-01.png   → categoría "Gatos", etiqueta "Gato 01"
+        stickers/rutina/cafe.png     → categoría "Rutina", etiqueta "Cafe"
+   Archivos sueltos en la raíz caen en la categoría "Otros". */
+const CUSTOM_URLS = import.meta.glob('../assets/stickers/**/*.png', { eager: true, query: '?url', import: 'default' });
+const prettify = (s) => s.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 const CUSTOM = Object.keys(CUSTOM_URLS)
-  .map(p => { const id = p.split('/').pop().replace(/\.png$/i, ''); return { id, label: prettify(id), url: CUSTOM_URLS[p] }; })
-  .sort((a, b) => a.id.localeCompare(b.id));
+  .map(p => {
+    const rel   = p.split('/assets/stickers/')[1];   // "gatos/gato-01.png" | "cafe.png"
+    const parts = rel.split('/');
+    const file  = parts.pop();
+    const cat   = parts.length ? parts[parts.length - 1] : 'otros';
+    const id    = file.replace(/\.png$/i, '');
+    return { id, label: prettify(id), category: cat, catLabel: prettify(cat), url: CUSTOM_URLS[p] };
+  })
+  .sort((a, b) => a.category.localeCompare(b.category) || a.id.localeCompare(b.id));
 const CUSTOM_MAP = Object.fromEntries(CUSTOM.map(s => [s.id, s.url]));
 
-/** Lista para el picker: primero tus PNG personalizados, luego el set base SVG */
-export const STICKERS = [
-  ...CUSTOM.map(({ id, label }) => ({ id, label, custom: true })),
-  ...SVG_STICKERS,
-];
+/** Lista plana para el picker (cada uno con su categoría) */
+export const STICKERS = CUSTOM.map(({ id, label, category, catLabel }) => ({ id, label, category, catLabel }));
+
+/** Categorías en orden de aparición, para las pestañas del selector */
+export const STICKER_CATEGORIES = CUSTOM.reduce((acc, s) => {
+  if (!acc.some(c => c.id === s.category)) acc.push({ id: s.category, label: s.catLabel });
+  return acc;
+}, []);
 
 /**
  * Renderiza un sticker por id. Usa el PNG personalizado si existe; si no, el SVG base.
