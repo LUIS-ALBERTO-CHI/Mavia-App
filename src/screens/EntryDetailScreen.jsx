@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { ArrowLeft, Pencil, Trash2, Check, Clock, Bell, Repeat, CalendarDays, Users } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Check, Bell, Repeat, CalendarDays, Users } from 'lucide-react';
 import { formatTime12h } from '../lib/utils';
 import Sticker from '../components/Sticker';
 import { formatAmount } from '../lib/entryStyle';
@@ -43,7 +43,10 @@ export default function EntryDetailScreen() {
   const color   = entry.color || 'var(--primary)';
   const done    = !!entry.completed;
   const amount  = formatAmount(entry.amount);
-  const timeStr = entry.time ? formatTime12h(entry.time) : 'Todo el día';
+  // Hora del recordatorio (nuevo) con respaldo al esquema viejo por offset
+  const reminderLabel = entry.reminderTime
+    ? formatTime12h(entry.reminderTime)
+    : (entry.reminderOffset < 60 ? `${entry.reminderOffset} min antes` : '1 hora antes');
   const entrySpace = entry.spaceId && entry.spaceId !== 'personal'
     ? (state.spaces || []).find(s => s.id === entry.spaceId)
     : null;
@@ -158,14 +161,10 @@ export default function EntryDetailScreen() {
             <div className="ed-row-icon"><CalendarDays size={17} /></div>
             <div><div className="ed-row-label">Fecha</div><div className="ed-row-value">{formatDate(entry.date)}</div></div>
           </div>
-          <div className="ed-row">
-            <div className="ed-row-icon"><Clock size={17} /></div>
-            <div><div className="ed-row-label">Hora</div><div className="ed-row-value">{timeStr}</div></div>
-          </div>
           {entry.reminder && (
             <div className="ed-row">
               <div className="ed-row-icon"><Bell size={17} /></div>
-              <div><div className="ed-row-label">Recordatorio</div><div className="ed-row-value">{entry.reminderOffset < 60 ? `${entry.reminderOffset} min antes` : '1 hora antes'}</div></div>
+              <div><div className="ed-row-label">Recordatorio</div><div className="ed-row-value">{reminderLabel}</div></div>
             </div>
           )}
           {entry.repeat && entry.repeat !== 'No repetir' && (

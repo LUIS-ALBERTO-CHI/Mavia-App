@@ -551,7 +551,7 @@ export function AppProvider({ children }) {
           if (existingTask) {
             const nowCompleted = !existingTask.completed;
             await persistTask({ ...existingTask, completed: nowCompleted });
-            if (nowCompleted && !isSpaceEntry(existingTask)) cancelReminder(enrichedAction.id);
+            if (nowCompleted && !isSpaceEntry(existingTask)) cancelReminder(enrichedAction.id, uid);
 
             // ── Repeat logic: auto-create next occurrence (mismo espacio) ──
             if (nowCompleted && existingTask.repeat && existingTask.repeat !== 'No repetir' && existingTask.date) {
@@ -590,10 +590,13 @@ export function AppProvider({ children }) {
             }
             await persistTask(updated);
             if (!isSpaceEntry(updated)) {
-              cancelReminder(updated.id);
               if (updated.reminder && !updated.completed) {
+                // Reprogramar: el upsert (docId determinista) sobreescribe el aviso anterior.
                 const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
                 scheduleTaskReminder(updated, uid, token);
+              } else {
+                // Recordatorio apagado/completado → borrar el aviso programado.
+                cancelReminder(updated.id, uid);
               }
             }
           }

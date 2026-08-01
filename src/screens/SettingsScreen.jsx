@@ -352,7 +352,7 @@ export default function SettingsScreen() {
           <SettingRow
             icon={Calendar} iconBg="var(--secondary-container)" iconColor="var(--secondary)"
             label={t('settings.taskNotif')}
-            sub="15 min antes y al momento"
+            sub="Aviso a la hora que elijas"
             id="set-task-notif"
             right={<Switch checked={notifTasks && permStatus === 'granted'} onCheckedChange={setNotifTasks} id="sw-tasks" disabled={permStatus !== 'granted'} />}
           />

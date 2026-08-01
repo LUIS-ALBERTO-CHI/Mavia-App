@@ -222,9 +222,10 @@ export default async function handler(req, res) {
           notifTitle = 'Evento ahora';
           notifBody  = `${taskName}\nComienza a las ${taskTime12}`;
         } else {
-          // Exact task time
-          notifTitle = '\u00a1Es hora!';
-          notifBody  = `${taskName}\nInicia ahora | ${taskTime12}`;
+          // Recordatorio (entrada de d\u00eda completo). storedBody trae la nota si existe.
+          const note = storedBody && storedBody !== 'Recordatorio de tu agenda' ? storedBody : '';
+          notifTitle = 'Recordatorio';
+          notifBody  = note ? `${taskName}\n${note}` : taskName;
         }
 
         try {

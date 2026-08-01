@@ -4,7 +4,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { Search, Clock, Edit2, Trash2, AlarmClock, Leaf, Bell, AlertCircle } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { localToday, localDateOffset } from '../lib/utils';
+import { localToday, localDateOffset, formatTime12h } from '../lib/utils';
 
 const FILTERS = ['Todos', 'Hoy', 'Próximos', 'Vencidos'];
 
@@ -47,7 +47,7 @@ export default function RemindersScreen() {
   const tomorrowStr = localDateOffset(1);
 
   // All tasks with reminder flag that are NOT yet completed
-  const all = state.tasks.filter(item => item.reminder && !t.completed);
+  const all = state.tasks.filter(item => item.reminder && !item.completed);
 
   // Filter by chip
   const byChip = (() => {
@@ -463,15 +463,17 @@ export default function RemindersScreen() {
                         <div className="rem-card-body">
                           <div className="rem-card-title">{task.title}</div>
                           <div className="rem-card-meta">
-                            {task.time && (
+                            {task.reminderTime && (
                               <span className="rem-card-time">
                                 <Clock size={16} strokeWidth={1.75} />
-                                {task.time}
+                                {formatTime12h(task.reminderTime)}
                               </span>
                             )}
-                            <span className="rem-cat-badge" style={{ background: cat.bg, color: cat.text }}>
-                              {task.category}
-                            </span>
+                            {task.category && (
+                              <span className="rem-cat-badge" style={{ background: cat.bg, color: cat.text }}>
+                                {task.category}
+                              </span>
+                            )}
                             {isUrgent && (
                               <span className="rem-urgent">
                                 <AlertCircle size={14} strokeWidth={2} />
@@ -540,15 +542,17 @@ export default function RemindersScreen() {
 
                         {/* Meta */}
                         <div className="rem-upcoming-meta">
-                          {task.time && (
+                          {task.reminderTime && (
                             <span className="rem-card-time">
                               <Clock size={15} strokeWidth={1.75} />
-                              {task.time}
+                              {formatTime12h(task.reminderTime)}
                             </span>
                           )}
-                          <span className="rem-cat-badge" style={{ background: cat.bg, color: cat.text }}>
-                            {task.category}
-                          </span>
+                          {task.category && (
+                            <span className="rem-cat-badge" style={{ background: cat.bg, color: cat.text }}>
+                              {task.category}
+                            </span>
+                          )}
                         </div>
 
                         {/* Actions */}

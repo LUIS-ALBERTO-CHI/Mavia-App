@@ -286,6 +286,7 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
   const taskMs = taskDt.getTime();
 
   // ── FCM Firestore scheduling (background push — IDEMPOTENT via upsert) ──
+  let scheduledViaFCM = false;
   if (uid && taskMs > now) {
     try {
       const allTokens = await getUserFCMTokens(uid);
@@ -315,7 +316,7 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
         await upsertScheduledNotification({
           uid, fcmToken: tok,
           title: `Es hora: ${task.title}`,
-          body:  task.description || `Tu tarea comienza ahora`,
+          body:  (task.note || '').trim() || 'Recordatorio de tu agenda',
           scheduledDate: task.date,
           scheduledTime: time24,
           taskId: task.id,
@@ -324,17 +325,17 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
         });
       }
 
-      console.log(`[Mavia] FCM push scheduled (upsert) for "${task.title}" at ${task.time} → ${allTokens.length} device(s)`);
+      if (allTokens.length > 0) scheduledViaFCM = true;
+      console.log(`[Mavia] Recordatorio agendado (FCM) para "${task.title}" a las ${time24} → ${allTokens.length} dispositivo(s)`);
     } catch (err) {
       console.warn('[Mavia] Firestore scheduling failed, falling back to local only:', err.message);
     }
   }
 
-  // ── Local setTimeout — ONLY used as fallback when FCM is unavailable ──
-  // If FCM push is active (token present + uid + future task), the Vercel cron
-  // handles delivery. Local timers would create duplicates.
-  const hasFCM = !!(uid && fcmToken && taskMs > now);
-  if (!hasFCM) {
+  // ── Local setTimeout — SOLO como respaldo cuando no se agendó vía FCM ──
+  // Si ya se agendó por FCM (hay token + doc en Firestore), el cron de Vercel
+  // entrega la notificación; un timer local crearía duplicados.
+  if (!scheduledViaFCM) {
     const ids = [];
     const offsetMin = task.reminderOffset || 15;
     const warnMs    = taskMs - offsetMin * 60 * 1000;
@@ -352,8 +353,10 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
     if (taskMs > now) {
       ids.push(setTimeout(() => {
         showNotification(
-          '¡Es hora!',
-          `${task.title}\nInicia ahora | ${formatTime12h(time24)}`,
+          hasEntryTime ? '¡Es hora!' : 'Recordatorio',
+          hasEntryTime
+            ? `${task.title}\nInicia ahora | ${formatTime12h(time24)}`
+            : `${task.title}${(task.note || '').trim() ? `\n${task.note.trim()}` : ''}`,
           { tag: `task-now-${task.id}` }
         );
       }, taskMs - now));
