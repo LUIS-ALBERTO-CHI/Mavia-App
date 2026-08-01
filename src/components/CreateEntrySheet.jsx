@@ -147,7 +147,7 @@ export default function CreateEntrySheet() {
         .es-pick-tab.sel { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
         .es-pick-grid { overflow-y: auto; overflow-x: hidden; padding: 4px 20px calc(env(safe-area-inset-bottom,0px) + 20px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
         @media (min-width: 480px) { .es-pick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-        .es-pick-grid .es-sticker-cell { aspect-ratio: auto; min-height: 96px; padding: 8px; background: var(--surface-container-low); border-radius: 18px; min-width: 0; overflow: hidden; }
+        .es-pick-grid .es-sticker-cell { aspect-ratio: auto; min-height: 100px; padding: 10px; background: var(--surface-container-low); border-radius: 18px; min-width: 0; overflow: hidden; }
 
         .es-title-input {
           flex: 1; width: 100%; background: transparent; border: none;
@@ -374,7 +374,7 @@ export default function CreateEntrySheet() {
               {STICKERS.filter(s => s.category === stickerCat).map(s => (
                 <button key={s.id} type="button" className={`es-sticker-cell${form.sticker === s.id ? ' sel' : ''}`}
                   onClick={() => { set('sticker', s.id); setPickerOpen(false); }} aria-label={s.label} title={s.label}>
-                  <Sticker id={s.id} size={80} />
+                  <Sticker id={s.id} size={72} />
                 </button>
               ))}
             </div>

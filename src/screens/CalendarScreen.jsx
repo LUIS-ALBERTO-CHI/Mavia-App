@@ -221,9 +221,10 @@ export default function CalendarScreen() {
         @media (min-width: 900px) { .cal-chip-more { font-size: 10px; } }
 
         /* Stickers agrupados al fondo de la casilla (máx 3) */
-        .cal-stickers { margin-top: auto; display: flex; align-items: flex-end; justify-content: center; gap: 1px; padding-top: 3px; }
+        .cal-stickers { margin-top: auto; display: flex; align-items: flex-end; justify-content: center; gap: 0; padding-top: 2px; }
         .cal-stickers > * { flex-shrink: 0; }
-        @media (min-width: 900px) { .cal-stickers { gap: 3px; } }
+        .cal-stickers > * + * { margin-left: -5px; }   /* cluster: 3 caben en la celda angosta */
+        @media (min-width: 900px) { .cal-stickers { gap: 4px; } .cal-stickers > * + * { margin-left: 0; } }
 
         /* ── Rows (lista/semana/día) ── */
         .cal-list { display: flex; flex-direction: column; gap: 9px; }
@@ -318,7 +319,7 @@ export default function CalendarScreen() {
                   const isToday     = isThisMonth && isCurrentMonth && cellDay === now.getDate();
                   const isSel       = isThisMonth && cellDay === selectedDay && !isToday;
                   const dayEntries  = isThisMonth ? entriesFor(toDS(viewYear, viewMonth, cellDay)) : [];
-                  const visible     = dayEntries.slice(0, 3);
+                  const visible     = dayEntries.slice(0, 2);
                   const overflow    = dayEntries.length - visible.length;
                   const stickers    = dayEntries.filter(e => e.sticker).slice(-3);   // máx 3, el nuevo reemplaza al anterior
                   return (
@@ -342,7 +343,7 @@ export default function CalendarScreen() {
                       )}
                       {stickers.length > 0 && (
                         <div className="cal-stickers">
-                          {stickers.map((e, i) => <Sticker key={e.id || i} id={e.sticker} size={22} />)}
+                          {stickers.map((e, i) => <Sticker key={e.id || i} id={e.sticker} size={18} />)}
                         </div>
                       )}
                     </div>
