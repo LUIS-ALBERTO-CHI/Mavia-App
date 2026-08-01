@@ -2,17 +2,26 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
 import { Check, DollarSign, Bell, Repeat, X, Lock, Users, Plus } from 'lucide-react';
+import { TimePicker } from './ui/time-picker';
 import { localToday } from '../lib/utils';
 
 const DAYS_FULL  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const MONTHS_LOW = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+// Opciones rápidas de recordatorio (un toque) — franja del día
+const REMINDER_PRESETS = [
+  { label: 'Mañana', sub: '9:00 am', time: '09:00' },
+  { label: 'Tarde',  sub: '3:00 pm', time: '15:00' },
+  { label: 'Noche',  sub: '8:00 pm', time: '20:00' },
+];
+const PRESET_TIMES = REMINDER_PRESETS.map(p => p.time);
 function formatDayLabel(ds) {
   if (!ds) return '';
   const d = new Date(ds + 'T00:00:00');
   return `${DAYS_FULL[d.getDay()]} ${d.getDate()} de ${MONTHS_LOW[d.getMonth()]}`;
 }
 import Sticker, { STICKERS, STICKER_CATEGORIES } from './Sticker';
-import { HIGHLIGHTERS, DEFAULT_COLOR, REPEAT_OPTIONS, REMINDER_OFFSETS } from '../lib/entryStyle';
+import { HIGHLIGHTERS, DEFAULT_COLOR, REPEAT_OPTIONS } from '../lib/entryStyle';
 
 /**
  * CreateEntrySheet — bottom sheet kawaii para crear/editar una "entrada".
@@ -42,6 +51,7 @@ export default function CreateEntrySheet() {
     note:           editEntry?.note           || editEntry?.notes || '',
     amount:         editEntry?.amount != null ? String(editEntry.amount) : '',
     reminder:       editEntry?.reminder       || false,
+    reminderTime:   editEntry?.reminderTime   || '09:00',
     reminderOffset: editEntry?.reminderOffset || 15,
     repeat:         editEntry?.repeat         || 'No repetir',
     spaceId:        initialSpace,
@@ -51,6 +61,9 @@ export default function CreateEntrySheet() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [stickerCat, setStickerCat] = useState(STICKER_CATEGORIES[0]?.id || null);
+  const [customReminder, setCustomReminder] = useState(
+    !!(editEntry?.reminder && editEntry?.reminderTime && !PRESET_TIMES.includes(editEntry.reminderTime))
+  );
 
   const spaces      = state.spaces || [];
   const activeSpace = spaces.find(s => s.id === form.spaceId);
@@ -69,6 +82,7 @@ export default function CreateEntrySheet() {
       note:   form.note.trim(),
       amount: amountNum != null && !isNaN(amountNum) ? amountNum : null,
       reminder: form.reminder,
+      reminderTime: form.reminder ? form.reminderTime : '',
       reminderOffset: form.reminderOffset,
       repeat: form.repeat,
       spaceId: form.spaceId || 'personal',
@@ -131,9 +145,9 @@ export default function CreateEntrySheet() {
         .es-pick-tabs::-webkit-scrollbar { display: none; }
         .es-pick-tab { flex-shrink: 0; padding: 8px 16px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .es-pick-tab.sel { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
-        .es-pick-grid { overflow-y: auto; overflow-x: hidden; padding: 4px 20px calc(env(safe-area-inset-bottom,0px) + 20px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+        .es-pick-grid { overflow-y: auto; overflow-x: hidden; padding: 4px 20px calc(env(safe-area-inset-bottom,0px) + 20px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
         @media (min-width: 480px) { .es-pick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-        .es-pick-grid .es-sticker-cell { aspect-ratio: 1; padding: 0; background: var(--surface-container-low); border-radius: 18px; min-width: 0; overflow: hidden; }
+        .es-pick-grid .es-sticker-cell { aspect-ratio: auto; min-height: 96px; padding: 8px; background: var(--surface-container-low); border-radius: 18px; min-width: 0; overflow: hidden; }
 
         .es-title-input {
           flex: 1; width: 100%; background: transparent; border: none;
@@ -292,12 +306,25 @@ export default function CreateEntrySheet() {
               <button type="button" className={`es-toggle ${form.reminder ? 'on' : 'off'}`} onClick={() => set('reminder', !form.reminder)} aria-label="Recordatorio" />
             </div>
             {form.reminder && (
-              <div className="es-pills">
-                {REMINDER_OFFSETS.map(m => (
-                  <button key={m} type="button" className={`es-pill${form.reminderOffset === m ? ' sel' : ''}`} onClick={() => set('reminderOffset', m)}>
-                    {m < 60 ? `${m} min` : '1 hora'} antes
+              <div style={{ marginTop: 14 }}>
+                <div className="es-label" style={{ fontSize: 'var(--text-label-sm)', color: 'var(--on-surface-variant)' }}>¿Cuándo te aviso?</div>
+                <div className="es-pills" style={{ marginTop: 0 }}>
+                  {REMINDER_PRESETS.map(p => (
+                    <button key={p.time} type="button"
+                      className={`es-pill${!customReminder && form.reminderTime === p.time ? ' sel' : ''}`}
+                      onClick={() => { setCustomReminder(false); set('reminderTime', p.time); }}>
+                      {p.label} · {p.sub}
+                    </button>
+                  ))}
+                  <button type="button" className={`es-pill${customReminder ? ' sel' : ''}`} onClick={() => setCustomReminder(true)}>
+                    Otra hora…
                   </button>
-                ))}
+                </div>
+                {customReminder && (
+                  <div style={{ marginTop: 12 }}>
+                    <TimePicker value={form.reminderTime} onChange={t => set('reminderTime', t)} id="entry-reminder-time" defaultTime="09:00" />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -347,7 +374,7 @@ export default function CreateEntrySheet() {
               {STICKERS.filter(s => s.category === stickerCat).map(s => (
                 <button key={s.id} type="button" className={`es-sticker-cell${form.sticker === s.id ? ' sel' : ''}`}
                   onClick={() => { set('sticker', s.id); setPickerOpen(false); }} aria-label={s.label} title={s.label}>
-                  <Sticker id={s.id} size={64} style={{ width: '100%', height: '100%' }} />
+                  <Sticker id={s.id} size={80} />
                 </button>
               ))}
             </div>

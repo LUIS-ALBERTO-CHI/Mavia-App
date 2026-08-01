@@ -265,7 +265,9 @@ async function deleteScheduledNotificationsForTask(taskId, uid, fcmToken) {
  * @param {string} fcmToken  — FCM push token (optional; enables background push)
  */
 export async function scheduleTaskReminder(task, uid, fcmToken) {
-  if (!task?.reminder || !task?.date || !task?.time) return;
+  // Hora del aviso: la del recordatorio (entradas de día completo) o la de la entrada (legado)
+  const timeStr = task?.reminderTime || task?.time;
+  if (!task?.reminder || !task?.date || !timeStr) return;
 
   // Cancel existing local timers first
   const existingTimers = _timers.get(task.id);
@@ -275,8 +277,9 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
   }
 
   const now    = Date.now();
-  const time24 = parseTimeTo24h(task.time);
-  if (!time24) { console.warn('[Mavia] Invalid task time:', task.time); return; }
+  const time24 = parseTimeTo24h(timeStr);
+  if (!time24) { console.warn('[Mavia] Invalid reminder time:', timeStr); return; }
+  const hasEntryTime = !!task.time;   // solo hay "aviso previo" si la entrada tiene hora propia
 
   const [h, m] = time24.split(':').map(Number);
   const taskDt = new Date(`${task.date}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`);
@@ -291,8 +294,8 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
       for (const tok of allTokens) {
         const offsetMin = task.reminderOffset || 15;
 
-        // Warning notification (before task time)
-        if (taskMs - offsetMin * 60 * 1000 > now) {
+        // Warning notification (before task time) — solo para entradas con hora propia
+        if (hasEntryTime && taskMs - offsetMin * 60 * 1000 > now) {
           const warnDt   = new Date(taskMs - offsetMin * 60 * 1000);
           const warnDate = localDateStr(warnDt);
           const warnTime = `${String(warnDt.getHours()).padStart(2,'0')}:${String(warnDt.getMinutes()).padStart(2,'0')}`;
@@ -336,7 +339,7 @@ export async function scheduleTaskReminder(task, uid, fcmToken) {
     const offsetMin = task.reminderOffset || 15;
     const warnMs    = taskMs - offsetMin * 60 * 1000;
 
-    if (warnMs > now) {
+    if (hasEntryTime && warnMs > now) {
       ids.push(setTimeout(() => {
         showNotification(
           `En ${offsetMin >= 60 ? '1 hora' : `${offsetMin} min`}`,
