@@ -460,6 +460,11 @@ export async function removeSpaceClient(spaceId, name) {
   await updateDoc(spaceRef(spaceId), { clients: arrayRemove(name) });
 }
 
+/** Color de identidad del espacio (para distinguirlo en el calendario). */
+export async function setSpaceColor(spaceId, color) {
+  await updateDoc(spaceRef(spaceId), { color });
+}
+
 /** Entradas del espacio compartido. */
 export async function saveSpaceTask(spaceId, task) {
   const { id, spaceId: _s, ...data } = task;   // el spaceId es implícito por la ubicación

@@ -46,6 +46,19 @@ export default function CalendarScreen() {
   const spaces         = state.spaces || [];
   const currentSpaceId = state.currentSpaceId || 'personal';
   const currentSpace   = spaces.find(s => s.id === currentSpaceId);
+  const showAll        = currentSpaceId === 'all';   // vista "Todos": marcar por espacio
+
+  // Identidad visual por espacio (color elegido o automático por orden) + nombre
+  const SPACE_PALETTE = ['#8478c8', '#e888b6', '#6bbd8e', '#7cb8e0', '#e0a72e', '#c9a9e0'];
+  const spaceIndex = new Map(spaces.map((s, i) => [s.id, i]));
+  const spaceColor = (sid) => {
+    if (!sid || sid === 'personal') return '#918da3';
+    const sp = spaces.find(s => s.id === sid);
+    return sp?.color || SPACE_PALETTE[(spaceIndex.get(sid) ?? 0) % SPACE_PALETTE.length];
+  };
+  const spaceName  = (sid) => (sid && sid !== 'personal')
+    ? (spaces.find(s => s.id === sid)?.name || 'Espacio')
+    : 'Personal';
 
   const [viewYear,    setViewYear]    = useState(now.getFullYear());
   const [viewMonth,   setViewMonth]   = useState(now.getMonth());
@@ -122,8 +135,15 @@ export default function CalendarScreen() {
         <span className="cal-row-bullet" style={{ background: color }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className={`cal-row-title${e.completed ? ' done' : ''}`}>{e.title}</div>
-          {amount && (
-            <div className="cal-row-meta"><span style={{ color, fontWeight: 800 }}>{amount}</span></div>
+          {(showAll || amount) && (
+            <div className="cal-row-meta">
+              {showAll && (
+                <span className="cal-space-tag" style={{ background: `${spaceColor(e.spaceId)}22`, color: spaceColor(e.spaceId) }}>
+                  {spaceName(e.spaceId)}
+                </span>
+              )}
+              {amount && <span style={{ color, fontWeight: 800 }}>{amount}</span>}
+            </div>
           )}
         </div>
         {e.sticker && <Sticker id={e.sticker} size={42} className="cal-card-sticker" />}
@@ -156,7 +176,7 @@ export default function CalendarScreen() {
   return (
     <>
       <style>{`
-        .cal { max-width: 760px; margin: 0 auto; padding: var(--space-md) var(--space-container) var(--space-8); animation: screenEnter 0.4s var(--ease-out) both; }
+        .cal { max-width: 760px; margin: 0 auto; padding: var(--space-md) var(--space-container) var(--space-8); animation: screenEnter 0.4s var(--ease-out) both; box-sizing: border-box; display: flex; flex-direction: column; min-height: 100%; }
 
         /* ── Topbar ── */
         .cal-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
@@ -177,13 +197,11 @@ export default function CalendarScreen() {
         .cal-segs { display: flex; background: var(--surface-container); border-radius: 13px; padding: 3px; gap: 2px; margin-bottom: 12px; box-shadow: inset 0 1px 3px rgba(90,80,130,0.07); }
 
         /* Selector de espacio */
-        .cal-spaces { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 10px; padding-bottom: 2px; }
-        .cal-spaces::-webkit-scrollbar { display: none; }
+        .cal-spaces { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
         .cal-space { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
-        .cal-space.active { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
+        .cal-space.active { border-color: var(--primary); background: var(--primary); color: var(--on-primary); box-shadow: 0 2px 8px -2px rgba(140,150,220,0.5); }
         /* Filtro de clientes */
-        .cal-clients { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; margin-bottom: 14px; padding-bottom: 2px; }
-        .cal-clients::-webkit-scrollbar { display: none; }
+        .cal-clients { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
         .cal-client { flex-shrink: 0; padding: 5px 12px; border-radius: 99px; border: none; background: var(--surface-container); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 12px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .cal-client.active { background: var(--secondary-container); color: var(--on-secondary-container); }
         .cal-seg { flex: 1; padding: 9px 4px; border-radius: 10px; border: none; background: transparent; cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 800; letter-spacing: 0.03em; color: var(--on-surface-variant); transition: all var(--transition-fast); }
@@ -193,6 +211,10 @@ export default function CalendarScreen() {
         .cal-view { transition: opacity 0.18s ease, transform 0.18s ease; }
         .cal-view.slide-left  { opacity: 0; transform: translateX(-14px); }
         .cal-view.slide-right { opacity: 0; transform: translateX(14px); }
+        /* Mes: se ajusta al alto disponible (nunca queda tras la nav) y nunca colapsa vacío */
+        .cal-view.is-month { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+        .cal-view.is-month .cal-grid { flex: 1; min-height: 0; grid-auto-rows: minmax(72px, 1fr); }
+        @media (min-width: 900px) { .cal-view.is-month .cal-grid { grid-auto-rows: minmax(104px, 1fr); } }
 
         /* ── Weekday header ── */
         .cal-dow { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 6px; }
@@ -201,9 +223,9 @@ export default function CalendarScreen() {
 
         /* ── Month grid — enmarcado como tarjeta ── */
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--cal-line); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow-card); background: var(--surface-container-lowest); }
-        .cal-cell { border-right: 1px solid var(--cal-line); border-bottom: 1px solid var(--cal-line); min-height: 104px; padding: 6px 5px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; overflow: hidden; transition: background var(--transition-fast); }
+        .cal-cell { border-right: 1px solid var(--cal-line); border-bottom: 1px solid var(--cal-line); min-height: 0; padding: 6px 5px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; overflow: hidden; transition: background var(--transition-fast); }
         .cal-cell:nth-child(7n) { border-right: none; }
-        @media (min-width: 900px) { .cal-cell { min-height: 128px; padding: 8px 7px; } }
+        @media (min-width: 900px) { .cal-cell { padding: 8px 7px; } }
         .cal-cell:hover { background: var(--surface-container-low); }
         .cal-cell.other { color: var(--outline); cursor: default; }
         .cal-cell.other .cal-num { color: var(--outline); opacity: 0.55; }
@@ -241,7 +263,8 @@ export default function CalendarScreen() {
         .cal-card-sticker { flex-shrink: 0; margin-left: 4px; }
         .cal-row-title { font-size: var(--text-body-md); font-weight: 700; color: var(--on-surface); line-height: 1.3; }
         .cal-row-title.done { text-decoration: line-through; opacity: 0.6; }
-        .cal-row-meta { font-size: var(--text-label-sm); color: var(--on-surface-variant); margin-top: 2px; }
+        .cal-row-meta { font-size: var(--text-label-sm); color: var(--on-surface-variant); margin-top: 3px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .cal-space-tag { display: inline-block; padding: 1px 7px; border-radius: 99px; font-size: 10.5px; font-weight: 800; line-height: 1.4; }
         .cal-check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all var(--transition-spring); }
 
         /* ── Day view ── */
@@ -305,7 +328,7 @@ export default function CalendarScreen() {
           </div>
         )}
 
-        <div className={`cal-view${slideDir ? ` slide-${slideDir}` : ''}`} {...swipe}>
+        <div className={`cal-view${slideDir ? ` slide-${slideDir}` : ''}${viewMode === 'month' ? ' is-month' : ''}`} {...swipe}>
 
           {/* ═══ MES ═══ */}
           {viewMode === 'month' && (
@@ -332,8 +355,9 @@ export default function CalendarScreen() {
                         <div className="cal-chips">
                           {visible.map((e, i) => {
                             const c = e.color || DEFAULT_COLOR;
+                            const accent = showAll ? { borderLeft: `3px solid ${spaceColor(e.spaceId)}` } : null;
                             return (
-                              <div key={e.id || i} className={`cal-chip${e.completed ? ' done' : ''}`} style={{ background: c }}>
+                              <div key={e.id || i} className={`cal-chip${e.completed ? ' done' : ''}`} style={{ background: c, ...accent }}>
                                 <span className="cal-chip-t">{e.title}</span>
                               </div>
                             );

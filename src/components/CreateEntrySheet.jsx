@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
 import { Check, DollarSign, Bell, Repeat, X, Lock, Users, Plus } from 'lucide-react';
 import { TimePicker } from './ui/time-picker';
+import { DatePicker } from './ui/date-picker';
 import { localToday } from '../lib/utils';
 
 const DAYS_FULL  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -60,6 +61,7 @@ export default function CreateEntrySheet() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [showDate, setShowDate]     = useState(false);
   const [stickerCat, setStickerCat] = useState(STICKER_CATEGORIES[0]?.id || null);
   const [customReminder, setCustomReminder] = useState(
     !!(editEntry?.reminder && editEntry?.reminderTime && !PRESET_TIMES.includes(editEntry.reminderTime))
@@ -175,6 +177,8 @@ export default function CreateEntrySheet() {
 
         .es-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
         .es-date-fixed { font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 800; color: var(--primary); text-transform: capitalize; }
+        .es-date-btn { width: 100%; background: none; border: none; cursor: pointer; padding: 0; font-family: var(--font-body); }
+        .es-date-btn:active { opacity: 0.7; }
         .es-toggle { position: relative; width: 46px; height: 26px; border-radius: 99px; border: none; cursor: pointer; flex-shrink: 0; transition: background var(--transition-fast); }
         .es-toggle.on { background: var(--primary); } .es-toggle.off { background: var(--surface-variant); }
         .es-toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: transform var(--transition-spring); }
@@ -276,12 +280,17 @@ export default function CreateEntrySheet() {
             </div>
           </div>
 
-          {/* Día (fijo, viene del calendario) */}
+          {/* Día — viene del calendario; se puede cambiar (mover a otro día) */}
           <div className="es-card">
-            <div className="es-row">
+            <button type="button" className="es-row es-date-btn" onClick={() => setShowDate(v => !v)} aria-expanded={showDate}>
               <div className="es-label" style={{ marginBottom: 0 }}><span className="material-symbols-outlined">event</span>Día</div>
-              <span className="es-date-fixed">{formatDayLabel(form.date)}</span>
-            </div>
+              <span className="es-date-fixed">{formatDayLabel(form.date)} <span style={{ fontSize: 12, opacity: 0.7 }}>{showDate ? '▴' : '▾'}</span></span>
+            </button>
+            {showDate && (
+              <div style={{ marginTop: 12 }}>
+                <DatePicker value={form.date} onChange={d => { set('date', d); setShowDate(false); }} id="entry-date" />
+              </div>
+            )}
           </div>
 
           {/* Monto */}

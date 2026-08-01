@@ -7,7 +7,7 @@ import { loadUserData, saveTask, deleteTask,
          saveSettings,
          subscribePersonalTasks, subscribeUserSpaces, subscribeSpaceTasks,
          getPendingInvites, createSpace, inviteToSpace, joinSpace, leaveSpace,
-         addSpaceClient, removeSpaceClient, saveSpaceTask, deleteSpaceTask } from '../lib/firestoreService';
+         addSpaceClient, removeSpaceClient, setSpaceColor, saveSpaceTask, deleteSpaceTask } from '../lib/firestoreService';
 import {
   initFCM,
   scheduleTaskReminder,
@@ -733,6 +733,7 @@ export function AppProvider({ children }) {
   };
   const addClient    = async (spaceId, name) => { await addSpaceClient(spaceId, name); };
   const removeClient = async (spaceId, name) => { await removeSpaceClient(spaceId, name); };
+  const setSpaceColorFn = async (spaceId, color) => { await setSpaceColor(spaceId, color); };
 
   const value = {
     state,
@@ -750,6 +751,7 @@ export function AppProvider({ children }) {
     leaveSharedSpace,
     addClient,
     removeClient,
+    setSpaceColor: setSpaceColorFn,
   };
 
   return (

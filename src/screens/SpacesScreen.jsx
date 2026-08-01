@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { ArrowLeft, Plus, Mail, Users, LogOut, X, Check, Tag } from 'lucide-react';
+import { ArrowLeft, Plus, Mail, Users, LogOut, X, Check, Tag, Palette } from 'lucide-react';
+
+// Paleta de colores de identidad de espacio (igual que el calendario)
+const SPACE_COLORS = ['#8478c8', '#e888b6', '#6bbd8e', '#7cb8e0', '#e0a72e', '#c9a9e0'];
 
 export default function SpacesScreen() {
-  const { state, goBack, showToast, createSharedSpace, inviteEmail, acceptInvite, leaveSharedSpace, addClient, removeClient } = useApp();
+  const { state, goBack, showToast, createSharedSpace, inviteEmail, acceptInvite, leaveSharedSpace, addClient, removeClient, setSpaceColor } = useApp();
   const { spaces = [], pendingInvites = [], user } = state;
 
   const [creating, setCreating]   = useState(false);
@@ -69,6 +72,10 @@ export default function SpacesScreen() {
         .sp-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; }
         .sp-btn.primary { background: var(--gradient-primary); color: #fff; border: none; }
         .sp-btn.danger { color: var(--error); border-color: var(--error-container); }
+        .sp-swatches { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .sp-swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform var(--transition-fast); box-shadow: var(--shadow-sm); }
+        .sp-swatch:active { transform: scale(0.9); }
+        .sp-swatch.sel { border-color: var(--on-surface); }
         .sp-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
         .sp-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 99px; background: var(--secondary-container); color: var(--on-secondary-container); font-size: 12px; font-weight: 700; }
         .sp-chip button { background: none; border: none; cursor: pointer; color: inherit; display: flex; padding: 0; opacity: 0.7; }
@@ -117,6 +124,20 @@ export default function SpacesScreen() {
                 <div className="sp-card-name">{sp.name}</div>
               </div>
               <div className="sp-meta">{(sp.memberUids || []).length} miembro(s){isOwner ? ' · eres dueño' : ''}</div>
+
+              {/* Color del espacio */}
+              <div className="sp-meta" style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}><Palette size={13} /> Color</div>
+              <div className="sp-swatches">
+                {SPACE_COLORS.map(col => {
+                  const active = (sp.color || SPACE_COLORS[spaces.indexOf(sp) % SPACE_COLORS.length]) === col;
+                  return (
+                    <button key={col} type="button" className={`sp-swatch${active ? ' sel' : ''}`}
+                      style={{ background: col }} onClick={() => setSpaceColor(sp.id, col)} aria-label={`Color ${col}`}>
+                      {active && <Check size={13} color="#fff" strokeWidth={3} />}
+                    </button>
+                  );
+                })}
+              </div>
 
               {/* Clientes */}
               <div className="sp-meta" style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}><Tag size={13} /> Clientes</div>
