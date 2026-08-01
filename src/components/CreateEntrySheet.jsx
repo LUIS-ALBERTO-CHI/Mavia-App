@@ -131,9 +131,9 @@ export default function CreateEntrySheet() {
         .es-pick-tabs::-webkit-scrollbar { display: none; }
         .es-pick-tab { flex-shrink: 0; padding: 8px 16px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .es-pick-tab.sel { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
-        .es-pick-grid { overflow-y: auto; overflow-x: hidden; padding: 4px 20px calc(env(safe-area-inset-bottom,0px) + 20px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-        @media (min-width: 480px) { .es-pick-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-        .es-pick-grid .es-sticker-cell { aspect-ratio: 1; padding: 8px; background: var(--surface-container-low); border-radius: 18px; min-width: 0; overflow: hidden; }
+        .es-pick-grid { overflow-y: auto; overflow-x: hidden; padding: 4px 20px calc(env(safe-area-inset-bottom,0px) + 20px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+        @media (min-width: 480px) { .es-pick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+        .es-pick-grid .es-sticker-cell { aspect-ratio: 1; padding: 0; background: var(--surface-container-low); border-radius: 18px; min-width: 0; overflow: hidden; }
 
         .es-title-input {
           flex: 1; width: 100%; background: transparent; border: none;
