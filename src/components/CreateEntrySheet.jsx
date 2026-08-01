@@ -131,9 +131,9 @@ export default function CreateEntrySheet() {
         .es-pick-tabs::-webkit-scrollbar { display: none; }
         .es-pick-tab { flex-shrink: 0; padding: 8px 16px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .es-pick-tab.sel { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
-        .es-pick-grid { overflow-y: auto; overflow-x: hidden; padding: 4px 20px calc(env(safe-area-inset-bottom,0px) + 20px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+        .es-pick-grid { overflow-y: auto; overflow-x: hidden; padding: 4px 20px calc(env(safe-area-inset-bottom,0px) + 20px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-items: start; }
         @media (min-width: 480px) { .es-pick-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-        .es-pick-grid .es-sticker-cell { background: var(--surface-container-low); border-radius: 18px; min-width: 0; overflow: hidden; }
+        .es-pick-grid .es-sticker-cell { aspect-ratio: 1; padding: 8px; background: var(--surface-container-low); border-radius: 18px; min-width: 0; overflow: hidden; }
 
         .es-title-input {
           flex: 1; width: 100%; background: transparent; border: none;
@@ -347,7 +347,7 @@ export default function CreateEntrySheet() {
               {STICKERS.filter(s => s.category === stickerCat).map(s => (
                 <button key={s.id} type="button" className={`es-sticker-cell${form.sticker === s.id ? ' sel' : ''}`}
                   onClick={() => { set('sticker', s.id); setPickerOpen(false); }} aria-label={s.label} title={s.label}>
-                  <Sticker id={s.id} size={46} />
+                  <Sticker id={s.id} size={64} style={{ width: '100%', height: '100%' }} />
                 </button>
               ))}
             </div>
