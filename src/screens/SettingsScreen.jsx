@@ -10,8 +10,6 @@ import {
   ChevronRight, Settings, Eye, EyeOff, X, Check
 } from 'lucide-react';
 import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
-import { requestNotificationPermission, showNotification, initFCM, getCachedFCMToken } from '../lib/notificationService';
-import { createScheduledNotification } from '../lib/firestoreService';
 
 function SettingRow({ icon: Icon, iconBg, iconColor = 'var(--on-surface-variant)', label, sub, right, onClick, id, danger }) {
   return (
@@ -116,48 +114,6 @@ export default function SettingsScreen() {
     setPermStatus(result);
     if (result === 'granted') showToast(t('toasts.notifActivated'), 'success');
     else showToast(t('toasts.notifBlocked'), 'error');
-  };
-
-  // ── Prueba de notificaciones: local al instante + push real (~1 min vía cron) ──
-  const [testingNotif, setTestingNotif] = useState(false);
-  const handleTestNotification = async () => {
-    setTestingNotif(true);
-    try {
-      // 1) Permiso
-      let perm = ('Notification' in window) ? Notification.permission : 'unsupported';
-      if (perm !== 'granted') { perm = await requestNotificationPermission(); setPermStatus(perm); }
-      if (perm !== 'granted') { showToast('Primero activa las notificaciones', 'error'); return; }
-
-      // 2) Notificación local inmediata (confirma que el dispositivo las muestra)
-      showNotification('🔔 Prueba Mavia', 'Si ves esto, las notificaciones funcionan ✓', { tag: 'mavia-test' });
-
-      // 3) Token FCM
-      const uid  = state.user?.uid;
-      let token  = state.fcmToken || getCachedFCMToken();
-      if (!token && uid) token = await initFCM(uid);
-      if (!uid || !token) {
-        showToast('Local enviada ✓ — push no disponible (sin token FCM)', 'default');
-        return;
-      }
-
-      // 4) Push real programada ~1 min → la entrega el cron (prueba con la app cerrada)
-      const soon    = new Date(Date.now() + 90_000);
-      const dateStr = soon.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
-      const timeStr = soon.toLocaleTimeString('es-MX', { timeZone: 'America/Mexico_City', hour: '2-digit', minute: '2-digit', hour12: false });
-      await createScheduledNotification({
-        uid, fcmToken: token,
-        title: 'Recordatorio de prueba',
-        body:  'Tu notificación en segundo plano funciona ✓',
-        scheduledDate: dateStr,
-        scheduledTime: timeStr,
-        data: { type: 'test-push' },
-      });
-      showToast('Local enviada ✓ · La push llegará en ~1 min (puedes cerrar la app)', 'success');
-    } catch (e) {
-      showToast('Error en la prueba: ' + (e?.message || e), 'error');
-    } finally {
-      setTestingNotif(false);
-    }
   };
 
   const handleExport = () => {
@@ -406,27 +362,6 @@ export default function SettingsScreen() {
             sub="30 min"
             id="set-ev-notif"
             right={<Switch checked={notifEvents && permStatus === 'granted'} onCheckedChange={setNotifEvents} id="sw-events" disabled={permStatus !== 'granted'} />}
-          />
-          <SettingRow
-            icon={Bell} iconBg="var(--primary-container)" iconColor="var(--primary)"
-            label="Probar notificación"
-            sub="Una ahora + una push en ~1 min"
-            id="set-test-notif"
-            right={
-              <button
-                onClick={handleTestNotification}
-                disabled={testingNotif}
-                style={{
-                  fontSize: '12px', padding: '5px 14px',
-                  borderRadius: '20px', cursor: testingNotif ? 'wait' : 'pointer',
-                  background: 'var(--primary)', color: 'var(--on-primary)',
-                  border: 'none', fontWeight: 700, opacity: testingNotif ? 0.6 : 1,
-                }}
-                id="btn-test-notif"
-              >
-                {testingNotif ? 'Enviando…' : 'Probar'}
-              </button>
-            }
           />
         </SettingGroup>
 

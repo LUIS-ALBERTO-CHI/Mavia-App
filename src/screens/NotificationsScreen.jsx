@@ -3,8 +3,6 @@ import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
 import { Bell, CheckCheck, Dumbbell, Target, Calendar, Award, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { requestNotificationPermission, showNotification, initFCM, getCachedFCMToken } from '../lib/notificationService';
-import { createScheduledNotification } from '../lib/firestoreService';
 
 const TYPE_CONFIG = {
   reminder:   { icon: Bell,      bg: 'var(--primary-container)',   color: 'var(--primary)'   },
@@ -76,49 +74,12 @@ function NotifCard({ n, isUnread, onMarkRead, onDelete, forceExit }) {
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function NotificationsScreen() {
-  const { state, dispatch, showToast } = useApp();
+  const { state, dispatch } = useApp();
   const { t } = useTranslation();
   const { notifications } = state;
 
   // Track IDs being animated out (bulk clear)
   const [exitingIds, setExitingIds] = useState(new Set());
-
-  // ── Prueba de notificaciones: local al instante + push real (~1 min vía cron) ──
-  const [testingNotif, setTestingNotif] = useState(false);
-  const handleTestNotification = async () => {
-    setTestingNotif(true);
-    try {
-      let perm = ('Notification' in window) ? Notification.permission : 'unsupported';
-      if (perm !== 'granted') perm = await requestNotificationPermission();
-      if (perm !== 'granted') { showToast('Primero activa las notificaciones', 'error'); return; }
-
-      // 1) Local inmediata
-      showNotification('🔔 Prueba Mavia', 'Si ves esto, las notificaciones funcionan ✓', { tag: 'mavia-test' });
-
-      // 2) Token FCM
-      const uid = state.user?.uid;
-      let token = state.fcmToken || getCachedFCMToken();
-      if (!token && uid) token = await initFCM(uid);
-      if (!uid || !token) { showToast('Local enviada ✓ — push no disponible (sin token FCM)', 'default'); return; }
-
-      // 3) Push real ~1 min → la entrega el cron (prueba con la app cerrada)
-      const soon    = new Date(Date.now() + 90_000);
-      const dateStr = soon.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
-      const timeStr = soon.toLocaleTimeString('es-MX', { timeZone: 'America/Mexico_City', hour: '2-digit', minute: '2-digit', hour12: false });
-      await createScheduledNotification({
-        uid, fcmToken: token,
-        title: 'Recordatorio de prueba',
-        body:  'Tu notificación en segundo plano funciona ✓',
-        scheduledDate: dateStr, scheduledTime: timeStr,
-        data: { type: 'test-push' },
-      });
-      showToast('Local enviada ✓ · La push llegará en ~1 min (puedes cerrar la app)', 'success');
-    } catch (e) {
-      showToast('Error en la prueba: ' + (e?.message || e), 'error');
-    } finally {
-      setTestingNotif(false);
-    }
-  };
 
   const unread = notifications.filter(n => !n.read);
   const read   = notifications.filter(n => n.read);
@@ -361,23 +322,8 @@ export default function NotificationsScreen() {
               {unread.length > 0 ? `${unread.length} sin leer` : 'Todo al día'}
             </p>
           </div>
-          <div className="ntf-actions-group">
-              <button
-                onClick={handleTestNotification}
-                disabled={testingNotif}
-                id="ntf-test-btn"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  fontSize: 12, fontWeight: 700, padding: '7px 14px',
-                  borderRadius: 999, border: 'none', whiteSpace: 'nowrap',
-                  background: 'var(--gradient-primary)', color: '#fff',
-                  cursor: testingNotif ? 'wait' : 'pointer', opacity: testingNotif ? 0.6 : 1,
-                  boxShadow: 'var(--shadow-sm)',
-                }}
-              >
-                <Bell size={13} strokeWidth={2.5} />
-                {testingNotif ? 'Enviando…' : 'Probar notificación'}
-              </button>
+          {(unread.length > 0 || read.length > 0) && (
+            <div className="ntf-actions-group">
               {unread.length > 0 && (
                 <Button variant="ghost" size="sm" onClick={markAll} id="ntf-mark-all"
                   style={{ fontSize: 12, padding: '4px 10px', whiteSpace: 'nowrap' }}>
@@ -399,6 +345,7 @@ export default function NotificationsScreen() {
                 </Button>
               )}
             </div>
+          )}
         </div>{/* /ntf-hero-row */}
 
         {/* Unread */}
