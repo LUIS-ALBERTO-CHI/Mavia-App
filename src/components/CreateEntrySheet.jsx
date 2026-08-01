@@ -126,14 +126,14 @@ export default function CreateEntrySheet() {
 
         /* Selector de pegatinas (modal) */
         .es-pick-backdrop { position: fixed; inset: 0; z-index: 9997; background: rgba(40,36,60,0.42); backdrop-filter: blur(8px) saturate(160%); -webkit-backdrop-filter: blur(8px) saturate(160%); animation: fadeIn 0.18s ease both; }
-        .es-pick { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9998; max-height: 76dvh; display: flex; flex-direction: column; background: var(--surface-container-lowest); border-radius: 24px 24px 0 0; box-shadow: 0 -8px 40px -8px rgba(40,36,60,0.3), 0 -1px 0 rgba(255,255,255,0.5) inset; animation: esUp 0.34s cubic-bezier(0.22,1,0.36,1) both; margin: 0 auto; max-width: 640px; }
+        .es-pick { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9998; max-height: 76dvh; display: flex; flex-direction: column; overflow-x: hidden; background: var(--surface-container-lowest); border-radius: 24px 24px 0 0; box-shadow: 0 -8px 40px -8px rgba(40,36,60,0.3), 0 -1px 0 rgba(255,255,255,0.5) inset; animation: esUp 0.34s cubic-bezier(0.22,1,0.36,1) both; margin: 0 auto; max-width: 640px; }
         .es-pick-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 20px 10px; flex-shrink: 0; }
         .es-pick-tabs::-webkit-scrollbar { display: none; }
         .es-pick-tab { flex-shrink: 0; padding: 8px 16px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .es-pick-tab.sel { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
-        .es-pick-grid { overflow-y: auto; padding: 4px 20px calc(env(safe-area-inset-bottom,0px) + 20px); display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        @media (min-width: 480px) { .es-pick-grid { grid-template-columns: repeat(5, 1fr); } }
-        .es-pick-grid .es-sticker-cell { background: var(--surface-container-low); border-radius: 18px; }
+        .es-pick-grid { overflow-y: auto; overflow-x: hidden; padding: 4px 20px calc(env(safe-area-inset-bottom,0px) + 20px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+        @media (min-width: 480px) { .es-pick-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+        .es-pick-grid .es-sticker-cell { background: var(--surface-container-low); border-radius: 18px; min-width: 0; overflow: hidden; }
 
         .es-title-input {
           flex: 1; width: 100%; background: transparent; border: none;

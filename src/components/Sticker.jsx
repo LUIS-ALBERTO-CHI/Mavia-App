@@ -224,16 +224,20 @@ export const STICKER_CATEGORIES = CUSTOM.reduce((acc, s) => {
 export default function Sticker({ id, size = 28, className = '', style = {} }) {
   const customUrl = CUSTOM_MAP[id];
   if (customUrl) {
+    // Caja cuadrada fija: la imagen se ajusta dentro sin importar su proporción
+    // (evita que las horizontales/verticales empujen el contenedor).
     return (
-      <img
-        src={customUrl}
-        width={size}
-        height={size}
-        alt=""
+      <span
         className={className}
-        style={{ display: 'block', flexShrink: 0, objectFit: 'contain', ...style }}
+        style={{ width: size, height: size, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', ...style }}
         aria-hidden="true"
-      />
+      >
+        <img
+          src={customUrl}
+          alt=""
+          style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain', display: 'block' }}
+        />
+      </span>
     );
   }
   const art = ART[id] || ART.star;
