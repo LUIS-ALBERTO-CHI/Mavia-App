@@ -40,6 +40,20 @@ export default function CreateGoalScreen() {
 
   const [saving, setSaving] = useState(false);
 
+  // Categorías personalizables: defaults + las que ya usan tus objetivos + nuevas
+  const goalCats = (state.goals || []).map(g => g.category).filter(Boolean);
+  const [extraCats, setExtraCats] = useState([]);
+  const allCats = [...new Set([...CATEGORIES, ...goalCats, ...extraCats])];
+  const [addingCat, setAddingCat] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const addCat = () => {
+    const name = newCatName.trim();
+    if (!name) { setAddingCat(false); return; }
+    if (!allCats.includes(name)) setExtraCats(e => [...e, name]);
+    set('category', name);
+    setNewCatName(''); setAddingCat(false);
+  };
+
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
   const handleSave = () => {
@@ -131,6 +145,7 @@ export default function CreateGoalScreen() {
           color: var(--on-primary);
           border-color: transparent;
         }
+        .cg-cat-add { border-style: dashed; color: var(--primary); border-color: var(--primary); background: none; font-weight: 700; }
         .cg-color-row { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
         .cg-color-swatch {
           width: 36px; height: 36px;
@@ -190,8 +205,8 @@ export default function CreateGoalScreen() {
         {/* Category + Color */}
         <div className="cg-card">
           <span className="cg-label">Categoría</span>
-          <div className="cg-cats" style={{ marginBottom: 'var(--space-lg)' }}>
-            {CATEGORIES.map(c => (
+          <div className="cg-cats" style={{ marginBottom: addingCat ? 10 : 'var(--space-lg)' }}>
+            {allCats.map(c => (
               <button
                 key={c}
                 className={`cg-cat-btn${form.category === c ? ' active' : ''}`}
@@ -201,7 +216,24 @@ export default function CreateGoalScreen() {
                 {c}
               </button>
             ))}
+            <button className="cg-cat-btn cg-cat-add" onClick={() => setAddingCat(v => !v)} id="cg-cat-add">
+              ＋ Nueva
+            </button>
           </div>
+          {addingCat && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 'var(--space-lg)' }}>
+              <Input
+                autoFocus
+                placeholder="Nombre de la categoría"
+                value={newCatName}
+                onChange={e => setNewCatName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addCat()}
+                id="cg-cat-new"
+                className="flex-1"
+              />
+              <Button onClick={addCat} disabled={!newCatName.trim()}>Agregar</Button>
+            </div>
+          )}
 
           <span className="cg-label">Color</span>
           <div className="cg-color-row">

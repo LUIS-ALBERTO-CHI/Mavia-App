@@ -399,7 +399,7 @@ export default function GoalsScreen() {
         ) : (
           <div className="gls-grid">
             {filtered.map(goal => {
-              const style = CAT_STYLE[goal.category] || CAT_STYLE.Personal;
+              const style = CAT_STYLE[goal.category] || { bg: goal.color || '#F1EEF9', text: 'var(--heading)', bar: 'primary', badge: 'outline' };
               const pct = progressOf(goal);
               const isComplete = pct >= 100;
               const hasTarget = (Number(goal.target) || 0) > 0;
