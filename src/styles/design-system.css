@@ -413,6 +413,19 @@ body {
 
 img, svg { display: block; max-width: 100%; }
 
+/* Accesibilidad: anillo de foco visible para teclado (no afecta al mouse) */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
 button {
   font-family: inherit;
   cursor: pointer;

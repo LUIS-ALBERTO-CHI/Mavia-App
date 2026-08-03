@@ -340,7 +340,12 @@ export default function CalendarScreen() {
         .cal-row-title.done { text-decoration: line-through; opacity: 0.6; }
         .cal-row-meta { font-size: var(--text-label-sm); color: var(--on-surface-variant); margin-top: 3px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .cal-space-tag { display: inline-block; padding: 1px 7px; border-radius: 99px; font-size: 10.5px; font-weight: 800; line-height: 1.4; }
-        .cal-check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all var(--transition-spring); }
+        .cal-check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all var(--transition-spring); position: relative; }
+        /* Área táctil ≥44px sin cambiar el tamaño visual */
+        .cal-check::after { content: ''; position: absolute; inset: -9px; }
+        .cal-arrow { position: relative; }
+        .cal-arrow::after, .cal-icon-btn::after, .cal-today-chip::after { content: ''; position: absolute; inset: -6px; }
+        .cal-icon-btn, .cal-today-chip { position: relative; }
 
         /* ── Day view ── */
         .cal-day-head { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; color: var(--heading); margin-bottom: 14px; text-transform: capitalize; }

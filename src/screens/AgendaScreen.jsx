@@ -48,8 +48,9 @@ export default function AgendaScreen() {
         .agenda-check {
           width: 26px; height: 26px; border-radius: 50%; border: 2px solid; background: none;
           display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
-          transition: all var(--transition-spring);
+          transition: all var(--transition-spring); position: relative;
         }
+        .agenda-check::after { content: ''; position: absolute; inset: -9px; }
         .empty-agenda {
           text-align: center; padding: var(--space-lg); min-height: 58vh;
           display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;

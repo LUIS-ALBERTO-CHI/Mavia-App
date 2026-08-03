@@ -123,7 +123,8 @@ export default function CreateEntrySheet() {
         .es-handle { width: 38px; height: 5px; border-radius: 99px; background: rgba(120,110,150,0.4); margin: 10px auto 4px; flex-shrink: 0; }
         .es-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 20px 8px; flex-shrink: 0; }
         .es-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; color: var(--heading); }
-        .es-close { width: 34px; height: 34px; border-radius: 50%; background: var(--surface-container); border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; }
+        .es-close { width: 34px; height: 34px; border-radius: 50%; background: var(--surface-container); border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; position: relative; }
+        .es-close::after { content: ''; position: absolute; inset: -6px; }
         .es-scroll { overflow-y: auto; padding: 4px 20px 12px; }
 
         .es-card { background: var(--surface-container-low); border-radius: 20px; padding: 16px; margin-bottom: 12px; }

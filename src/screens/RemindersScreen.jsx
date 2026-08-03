@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
-import { Search, Clock, Edit2, Trash2, AlarmClock, Leaf, Bell, AlertCircle } from 'lucide-react';
+import { Search, Clock, Edit2, Trash2, Bell } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { localToday, localDateOffset, formatTime12h } from '../lib/utils';
@@ -18,10 +18,7 @@ const CAT_COLORS = {
 };
 
 // Pick icon per category
-function ReminderIcon({ category, priority }) {
-  const isUrgent = priority === 'alta';
-  if (isUrgent) return <AlarmClock size={22} strokeWidth={1.75} />;
-  if (category === 'Espiritual') return <Leaf size={22} strokeWidth={1.75} />;
+function ReminderIcon() {
   return <Bell size={22} strokeWidth={1.75} />;
 }
 
@@ -448,15 +445,11 @@ export default function RemindersScreen() {
                 <div className="rem-today-list">
                   {todayItems.map(task => {
                     const cat = CAT_COLORS[task.category] || { bg: 'var(--surface-container)', text: 'var(--on-surface-variant)' };
-                    const isUrgent = task.priority === 'alta';
                     return (
                       <div key={task.id} className="rem-card-today">
                         {/* Icon */}
-                        <div
-                          className="rem-card-icon"
-                          style={{ background: isUrgent ? 'var(--primary-container)' : 'var(--surface-container)' }}
-                        >
-                          <ReminderIcon category={task.category} priority={task.priority} />
+                        <div className="rem-card-icon" style={{ background: 'var(--surface-container)' }}>
+                          <ReminderIcon />
                         </div>
 
                         {/* Body */}
@@ -472,12 +465,6 @@ export default function RemindersScreen() {
                             {task.category && (
                               <span className="rem-cat-badge" style={{ background: cat.bg, color: cat.text }}>
                                 {task.category}
-                              </span>
-                            )}
-                            {isUrgent && (
-                              <span className="rem-urgent">
-                                <AlertCircle size={14} strokeWidth={2} />
-                                Alta prioridad
                               </span>
                             )}
                           </div>

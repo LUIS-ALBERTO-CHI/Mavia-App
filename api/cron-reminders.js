@@ -118,6 +118,15 @@ async function sendFCM(tok, pid, { token, title, body }) {
 
 export default async function handler(req, res) {
   try {
+    // Seguridad: si hay CRON_SECRET, exigir el header (protege el endpoint).
+    const CRON_SECRET = process.env.CRON_SECRET;
+    if (CRON_SECRET) {
+      const auth = req.headers['authorization'] || req.headers['Authorization'] || '';
+      if (auth !== `Bearer ${CRON_SECRET}`) return res.status(401).json({ error: 'unauthorized' });
+    }
+    // Zona horaria configurable (por defecto México)
+    const TZ = process.env.APP_TIMEZONE || 'America/Mexico_City';
+
     const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
     if (!raw) return res.status(500).json({ error: 'FIREBASE_SERVICE_ACCOUNT no configurado' });
 
@@ -125,13 +134,13 @@ export default async function handler(req, res) {
     const tok = await getAccessToken(sa);
     const pid = sa.project_id;
 
-    // Hora actual en México — revisar ventana de 3 minutos
+    // Hora actual — revisar ventana de 3 minutos
     const windows = [];
     const seen = new Set();
     for (let i = 0; i <= 3; i++) {
       const d = new Date(Date.now() - i * 60000);
       const parts = new Intl.DateTimeFormat('es-MX', {
-        timeZone: 'America/Mexico_City',
+        timeZone: TZ,
         year: 'numeric', month: '2-digit', day: '2-digit',
         hour: '2-digit', minute: '2-digit', hour12: false,
       }).formatToParts(d);
@@ -262,7 +271,7 @@ export default async function handler(req, res) {
             // Friendly relative time (always "Ahora" since it was just triggered)
             const timeLabel = new Intl.DateTimeFormat('es-MX', {
               hour: '2-digit', minute: '2-digit', hour12: true,
-              timeZone: 'America/Mexico_City',
+              timeZone: TZ,
             }).format(new Date());
             await fsPost(tok, pid, `users/${uid}/notifications`, {
               title:     { stringValue: notifTitle  },

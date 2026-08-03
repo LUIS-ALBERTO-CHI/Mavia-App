@@ -115,7 +115,8 @@ export default function JournalScreen() {
         .nte-handle { width: 38px; height: 5px; border-radius: 99px; background: rgba(120,110,150,0.4); margin: 10px auto 4px; flex-shrink: 0; }
         .nte-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 20px 8px; flex-shrink: 0; }
         .nte-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; color: var(--heading); }
-        .nte-close { width: 34px; height: 34px; border-radius: 50%; background: var(--surface-container); border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; }
+        .nte-close { width: 34px; height: 34px; border-radius: 50%; background: var(--surface-container); border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; position: relative; }
+        .nte-close::after { content: ''; position: absolute; inset: -6px; }
         .nte-scroll { overflow-y: auto; padding: 4px 20px 12px; }
 
         .nte-paper { border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 4px 14px -6px rgba(90,80,130,0.3); }
