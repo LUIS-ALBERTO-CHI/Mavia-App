@@ -4,8 +4,8 @@ import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
 import { Switch } from '../components/ui/switch';
 import {
-  Bell, Calendar, Brain, Repeat2, Moon, Clock,
-  RefreshCw, Download, Upload, Lock, ShieldCheck, LogOut,
+  Bell, Moon,
+  RefreshCw, Download, Upload, Lock, LogOut,
   ChevronRight, Settings, Eye, EyeOff, X, Check
 } from 'lucide-react';
 import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
@@ -136,8 +136,6 @@ export default function SettingsScreen() {
     }
   };
 
-  const [notifTasks,   setNotifTasks]   = useState(true);
-  const [notifEvents,  setNotifEvents]  = useState(true);
 
   return (
     <>
@@ -323,13 +321,13 @@ export default function SettingsScreen() {
           {/* Permission status row */}
           <SettingRow
             icon={Bell} iconBg="var(--primary-container)" iconColor="var(--primary)"
-            label={t('settings.systemNotif')}
+            label="Notificaciones"
             id="set-notif-perm"
             sub={
-              permStatus === 'granted'     ? t('settings.notifOn') :
+              permStatus === 'granted'     ? 'Activadas · recibes todos los avisos' :
               permStatus === 'denied'      ? t('settings.notifBlocked') :
               permStatus === 'unsupported' ? t('settings.notifUnsup') :
-              t('settings.notifPending')
+              'Actívalas para recibir tus recordatorios'
             }
             right={
               permStatus !== 'granted' && permStatus !== 'unsupported' ? (
@@ -345,22 +343,8 @@ export default function SettingsScreen() {
                 >
                   {t('settings.enableNotif')}
                 </button>
-              ) : null
+              ) : <Check size={18} color="var(--tertiary)" />
             }
-          />
-          <SettingRow
-            icon={Calendar} iconBg="var(--secondary-container)" iconColor="var(--secondary)"
-            label={t('settings.taskNotif')}
-            sub="Aviso a la hora que elijas"
-            id="set-task-notif"
-            right={<Switch checked={notifTasks && permStatus === 'granted'} onCheckedChange={setNotifTasks} id="sw-tasks" disabled={permStatus !== 'granted'} />}
-          />
-          <SettingRow
-            icon={Bell} iconBg="var(--tertiary-container)" iconColor="var(--tertiary)"
-            label={t('settings.eventNotif')}
-            sub="30 min"
-            id="set-ev-notif"
-            right={<Switch checked={notifEvents && permStatus === 'granted'} onCheckedChange={setNotifEvents} id="sw-events" disabled={permStatus !== 'granted'} />}
           />
         </SettingGroup>
 
@@ -372,12 +356,6 @@ export default function SettingsScreen() {
             sub={state.darkMode ? t('settings.darkModeOn') : t('settings.darkModeOff')}
             id="set-dark"
             right={<Switch checked={state.darkMode} onCheckedChange={() => dispatch({ type: 'TOGGLE_DARK_MODE' })} id="sw-dark" />}
-          />
-          <SettingRow
-            icon={Clock} iconBg="var(--surface-container)"
-            label={t('common.time')}
-            id="set-tz"
-            right={<><span>Ciudad de México</span><ChevronRight size={16} /></>}
           />
         </SettingGroup>
 
@@ -419,13 +397,6 @@ export default function SettingsScreen() {
             sub="Actualiza tu contraseña de acceso"
             onClick={() => setShowPwModal(true)}
             id="set-change-pw"
-            right={<ChevronRight size={16} />}
-          />
-          <SettingRow
-            icon={ShieldCheck} iconBg="var(--secondary-container)" iconColor="var(--secondary)"
-            label={t('settings.privacy')}
-            onClick={() => showToast('Abriendo política...')}
-            id="set-privacy"
             right={<ChevronRight size={16} />}
           />
           <SettingRow
@@ -546,7 +517,7 @@ export default function SettingsScreen() {
           document.body
         )}
 
-        <div className="stg-footer">Mavia v1.0.0 · Hecho con amor para ti 🌸</div>
+        <div className="stg-footer">Mavia v1 · Hecho con amor para ti 🌸</div>
 
       </div>
     </>
