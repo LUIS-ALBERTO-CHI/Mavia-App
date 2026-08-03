@@ -517,7 +517,7 @@ export default function SettingsScreen() {
           document.body
         )}
 
-        <div className="stg-footer">Mavia v1 · Hecho con amor para ti 🌸</div>
+        <div className="stg-footer">Mavia v2.0 · Hecho con amor para ti 🌸</div>
 
       </div>
     </>

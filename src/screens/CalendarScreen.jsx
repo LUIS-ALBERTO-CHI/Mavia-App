@@ -459,7 +459,7 @@ export default function CalendarScreen() {
                 <div className="cal-postit-layer">
                   {monthNotes.map(n => (
                     <CalendarPostit key={n.id} note={n} wrapRef={gridWrapRef}
-                      onCommit={commitPostit} onTap={() => navigate('journal')} />
+                      onCommit={commitPostit} onTap={(nn) => navigate('journal', { noteId: nn.id })} />
                   ))}
                 </div>
               )}

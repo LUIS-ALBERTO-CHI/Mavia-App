@@ -1,7 +1,7 @@
 ﻿import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
-import { Target, Calendar, TrendingUp, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Target, Calendar, TrendingUp, Plus, Edit2, Trash2, Check } from 'lucide-react';
 import { Progress } from '../components/ui/progress';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -57,7 +57,7 @@ export default function GoalsScreen() {
     return true;
   });
 
-  // + / − al contador del objetivo
+  // + / − al contador (tipo cantidad)
   const bump = (goal, delta) => {
     const target = Number(goal.target) || 0;
     const cur = Number(goal.current) || 0;
@@ -65,6 +65,18 @@ export default function GoalsScreen() {
     if (next === cur) return;
     dispatch({ type: 'UPDATE_GOAL', goal: { ...goal, current: next } });
     if (target > 0 && next >= target) showToast('¡Objetivo completado! 🎉', 'success');
+  };
+  // Marcar un paso (tipo pasos)
+  const toggleStep = (goal, i) => {
+    const steps = (goal.steps || []).map((s, idx) => idx === i ? { ...s, done: !s.done } : s);
+    dispatch({ type: 'UPDATE_GOAL', goal: { ...goal, steps } });
+    if (steps.length && steps.every(s => s.done)) showToast('¡Objetivo completado! 🎉', 'success');
+  };
+  // Cumplido/pendiente (tipo sí/no)
+  const toggleSimple = (goal) => {
+    const done = !goal.done;
+    dispatch({ type: 'UPDATE_GOAL', goal: { ...goal, done } });
+    if (done) showToast('¡Objetivo completado! 🎉', 'success');
   };
 
   return (
@@ -301,6 +313,15 @@ export default function GoalsScreen() {
         }
         .gls-step:active { transform: scale(0.9); }
         .gls-step-plus { border: none; color: #fff; box-shadow: var(--shadow-sm); }
+        /* Pasos (checklist) */
+        .gls-steps { margin-top: var(--space-sm); padding-top: var(--space-sm); border-top: 1px solid rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 2px; }
+        .gls-stepitem { display: flex; align-items: center; gap: 9px; padding: 7px 4px; background: none; border: none; cursor: pointer; text-align: left; font-family: var(--font-body); font-size: var(--text-label-md); color: var(--on-surface); }
+        .gls-stepitem.done { opacity: 0.6; }
+        .gls-stepitem.done span:last-child { text-decoration: line-through; }
+        .gls-stepcheck { width: 20px; height: 20px; border-radius: 6px; border: 2px solid rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all var(--transition-fast); }
+        /* Sí / No */
+        .gls-simple { margin-top: var(--space-sm); width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px; border-radius: 99px; border: 1.5px solid rgba(0,0,0,0.14); background: rgba(255,255,255,0.6); color: var(--on-surface); font-family: var(--font-body); font-weight: 800; font-size: 14px; cursor: pointer; }
+        .gls-simple:active { transform: scale(0.98); }
 
         /* ── Empty ── */
         .gls-empty {
@@ -460,14 +481,31 @@ export default function GoalsScreen() {
                   {/* Progress bar (calculada) */}
                   <Progress value={pct} color={style.bar} className="mb-3" />
 
-                  {/* Contador + / − (objetivo de cantidad) */}
-                  {hasTarget && (
+                  {/* Interacción según el tipo */}
+                  {goal.type === 'steps' ? (
+                    <div className="gls-steps" onClick={e => e.stopPropagation()}>
+                      {(goal.steps || []).map((s, i) => (
+                        <button key={i} className={`gls-stepitem${s.done ? ' done' : ''}`} onClick={() => toggleStep(goal, i)}>
+                          <span className="gls-stepcheck" style={s.done ? { background: style.text, borderColor: style.text } : {}}>
+                            {s.done && <Check size={12} strokeWidth={3} color="#fff" />}
+                          </span>
+                          <span>{s.text}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : goal.type === 'simple' ? (
+                    <button className="gls-simple" onClick={e => { e.stopPropagation(); toggleSimple(goal); }}
+                      style={goal.done ? { background: style.text, color: '#fff', borderColor: style.text } : {}}
+                      id={`gls-simple-${goal.id}`}>
+                      {goal.done ? <><Check size={15} strokeWidth={3} /> Cumplido</> : 'Marcar cumplido'}
+                    </button>
+                  ) : hasTarget ? (
                     <div className="gls-counter" onClick={e => e.stopPropagation()}>
                       <button className="gls-step" onClick={() => bump(goal, -1)} aria-label="Restar uno" id={`gls-minus-${goal.id}`}>−</button>
                       <div className="gls-count-label" style={{ color: style.text }}>{goalCountLabel(goal)}</div>
                       <button className="gls-step gls-step-plus" style={{ background: style.text }} onClick={() => bump(goal, 1)} aria-label="Sumar uno" id={`gls-plus-${goal.id}`}>+</button>
                     </div>
-                  )}
+                  ) : null}
 
                   {/* Meta */}
                   <div className="gls-card-meta">

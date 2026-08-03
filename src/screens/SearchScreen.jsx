@@ -49,9 +49,15 @@ export default function SearchScreen() {
   const q = query.toLowerCase().trim();
 
   const results = {
-    entries: q ? state.tasks.filter(item => item.title.toLowerCase().includes(q) || item.note?.toLowerCase().includes(q)) : [],
-    journal: q ? state.journalEntries.filter(e => e.content.toLowerCase().includes(q)) : [],
-    goals:   q ? state.goals.filter(g => g.title.toLowerCase().includes(q) || g.category.toLowerCase().includes(q)) : [],
+    entries: q ? state.tasks.filter(item =>
+        item.title.toLowerCase().includes(q) ||
+        item.note?.toLowerCase().includes(q) ||
+        item.client?.toLowerCase().includes(q)) : [],
+    journal: q ? state.journalEntries.filter(e =>
+        (e.text || e.content || '').toLowerCase().includes(q)) : [],
+    goals:   q ? state.goals.filter(g =>
+        g.title.toLowerCase().includes(q) ||
+        (g.category || '').toLowerCase().includes(q)) : [],
   };
 
   const totalResults = Object.values(results).reduce((a, r) => a + r.length, 0);
@@ -417,7 +423,7 @@ export default function SearchScreen() {
                     className="srch-result"
                     onClick={() => {
                       if (cat === 'entries')      navigate('entryDetail', { entryId: item.id });
-                      else if (cat === 'journal') navigate('notes');
+                      else if (cat === 'journal') navigate('notes', { noteId: item.id });
                       else navigate('goals');
                     }}
                     id={`search-result-${item.id}`}
@@ -430,7 +436,7 @@ export default function SearchScreen() {
                     {/* Body */}
                     <div className="srch-result-body">
                       <div className="srch-result-title">
-                        {item.title || item.name || item.content?.slice(0, 70) + '…' || item.text?.slice(0, 70)}
+                        {item.title || item.name || (item.text || item.content || '').slice(0, 70) || 'Nota'}
                       </div>
                       <div className="srch-result-meta">
                         {cat === 'entries' && (

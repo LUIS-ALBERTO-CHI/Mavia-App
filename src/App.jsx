@@ -12,7 +12,6 @@ import LoginScreen from './screens/LoginScreen';
 import SetupProfileScreen from './screens/SetupProfileScreen';
 
 // Screens - Main
-import AgendaScreen from './screens/AgendaScreen';
 import CalendarScreen from './screens/CalendarScreen';
 import EntryDetailScreen from './screens/EntryDetailScreen';
 
@@ -49,7 +48,6 @@ const SCREEN_MAP = {
   register: RegisterScreen,
   login: LoginScreen,
   'setup-profile': SetupProfileScreen,
-  agenda: AgendaScreen,
   calendar: CalendarScreen,
   // Detalle de entrada (crear/editar es un bottom sheet, no una pantalla)
   entryDetail: EntryDetailScreen,
@@ -86,7 +84,6 @@ const SCREENS_WITH_OWN_ADD = new Set([
 const DETAIL_SCREENS = new Set(['entryDetail', 'taskDetail', 'eventDetail', 'createGoal']);
 
 const SCREEN_TITLES = {
-  agenda: 'Agenda del día',
   calendar: 'Calendario',
   entryDetail: 'Detalle',
   goals: 'Objetivos',
@@ -184,7 +181,6 @@ function DesktopSidebar() {
         {/* Extra items */}
         <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(208,195,200,0.2)', paddingTop: '0.75rem' }}>
           {[
-            { id: 'agenda',        label: 'Agenda del día',  icon: 'today'         },
             { id: 'reminders',     label: 'Recordatorios',   icon: 'alarm'         },
             { id: 'goals',         label: 'Objetivos',       icon: 'flag'          },
             { id: 'notifications', label: 'Notificaciones',  icon: 'notifications', badge: unread },
@@ -235,7 +231,6 @@ function DesktopSidebar() {
    MOBILE SIDE DRAWER  (hamburger → slide-from-left)
    ============================================ */
 const DRAWER_ITEMS = [
-  { id: 'agenda',     label: 'Agenda del día', icon: 'today',     section: 'Agenda',    color: '#37a9d4' },
   { id: 'reminders',  label: 'Recordatorios',  icon: 'alarm',     section: 'Agenda',    color: '#e0a72e' },
   { id: 'notes',      label: 'Notas',          icon: 'edit_note', section: 'Trabajo',   color: '#ec4b8b' },
   { id: 'goals',      label: 'Objetivos',      icon: 'flag',      section: 'Trabajo',   color: '#8a63d2' },
@@ -597,7 +592,7 @@ function MobileBottomNav() {
   ];
 
   const TAB_GROUPS = {
-    calendar:  ['calendar', 'agenda', 'entryDetail', 'taskDetail', 'eventDetail', 'reminders'],
+    calendar:  ['calendar', 'entryDetail', 'taskDetail', 'eventDetail', 'reminders'],
     notes:     ['notes', 'journal'],
     profile:   ['profile', 'settings', 'notifications', 'search', 'goals', 'createGoal', 'spaces'],
   };

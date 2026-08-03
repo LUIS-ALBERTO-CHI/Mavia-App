@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { ArrowLeft, Plus, Mail, Users, LogOut, X, Check, Tag, Palette } from 'lucide-react';
+import { ArrowLeft, Plus, Mail, Users, LogOut, X, Check, Tag, Palette, Copy } from 'lucide-react';
 
 // Paleta de colores de identidad de espacio (igual que el calendario)
 const SPACE_COLORS = ['#8478c8', '#e888b6', '#6bbd8e', '#7cb8e0', '#e0a72e', '#c9a9e0'];
@@ -32,6 +32,20 @@ export default function SpacesScreen() {
     try { await inviteEmail(spaceId, email); showToast(`Invitación enviada a ${email}`, 'success'); setInviteVal(''); setInviteFor(null); }
     catch (e) { showToast('No se pudo invitar', 'error'); }
     finally { setBusy(false); }
+  };
+
+  const copyInvite = async (sp) => {
+    const emails = sp.invitedEmails || [];
+    const email = emails[emails.length - 1] || 'tu correo';
+    const url = (typeof window !== 'undefined' && window.location.origin) || 'la app';
+    const msg =
+      `¡Te invité a Mavia (nuestra agenda) 💜\n\n` +
+      `1) Entra a ${url}\n` +
+      `2) Crea tu cuenta con este correo: ${email}\n` +
+      `3) En Perfil → Espacios, acepta la invitación a "${sp.name}".\n\n` +
+      `¡Así nos organizamos juntos!`;
+    try { await navigator.clipboard.writeText(msg); showToast('Invitación copiada ✓', 'success'); }
+    catch { showToast('No se pudo copiar', 'error'); }
   };
 
   const accept = async (space) => {
@@ -174,7 +188,12 @@ export default function SpacesScreen() {
                 </div>
               )}
               {sp.invitedEmails?.length > 0 && (
-                <div className="sp-meta" style={{ marginTop: 8 }}>Invitados: {sp.invitedEmails.join(', ')}</div>
+                <>
+                  <div className="sp-meta" style={{ marginTop: 8 }}>Invitados: {sp.invitedEmails.join(', ')}</div>
+                  <button className="sp-btn" style={{ marginTop: 8 }} onClick={() => copyInvite(sp)}>
+                    <Copy size={14} /> Copiar invitación
+                  </button>
+                </>
               )}
             </div>
           );

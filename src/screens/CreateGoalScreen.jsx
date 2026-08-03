@@ -5,6 +5,7 @@ import { ArrowLeft, Target, Calendar, Edit2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { DatePicker } from '../components/ui/date-picker';
+import { GOAL_TYPES } from '../lib/goalUtils';
 
 const CATEGORIES = ['Marketing', 'Personal', 'Espiritual', 'Trabajo', 'Salud'];
 const COLORS = [
@@ -27,6 +28,7 @@ export default function CreateGoalScreen() {
     category: editGoal.category || 'Personal',
     deadline: editGoal.deadline || '',
     color:    editGoal.color    || '#F8D7E8',
+    type:     editGoal.type     || 'count',
     target:   editGoal.target != null ? String(editGoal.target) : '',
     unit:     editGoal.unit     || '',
   } : {
@@ -34,9 +36,18 @@ export default function CreateGoalScreen() {
     category: 'Personal',
     deadline: '',
     color:    '#F8D7E8',
+    type:     'count',
     target:   '',
     unit:     '',
   });
+
+  // Lista de pasos (para el tipo "Pasos")
+  const [stepList, setStepList] = useState(() =>
+    isEdit && editGoal.steps?.length ? editGoal.steps.map(s => s.text) : ['']
+  );
+  const addStep = () => setStepList(l => [...l, '']);
+  const rmStep  = (i) => setStepList(l => l.filter((_, idx) => idx !== i));
+  const upStep  = (i, v) => setStepList(l => l.map((x, idx) => idx === i ? v : x));
 
   const [saving, setSaving] = useState(false);
 
@@ -58,27 +69,34 @@ export default function CreateGoalScreen() {
 
   const handleSave = () => {
     if (!form.title.trim()) return;
-    const target = Math.max(0, Math.round(Number(form.target) || 0));
     setSaving(true);
-    setTimeout(() => {
-      const base = {
-        title: form.title.trim(),
-        category: form.category,
-        deadline: form.deadline,
-        color: form.color,
-        type: 'count',
-        target,
-        unit: form.unit.trim(),
-      };
-      if (isEdit) {
-        dispatch({ type: 'UPDATE_GOAL', goal: { ...editGoal, ...base, current: editGoal.current || 0 } });
-        showToast('Objetivo actualizado', 'success');
-      } else {
-        dispatch({ type: 'ADD_GOAL', goal: { ...base, current: 0 } });
-        showToast('¡Objetivo creado!', 'success');
-      }
-      goBack();
-    }, 500);
+    const base = {
+      title: form.title.trim(),
+      category: form.category,
+      deadline: form.deadline,
+      color: form.color,
+      type: form.type,
+    };
+    if (form.type === 'count') {
+      base.target = Math.max(0, Math.round(Number(form.target) || 0));
+      base.unit   = form.unit.trim();
+      base.current = isEdit ? (editGoal.current || 0) : 0;
+    } else if (form.type === 'steps') {
+      base.steps = stepList.filter(t => t.trim()).map(text => {
+        const prev = editGoal?.steps?.find(s => s.text === text);
+        return { text: text.trim(), done: prev?.done || false };
+      });
+    } else { // simple
+      base.done = isEdit ? (editGoal.done || false) : false;
+    }
+    if (isEdit) {
+      dispatch({ type: 'UPDATE_GOAL', goal: { ...editGoal, ...base } });
+      showToast('Objetivo actualizado', 'success');
+    } else {
+      dispatch({ type: 'ADD_GOAL', goal: base });
+      showToast('¡Objetivo creado!', 'success');
+    }
+    goBack();
   };
 
   return (
@@ -261,30 +279,56 @@ export default function CreateGoalScreen() {
           />
         </div>
 
-        {/* Meta (cantidad) */}
+        {/* Tipo de medición */}
         <div className="cg-card">
-          <span className="cg-label">¿Cuánto quieres lograr?</span>
-          <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
-            <Input
-              type="number" inputMode="numeric" min={1}
-              placeholder="Ej. 7"
-              value={form.target}
-              onChange={e => set('target', e.target.value)}
-              id="cg-target"
-              style={{ flex: '0 0 110px' }}
-            />
-            <Input
-              placeholder="unidad (días, $, libros…)"
-              value={form.unit}
-              onChange={e => set('unit', e.target.value)}
-              id="cg-unit"
-              className="flex-1"
-            />
+          <span className="cg-label">¿Cómo se mide?</span>
+          <div className="cg-cats" style={{ marginTop: 6 }}>
+            {GOAL_TYPES.map(tp => (
+              <button key={tp.id} className={`cg-cat-btn${form.type === tp.id ? ' active' : ''}`}
+                onClick={() => set('type', tp.id)} id={`cg-type-${tp.id}`} title={tp.hint}>
+                {tp.label}
+              </button>
+            ))}
           </div>
-          <p style={{ fontSize: 12, color: 'var(--on-surface-variant)', marginTop: 8 }}>
-            El avance se calcula solo: marcas <b>+1</b> cada vez y la barra se llena hasta la meta.
-          </p>
         </div>
+
+        {/* Campos según el tipo */}
+        {form.type === 'count' && (
+          <div className="cg-card">
+            <span className="cg-label">¿Cuánto quieres lograr?</span>
+            <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
+              <Input type="number" inputMode="numeric" min={1} placeholder="Ej. 7"
+                value={form.target} onChange={e => set('target', e.target.value)} id="cg-target" style={{ flex: '0 0 110px' }} />
+              <Input placeholder="unidad (días, $, libros…)"
+                value={form.unit} onChange={e => set('unit', e.target.value)} id="cg-unit" className="flex-1" />
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--on-surface-variant)', marginTop: 8 }}>
+              Marcas <b>+1</b> cada vez y la barra se llena hasta la meta.
+            </p>
+          </div>
+        )}
+
+        {form.type === 'steps' && (
+          <div className="cg-card">
+            <span className="cg-label">Pasos</span>
+            {stepList.map((s, i) => (
+              <div key={i} className="cg-task-row">
+                <div className="cg-task-num">{i + 1}</div>
+                <Input placeholder={`Paso ${i + 1}…`} value={s} onChange={e => upStep(i, e.target.value)} id={`cg-step-${i}`} className="flex-1" />
+                {stepList.length > 1 && <button className="cg-rm-btn" onClick={() => rmStep(i)} aria-label="Quitar paso">×</button>}
+              </div>
+            ))}
+            <button onClick={addStep} className="cg-cat-btn cg-cat-add" style={{ marginTop: 8 }} id="cg-add-step">＋ Añadir paso</button>
+          </div>
+        )}
+
+        {form.type === 'simple' && (
+          <div className="cg-card">
+            <p style={{ fontSize: 13.5, color: 'var(--on-surface-variant)' }}>
+              Se marca como <b>cumplido</b> o <b>pendiente</b> con un toque desde Objetivos.
+            </p>
+          </div>
+        )}
 
         <Button
           className="w-full"

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
 import { Plus, X, Check, Pin, Trash2, Sparkles } from 'lucide-react';
@@ -35,6 +35,15 @@ export default function JournalScreen() {
 
   const [editing, setEditing] = useState(null);  // null | {id?, ...form}
   const [stickerCat, setStickerCat] = useState(STICKER_CATEGORIES[0]?.id || null);
+
+  // Si llegamos desde un post-it del calendario, abrir esa nota
+  useEffect(() => {
+    const nid = state.screenParams?.noteId;
+    if (!nid) return;
+    const n = (state.journalEntries || []).find(x => x.id === nid);
+    if (n) openEdit(n);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.screenParams?.noteId]);
 
   const sorted = [...notes].sort((a, b) =>
     (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) ||

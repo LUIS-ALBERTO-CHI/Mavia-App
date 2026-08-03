@@ -653,6 +653,7 @@ a { text-decoration: none; color: inherit; }
   height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;   /* evita recarga accidental (pull-to-refresh) */
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--outline-variant) transparent;
