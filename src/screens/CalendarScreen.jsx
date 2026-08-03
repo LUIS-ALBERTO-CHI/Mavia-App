@@ -449,12 +449,17 @@ export default function CalendarScreen() {
                       className={['cal-cell', !isThisMonth ? 'other' : '', isToday ? 'today' : '', isSel ? 'sel' : '', addDay === cellDay ? 'adding' : ''].filter(Boolean).join(' ')}
                       onClick={() => {
                         if (!isThisMonth) return;
-                        if (addDay === cellDay) { setViewMode('day'); }          // 2º toque → ver el día
-                        else { setSelectedDay(cellDay); setAddDay(cellDay); }     // 1er toque → ＋ con onda
+                        if (dayEntries.length > 0) {                             // día con datos → a la lista
+                          setSelectedDay(cellDay); setAddDay(null); setViewMode('day');
+                        } else if (addDay === cellDay) {                          // día vacío, 2º toque → agregar
+                          openEntrySheet({ date: toDS(viewYear, viewMonth, cellDay) });
+                        } else {                                                 // día vacío, 1er toque → ＋ con onda
+                          setSelectedDay(cellDay); setAddDay(cellDay);
+                        }
                       }}
                       id={isThisMonth ? `cal-cell-${cellDay}` : undefined}>
                       <span className="cal-num">{displayDay}</span>
-                      {isThisMonth && addDay === cellDay && (
+                      {isThisMonth && dayEntries.length === 0 && addDay === cellDay && (
                         <>
                           <span className="cal-add-ripple" />
                           <button className="cal-add-fab" aria-label="Agregar en este día"
