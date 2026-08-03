@@ -209,7 +209,7 @@ export default function OnboardingScreen() {
           display: flex;
           flex-direction: column;
           gap: 16px;
-          border-radius: 28px 28px 0 0;
+          border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
           box-shadow: 0 -4px 24px rgba(0,0,0,0.05);
         }
 
@@ -254,7 +254,7 @@ export default function OnboardingScreen() {
           flex: 1;
           padding: 14px 24px;
           background: var(--primary);
-          color: white;
+          color: var(--on-primary);
           border: none;
           border-radius: 99px;
           font-size: 15px;

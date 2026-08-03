@@ -46,7 +46,7 @@ export default function UpdatePrompt() {
           display: flex; align-items: center; gap: 12px;
           padding: 10px 12px 10px 16px; border-radius: 99px;
           background: var(--surface-container-lowest, #fff);
-          border: 0.5px solid var(--outline-variant, rgba(0,0,0,0.1));
+          border: var(--hairline);
           box-shadow: 0 10px 30px rgba(90,80,130,0.22), 0 2px 6px rgba(90,80,130,0.12);
           animation: updDown 0.34s cubic-bezier(0.22,1,0.36,1) both;
           max-width: calc(100vw - 24px);

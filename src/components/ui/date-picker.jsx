@@ -121,7 +121,7 @@ const DP_STYLES = `
   .dp-trigger.placeholder { color: var(--outline); }
   .dp-trigger:hover, .dp-trigger.open {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(112,87,101,0.1);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent);
   }
   .dp-trigger-icon { color: var(--primary); flex-shrink: 0; }
   .dp-trigger-date {
@@ -144,7 +144,7 @@ const DP_STYLES = `
   .dp-popover {
     background: var(--surface-container-lowest);
     border-radius: var(--radius-2xl);
-    border: 1px solid rgba(208,195,200,0.22);
+    border: var(--hairline);
     box-shadow: 0 24px 64px rgba(112,87,101,0.22), 0 4px 16px rgba(112,87,101,0.1);
     padding: 16px;
     animation: dpIn 0.18s var(--ease-out) both;
@@ -231,7 +231,7 @@ const DP_STYLES = `
     display: flex; gap: 8px;
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid rgba(208,195,200,0.18);
+    border-top: var(--hairline);
   }
   .dp-shortcut {
     flex: 1; padding: 8px 0;

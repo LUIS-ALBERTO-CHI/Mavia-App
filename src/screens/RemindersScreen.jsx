@@ -149,7 +149,7 @@ export default function RemindersScreen() {
         }
         .rem-search:focus {
           border-color: var(--primary);
-          box-shadow: 0 0 0 3px rgba(112,87,101,0.12);
+          box-shadow: 0 0 0 3px var(--accent-soft);
         }
         .rem-search::placeholder { color: var(--outline); }
 
@@ -177,7 +177,7 @@ export default function RemindersScreen() {
           color: var(--on-primary);
         }
         .rem-chip:not(.active):hover {
-          background: rgba(248,215,232,0.5);
+          background: var(--accent-soft);
           color: var(--primary);
         }
 
@@ -197,7 +197,7 @@ export default function RemindersScreen() {
         .rem-section-line {
           flex: 1;
           height: 1px;
-          background: rgba(208,195,200,0.3);
+          background: var(--hairline-color);
         }
 
         /* ── Today cards (full-width glass) ── */
@@ -216,8 +216,8 @@ export default function RemindersScreen() {
           background: var(--surface-container);
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
-          border: 1px solid rgba(255,255,255,0.3);
-          box-shadow: 0 8px 32px rgba(112,87,101,0.05);
+          border: var(--hairline);
+          box-shadow: var(--shadow-soft);
           border-radius: var(--radius-2xl);
           padding: var(--space-lg);
           transition: transform var(--transition-spring);
@@ -306,7 +306,7 @@ export default function RemindersScreen() {
 
         .rem-card-upcoming {
           background: var(--surface-container-low);
-          border: 1px solid rgba(208,195,200,0.2);
+          border: var(--hairline);
           border-radius: var(--radius-2xl);
           padding: var(--space-lg);
           position: relative;

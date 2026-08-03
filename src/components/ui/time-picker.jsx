@@ -190,7 +190,7 @@ function DrumScroller({ slots, value, onChange }) {
         top: PAD,
         height: ITEM_H,
         background: 'var(--primary)',
-        borderRadius: 14,
+        borderRadius: 'var(--radius-control)',
         pointerEvents: 'none',
         zIndex: 0,
       }} />
@@ -290,7 +290,7 @@ function MiniDrum({ items, value, onChange, label }) {
         position: 'absolute', left: 8, right: 8,
         top: D_PAD, height: D_ITEM_H,
         background: 'var(--surface-container-high)',
-        borderRadius: 10, zIndex: 0, pointerEvents: 'none',
+        borderRadius: 'var(--radius-control)', zIndex: 0, pointerEvents: 'none',
       }} />
 
       {/* Scroll list */}
@@ -411,7 +411,7 @@ function CustomTimeModal({ onClose, onConfirm, initialSlot }) {
         onMouseDown={e => { e.stopPropagation(); onClose(); }}
         style={{
           position: 'absolute', inset: 0,
-          background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)',
+          background: 'var(--overlay)', backdropFilter: 'blur(6px)',
         }}
       />
 
@@ -421,7 +421,7 @@ function CustomTimeModal({ onClose, onConfirm, initialSlot }) {
         style={{
           position: 'relative', zIndex: 1,
           background: 'var(--surface-container-lowest)',
-          borderRadius: '24px 24px 0 0',
+          borderRadius: 'var(--radius-sheet) var(--radius-sheet) 0 0',
           padding: '0 0 32px',
           animation: 'customIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both',
         }}
@@ -464,8 +464,8 @@ function CustomTimeModal({ onClose, onConfirm, initialSlot }) {
         <div style={{
           display: 'flex', margin: '16px 16px 0',
           background: 'var(--surface-container)',
-          borderRadius: 18, overflow: 'hidden',
-          border: '1px solid rgba(208,195,200,0.15)',
+          borderRadius: 'var(--radius-card)', overflow: 'hidden',
+          border: 'var(--hairline)',
         }}>
           {/* Hours 1-12 */}
           <MiniDrum
@@ -476,7 +476,7 @@ function CustomTimeModal({ onClose, onConfirm, initialSlot }) {
           />
 
           {/* Divider */}
-          <div style={{ width: 1, background: 'rgba(208,195,200,0.25)', margin: '20px 0' }} />
+          <div style={{ width: 1, background: 'var(--hairline-color)', margin: '20px 0' }} />
 
           {/* Minutes 0-59 */}
           <MiniDrum
@@ -487,7 +487,7 @@ function CustomTimeModal({ onClose, onConfirm, initialSlot }) {
           />
 
           {/* Divider */}
-          <div style={{ width: 1, background: 'rgba(208,195,200,0.25)', margin: '20px 0' }} />
+          <div style={{ width: 1, background: 'var(--hairline-color)', margin: '20px 0' }} />
 
           {/* AM / PM */}
           <MiniDrum
@@ -515,7 +515,7 @@ function CustomTimeModal({ onClose, onConfirm, initialSlot }) {
             type="button" onClick={handleConfirm}
             style={{
               width: '100%', padding: '15px', borderRadius: 99,
-              background: 'var(--primary)', color: 'white',
+              background: 'var(--primary)', color: 'var(--on-primary)',
               border: 'none', cursor: 'pointer',
               fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-body)',
               letterSpacing: '0.02em',
@@ -589,7 +589,7 @@ const TP_STYLES = `
   .tp-trigger.placeholder { color: var(--outline); }
   .tp-trigger:hover, .tp-trigger.open {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(112,87,101,0.1);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent);
   }
   .tp-icon   { color: var(--primary); flex-shrink: 0; }
   .tp-label  { flex: 1; font-family: var(--font-display); font-size: var(--text-body-md); }
@@ -604,7 +604,7 @@ const TP_STYLES = `
   .tp-panel {
     background: var(--surface-container-lowest);
     border-radius: var(--radius-2xl);
-    border: 1px solid rgba(208,195,200,0.22);
+    border: var(--hairline);
     box-shadow: 0 24px 64px rgba(112,87,101,0.22), 0 4px 16px rgba(112,87,101,0.1);
     overflow: hidden;
     animation: tpIn 0.18s var(--ease-out) both;

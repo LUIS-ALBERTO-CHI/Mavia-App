@@ -118,8 +118,8 @@ export default function JournalScreen() {
         .nt-empty p { color: var(--on-surface-variant); font-size: var(--text-body-md); }
 
         /* ── Editor (bottom sheet) ── */
-        .nte-backdrop { position: fixed; inset: 0; z-index: 9995; background: rgba(40,36,60,0.4); backdrop-filter: blur(6px) saturate(160%); -webkit-backdrop-filter: blur(6px) saturate(160%); animation: fadeIn 0.2s ease both; }
-        .nte-sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9996; max-height: 92dvh; display: flex; flex-direction: column; background: var(--surface-container-lowest); border-radius: 24px 24px 0 0; box-shadow: 0 -8px 40px -8px rgba(40,36,60,0.28); animation: esUp 0.36s cubic-bezier(0.22,1,0.36,1) both; margin: 0 auto; max-width: 640px; }
+        .nte-backdrop { position: fixed; inset: 0; z-index: 9995; background: var(--overlay); backdrop-filter: blur(6px) saturate(160%); -webkit-backdrop-filter: blur(6px) saturate(160%); animation: fadeIn 0.2s ease both; }
+        .nte-sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9996; max-height: 92dvh; display: flex; flex-direction: column; background: var(--surface-container-lowest); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; box-shadow: 0 -8px 40px -8px rgba(40,36,60,0.28); animation: esUp 0.36s cubic-bezier(0.22,1,0.36,1) both; margin: 0 auto; max-width: 640px; }
         @keyframes esUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .nte-handle { width: 38px; height: 5px; border-radius: 99px; background: rgba(120,110,150,0.4); margin: 10px auto 4px; flex-shrink: 0; }
         .nte-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 20px 8px; flex-shrink: 0; }
@@ -150,7 +150,7 @@ export default function JournalScreen() {
         .nte-tab { flex-shrink: 0; padding: 6px 14px; border-radius: 99px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 12.5px; font-weight: 700; cursor: pointer; }
         .nte-tab.sel { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
         .nte-sgrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 8px; }
-        .nte-scell { aspect-ratio: 1; border-radius: 14px; border: 2px solid transparent; background: var(--surface-container-low); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; }
+        .nte-scell { aspect-ratio: 1; border-radius: var(--radius-control); border: 2px solid transparent; background: var(--surface-container-low); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; }
         .nte-scell.sel { border-color: var(--primary); background: var(--primary-container); }
 
         .nte-bar { padding: 12px 20px calc(env(safe-area-inset-bottom,0px) + 14px); border-top: 1px solid var(--outline-variant); flex-shrink: 0; background: var(--surface-container-lowest); display: flex; gap: 10px; }

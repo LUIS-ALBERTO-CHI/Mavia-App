@@ -32,7 +32,7 @@ export default function SetupProfileScreen() {
           align-items: center;
           justify-content: center;
           padding: 2rem 1rem;
-          background-color: #fbf9f7;
+          background-color: var(--background);
           background-image:
             radial-gradient(circle at 10% 15%, rgba(248,215,232,0.45) 0%, transparent 45%),
             radial-gradient(circle at 88% 85%, rgba(216,232,197,0.32) 0%, transparent 45%);
@@ -43,10 +43,10 @@ export default function SetupProfileScreen() {
           width: 100%;
           max-width: 480px;
           background: var(--surface-container-lowest);
-          border-radius: 32px;
+          border-radius: var(--radius-sheet);
           padding: 3rem 2.5rem 2.5rem;
-          box-shadow: 0 24px 48px -12px rgba(112,87,101,0.08);
-          border: 1px solid rgba(255,255,255,0.7);
+          box-shadow: var(--shadow-soft);
+          border: var(--hairline);
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -127,7 +127,7 @@ export default function SetupProfileScreen() {
         }
         .sp-input:focus {
           border-color: var(--primary);
-          box-shadow: 0 0 0 4px rgba(248,215,232,0.5);
+          box-shadow: 0 0 0 4px var(--accent-soft);
         }
         .sp-input::placeholder { color: var(--outline); }
 

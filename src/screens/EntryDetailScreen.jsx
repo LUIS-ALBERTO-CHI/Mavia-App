@@ -68,7 +68,7 @@ export default function EntryDetailScreen() {
     return (
       <div style={{ padding: 'var(--space-xl)', textAlign: 'center', maxWidth: 480, margin: '0 auto' }}>
         <p style={{ color: 'var(--on-surface-variant)', marginBottom: 'var(--space-lg)' }}>No se encontró.</p>
-        <button className="btn" onClick={() => navigate('calendar')} style={{ background: 'var(--primary)', color: '#fff', padding: '10px 20px', borderRadius: 99, border: 'none' }}>
+        <button className="btn" onClick={() => navigate('calendar')} style={{ background: 'var(--primary)', color: 'var(--on-primary)', padding: '10px 20px', borderRadius: 99, border: 'none' }}>
           Ir al calendario
         </button>
       </div>
@@ -116,7 +116,7 @@ export default function EntryDetailScreen() {
           border: 1px solid var(--outline-variant);
         }
         .ed-hero-sticker {
-          width: 72px; height: 72px; border-radius: 22px; flex-shrink: 0;
+          width: 72px; height: 72px; border-radius: var(--radius-card); flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
           background: rgba(255,255,255,0.65);
         }
@@ -140,12 +140,12 @@ export default function EntryDetailScreen() {
         .ed-rows { background: var(--surface-container-lowest); border-radius: var(--radius-2xl); border: 1px solid var(--outline-variant); overflow: hidden; margin-bottom: var(--space-lg); }
         .ed-row { display: flex; align-items: center; gap: 12px; padding: 15px var(--space-lg); }
         .ed-row + .ed-row { border-top: 1px solid var(--outline-variant); }
-        .ed-row-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--surface-container); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--on-surface-variant); }
+        .ed-row-icon { width: 34px; height: 34px; border-radius: var(--radius-control); background: var(--surface-container); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--on-surface-variant); }
         .ed-row-label { font-size: var(--text-label-sm); color: var(--on-surface-variant); }
         .ed-row-value { font-size: var(--text-body-md); color: var(--on-surface); font-weight: 600; }
 
         .ed-note-card { background: var(--surface-container-lowest); border-radius: var(--radius-2xl); border: 1px solid var(--outline-variant); padding: var(--space-lg); margin-bottom: var(--space-lg); }
-        .ed-ics-btn { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px; border-radius: 16px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-weight: 700; font-size: var(--text-body-md); cursor: pointer; margin-bottom: var(--space-lg); transition: transform var(--transition-fast); }
+        .ed-ics-btn { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px; border-radius: var(--radius-card); border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-weight: 700; font-size: var(--text-body-md); cursor: pointer; margin-bottom: var(--space-lg); transition: transform var(--transition-fast); }
         .ed-ics-btn:active { transform: scale(0.98); }
         .ed-note-label { font-size: var(--text-label-sm); font-weight: 700; color: var(--on-surface-variant); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
         .ed-note-text { font-size: var(--text-body-md); color: var(--on-surface); line-height: 1.6; white-space: pre-wrap; }

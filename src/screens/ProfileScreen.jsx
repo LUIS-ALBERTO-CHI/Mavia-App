@@ -138,7 +138,7 @@ export default function ProfileScreen() {
           height: 40px;
           border-radius: 50%;
           background: var(--primary);
-          color: white;
+          color: var(--on-primary);
           border: 3px solid white;
           display: flex;
           align-items: center;
@@ -177,14 +177,14 @@ export default function ProfileScreen() {
         .prof-stat-card {
           background: var(--surface-container);
           backdrop-filter: blur(12px);
-          border: 1px solid rgba(255,255,255,0.3);
-          border-radius: 20px;
+          border: var(--hairline);
+          border-radius: var(--radius-card);
           padding: var(--space-md);
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 12px rgba(112,87,101,0.06);
+          box-shadow: var(--shadow-soft);
           gap: 4px;
           min-height: 80px;
         }
@@ -214,9 +214,9 @@ export default function ProfileScreen() {
 
         .prof-group {
           background: var(--surface-container-lowest);
-          border-radius: 18px;
+          border-radius: var(--radius-card);
           overflow: hidden;
-          border: 0.5px solid var(--outline-variant);
+          border: var(--hairline);
           box-shadow: var(--shadow-card);
           margin-bottom: var(--space-lg);
         }
@@ -234,7 +234,7 @@ export default function ProfileScreen() {
         .prof-row:hover { background: var(--surface-container-low); }
         .prof-row:active { background: var(--surface-container); }
         /* Separador hairline "inset" (no llega al borde izquierdo del icono) */
-        .prof-row + .prof-row { border-top: 0.5px solid var(--outline-variant); }
+        .prof-row + .prof-row { border-top: var(--hairline); }
 
         .prof-row-left {
           display: flex;
@@ -309,11 +309,11 @@ export default function ProfileScreen() {
         .prof-edit-panel {
           background: var(--surface-container);
           backdrop-filter: blur(12px);
-          border: 1px solid rgba(255,255,255,0.3);
-          border-radius: 28px;
+          border: var(--hairline);
+          border-radius: var(--radius-sheet);
           padding: var(--space-lg);
           margin-bottom: var(--space-xl);
-          box-shadow: 0 4px 20px rgba(112,87,101,0.08);
+          box-shadow: var(--shadow-soft);
           animation: scaleIn 0.3s var(--ease-spring);
         }
 
@@ -329,7 +329,7 @@ export default function ProfileScreen() {
           padding: 0.75rem 1rem;
           background: var(--surface-container-low);
           border: none;
-          border-radius: 14px;
+          border-radius: var(--radius-control);
           font-size: var(--text-body-md);
           font-family: var(--font-body);
           color: var(--on-surface);
@@ -338,7 +338,7 @@ export default function ProfileScreen() {
           transition: box-shadow var(--transition-fast);
         }
 
-        .prof-edit-input:focus { box-shadow: 0 0 0 3px rgba(248,215,232,0.5); }
+        .prof-edit-input:focus { box-shadow: 0 0 0 3px var(--accent-soft); }
 
         .prof-edit-actions {
           display: flex;
@@ -350,9 +350,9 @@ export default function ProfileScreen() {
           flex: 1;
           padding: 0.75rem;
           background: var(--primary);
-          color: white;
+          color: var(--on-primary);
           border: none;
-          border-radius: 12px;
+          border-radius: var(--radius-control);
           font-size: var(--text-label-md);
           font-weight: 600;
           font-family: var(--font-body);
@@ -372,7 +372,7 @@ export default function ProfileScreen() {
           background: var(--surface-container);
           color: var(--on-surface);
           border: none;
-          border-radius: 12px;
+          border-radius: var(--radius-control);
           font-size: var(--text-label-md);
           font-weight: 600;
           font-family: var(--font-body);
@@ -442,16 +442,13 @@ export default function ProfileScreen() {
         /* ── Profile dark mode ── */
         .dark .prof-stat-card {
           background: var(--surface-container) !important;
-          border: 1px solid rgba(255,255,255,0.08) !important;
         }
         .dark .prof-group {
           background: var(--surface-container-low) !important;
-          border: 1px solid rgba(255,255,255,0.07) !important;
           box-shadow: none !important;
         }
         .dark .prof-row { background: transparent; }
         .dark .prof-row:hover { background: var(--surface-container-high) !important; }
-        .dark .prof-row + .prof-row { border-top: 1px solid rgba(255,255,255,0.05) !important; }
       `}</style>
 
       <div className="prof-screen">

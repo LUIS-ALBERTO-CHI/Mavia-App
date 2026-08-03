@@ -184,13 +184,13 @@ export default function SettingsScreen() {
         .stg-section-line {
           flex: 1;
           height: 1px;
-          background: rgba(208,195,200,0.25);
+          background: var(--hairline-color);
         }
 
         /* ── Group card ── */
         .stg-group {
           background: var(--surface-container-lowest);
-          border-radius: 18px;
+          border-radius: var(--radius-card);
           border: 0.5px solid var(--outline-variant);
           box-shadow: var(--shadow-card);
           overflow: hidden;
@@ -214,7 +214,7 @@ export default function SettingsScreen() {
         .stg-icon {
           width: 38px;
           height: 38px;
-          border-radius: 12px;
+          border-radius: var(--radius-control);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -257,7 +257,7 @@ export default function SettingsScreen() {
         /* ── Language selector (full width) ── */
         .stg-lang-row {
           padding: 14px var(--space-lg);
-          border-bottom: 1px solid rgba(208,195,200,0.1);
+          border-bottom: var(--hairline);
         }
         .stg-lang-row-top {
           display: flex;
@@ -268,7 +268,7 @@ export default function SettingsScreen() {
         .stg-lang-icon {
           width: 36px;
           height: 36px;
-          border-radius: 10px;
+          border-radius: var(--radius-control);
           background: var(--surface-container);
           display: flex;
           align-items: center;
@@ -419,7 +419,7 @@ export default function SettingsScreen() {
               position: 'fixed',
               inset: 0,
               zIndex: 10000,
-              background: 'rgba(0,0,0,0.45)',
+              background: 'var(--overlay)',
               backdropFilter: 'blur(8px)',
               WebkitBackdropFilter: 'blur(8px)',
               display: 'flex',
@@ -431,7 +431,7 @@ export default function SettingsScreen() {
           >
             <div style={{
               background: 'var(--surface)',
-              borderRadius: 24,
+              borderRadius: 'var(--radius-sheet)',
               padding: '28px 24px',
               width: '100%',
               maxWidth: 380,
@@ -466,7 +466,7 @@ export default function SettingsScreen() {
                       onChange={e => setter(e.target.value)}
                       style={{
                         width: '100%', padding: '11px 42px 11px 14px',
-                        borderRadius: 12, border: '1px solid var(--outline-variant)',
+                        borderRadius: 'var(--radius-control)', border: '1px solid var(--outline-variant)',
                         background: 'var(--surface-container)', color: 'var(--on-surface)',
                         fontSize: 14, fontFamily: 'var(--font-body)',
                         boxSizing: 'border-box', outline: 'none',
@@ -490,7 +490,7 @@ export default function SettingsScreen() {
               ))}
 
               {pwError && (
-                <p style={{ fontSize: 12, color: 'var(--error)', marginBottom: 14, lineHeight: 1.5, background: 'var(--error-container)', padding: '8px 12px', borderRadius: 10 }}>
+                <p style={{ fontSize: 12, color: 'var(--error)', marginBottom: 14, lineHeight: 1.5, background: 'var(--error-container)', padding: '8px 12px', borderRadius: 'var(--radius-control)' }}>
                   {pwError}
                 </p>
               )}
@@ -502,7 +502,7 @@ export default function SettingsScreen() {
                 style={{
                   width: '100%', padding: '13px',
                   background: pwLoading ? 'var(--outline-variant)' : 'var(--primary)',
-                  color: 'white', border: 'none', borderRadius: 99,
+                  color: 'var(--on-primary)', border: 'none', borderRadius: 99,
                   fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-body)',
                   cursor: pwLoading ? 'not-allowed' : 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,

@@ -8,15 +8,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default:     'bg-primary text-on-primary shadow-sm hover:opacity-90',
-        destructive: 'bg-error text-on-error shadow-sm hover:opacity-90',
+        default:     'bg-primary text-on-primary shadow-[var(--shadow-soft)] hover:opacity-90',
+        destructive: 'bg-error text-on-error shadow-[var(--shadow-soft)] hover:opacity-90',
         outline:     'border border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-on-surface',
         secondary:   'bg-secondary-container text-on-secondary-container hover:opacity-90',
         ghost:       'hover:bg-surface-container text-on-surface-variant hover:text-on-surface',
         link:        'text-primary underline-offset-4 hover:underline',
-        primary:     'bg-primary text-on-primary shadow-sm hover:opacity-90',
+        primary:     'bg-primary text-on-primary shadow-[var(--shadow-soft)] hover:opacity-90',
         soft:        'bg-primary-container text-on-primary-container hover:opacity-90',
-        sage:        'bg-secondary text-on-secondary shadow-sm hover:opacity-90',
+        sage:        'bg-secondary text-on-secondary shadow-[var(--shadow-soft)] hover:opacity-90',
       },
       size: {
         default: 'h-10 px-5 py-2',

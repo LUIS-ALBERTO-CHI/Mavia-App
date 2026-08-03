@@ -5,7 +5,7 @@ const Input = React.forwardRef(({ className, type, ...props }, ref) => (
   <input
     type={type}
     className={cn(
-      'flex h-11 w-full rounded-xl border border-outline-variant bg-surface-container-low px-4 py-2 text-sm text-on-surface ring-offset-background',
+      'flex h-11 w-full rounded-[var(--radius-control)] border border-outline-variant bg-surface-container-low px-4 py-2 text-sm text-on-surface ring-offset-background',
       'placeholder:text-outline',
       'focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary',
       'disabled:cursor-not-allowed disabled:opacity-50',
@@ -21,7 +21,7 @@ Input.displayName = 'Input';
 const Textarea = React.forwardRef(({ className, ...props }, ref) => (
   <textarea
     className={cn(
-      'flex min-h-[100px] w-full rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface',
+      'flex min-h-[100px] w-full rounded-[var(--radius-control)] border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface',
       'placeholder:text-outline',
       'focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary',
       'disabled:cursor-not-allowed disabled:opacity-50',

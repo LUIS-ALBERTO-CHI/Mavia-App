@@ -116,11 +116,11 @@ export default function SearchScreen() {
           color: var(--on-surface);
           outline: none;
           transition: all var(--transition-fast);
-          box-shadow: 0 4px 20px rgba(112,87,101,0.04);
+          box-shadow: var(--shadow-soft);
         }
         .srch-bar:focus {
           border-color: var(--primary);
-          box-shadow: 0 0 0 3px rgba(112,87,101,0.1), 0 4px 20px rgba(112,87,101,0.06);
+          box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent), 0 4px 20px rgba(112,87,101,0.06);
         }
         .srch-bar::placeholder { color: var(--outline); }
         .srch-clear {
@@ -201,7 +201,7 @@ export default function SearchScreen() {
         .srch-section-line {
           flex: 1;
           height: 1px;
-          background: rgba(208,195,200,0.25);
+          background: var(--hairline-color);
         }
 
         /* ── Result cards ── */
@@ -218,8 +218,8 @@ export default function SearchScreen() {
           background: var(--surface-container-lowest);
           border-radius: var(--radius-2xl);
           padding: var(--space-md) var(--space-lg);
-          border: 1px solid rgba(208,195,200,0.12);
-          box-shadow: 0 4px 16px rgba(112,87,101,0.04);
+          border: var(--hairline);
+          box-shadow: var(--shadow-soft);
           cursor: pointer;
           transition: all var(--transition-spring);
         }
@@ -232,7 +232,7 @@ export default function SearchScreen() {
         .srch-result-icon {
           width: 38px;
           height: 38px;
-          border-radius: 11px;
+          border-radius: var(--radius-control);
           display: flex;
           align-items: center;
           justify-content: center;

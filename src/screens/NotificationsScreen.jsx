@@ -177,7 +177,7 @@ export default function NotificationsScreen() {
           padding: 1px 7px;
           border-radius: 99px;
         }
-        .ntf-section-line { flex: 1; height: 1px; background: rgba(208,195,200,0.25); }
+        .ntf-section-line { flex: 1; height: 1px; background: var(--hairline-color); }
 
         /* ── List ── */
         .ntf-list {
@@ -195,8 +195,8 @@ export default function NotificationsScreen() {
           background: var(--surface-container-lowest);
           border-radius: var(--radius-2xl);
           padding: var(--space-md) var(--space-lg);
-          border: 1px solid rgba(208,195,200,0.12);
-          box-shadow: 0 4px 16px rgba(112,87,101,0.04);
+          border: var(--hairline);
+          box-shadow: var(--shadow-soft);
           cursor: pointer;
           /* Entry animation */
           animation: ntfCardIn 0.3s var(--ease-out) both;
@@ -226,9 +226,9 @@ export default function NotificationsScreen() {
         }
         .ntf-card.unread {
           border-left: 3px solid var(--primary);
-          background: rgba(248,215,232,0.08);
+          background: var(--accent-soft);
         }
-        .ntf-card:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(112,87,101,0.08); }
+        .ntf-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-soft); }
         .ntf-card.exiting:hover { transform: translateX(60px) scale(0.94) !important; }
 
         .ntf-icon {

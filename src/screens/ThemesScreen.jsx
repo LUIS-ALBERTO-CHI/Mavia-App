@@ -32,7 +32,7 @@ export default function ThemesScreen() {
 
         /* Modo de color */
         .th-modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: var(--space-xl); }
-        .th-mode { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; padding: 16px 8px; border-radius: 16px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); cursor: pointer; font-family: var(--font-body); font-weight: 700; font-size: 13px; transition: all var(--transition-fast); }
+        .th-mode { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; padding: 16px 8px; border-radius: var(--radius-card); border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); cursor: pointer; font-family: var(--font-body); font-weight: 700; font-size: 13px; transition: all var(--transition-fast); }
         .th-mode.sel { border-color: var(--primary); color: var(--primary); background: var(--primary-container); box-shadow: var(--shadow-card); }
         .th-mode:active { transform: scale(0.97); }
 

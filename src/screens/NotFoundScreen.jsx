@@ -55,7 +55,7 @@ export default function NotFoundScreen() {
           padding: '12px 28px',
           borderRadius: 99,
           background: 'var(--primary)',
-          color: 'white',
+          color: 'var(--on-primary)',
           border: 'none',
           fontSize: 14, fontWeight: 700,
           fontFamily: 'var(--font-body)',

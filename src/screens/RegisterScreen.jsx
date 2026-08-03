@@ -139,7 +139,7 @@ export default function RegisterScreen() {
           padding: 2.5rem var(--space-md) 3rem;
           position: relative;
           overflow: visible;
-          background-color: #fbf9f7;
+          background-color: var(--background);
 
           /* Organic radial gradient exactly from Stitch */
           background-image:
@@ -223,10 +223,10 @@ export default function RegisterScreen() {
         .auth-card {
           width: 100%;
           background: var(--surface-container-lowest);
-          border-radius: 32px;
+          border-radius: var(--radius-sheet);
           padding: var(--space-lg);
-          box-shadow: 0 20px 40px -10px rgba(112, 87, 101, 0.05);
-          border: 1px solid rgba(255,255,255,0.5);
+          box-shadow: var(--shadow-soft);
+          border: var(--hairline);
         }
 
         @media (min-width: 768px) {
@@ -252,7 +252,7 @@ export default function RegisterScreen() {
           gap: var(--space-md);
           padding: 0.875rem var(--space-md);
           background: var(--surface-container-low);
-          border: 1px solid rgba(208, 195, 200, 0.3);
+          border: var(--hairline);
           border-radius: var(--radius-xl);
           font-size: var(--text-label-md);
           font-weight: 500;
@@ -279,7 +279,7 @@ export default function RegisterScreen() {
         .auth-divider-line {
           height: 1px;
           flex: 1;
-          background: rgba(208, 195, 200, 0.3);
+          background: var(--hairline-color);
         }
 
         .auth-divider-text {
@@ -351,7 +351,7 @@ export default function RegisterScreen() {
 
         .auth-input:focus {
           border-color: var(--primary);
-          box-shadow: 0 0 0 4px rgba(248, 215, 232, 0.5);
+          box-shadow: 0 0 0 4px var(--accent-soft);
         }
 
         .auth-input-toggle {
@@ -384,7 +384,7 @@ export default function RegisterScreen() {
           border-radius: var(--radius-full);
           border: none;
           cursor: pointer;
-          box-shadow: 0 20px 40px -10px rgba(112, 87, 101, 0.05);
+          box-shadow: var(--shadow-soft);
           transition: opacity 200ms ease, transform 200ms ease;
           margin-top: var(--space-md);
           display: flex;
