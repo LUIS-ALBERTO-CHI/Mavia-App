@@ -44,6 +44,7 @@ export default defineConfig({
     },
     workbox: {
       globDirectory: 'dist',
+      globIgnores: ['**/version.json'],   // nunca precachear la versión (se lee fresca)
       navigateFallback: '/',
       maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MB — needed after i18n bundle growth
       runtimeCaching: [

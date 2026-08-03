@@ -37,6 +37,7 @@ import NotFoundScreen from './screens/NotFoundScreen';
 import ErrorBoundary from './components/ErrorBoundary';
 import OfflineBanner from './components/OfflineBanner';
 import CreateEntrySheet from './components/CreateEntrySheet';
+import UpdatePrompt from './components/UpdatePrompt';
 
 /* ============================================
    CONSTANTS
@@ -758,6 +759,9 @@ function AppContent() {
 
       {/* Offline/online status banner — floats above everything via Portal */}
       <OfflineBanner />
+
+      {/* Aviso de versión nueva (deploy) → recargar */}
+      <UpdatePrompt />
 
     </div>
   );
