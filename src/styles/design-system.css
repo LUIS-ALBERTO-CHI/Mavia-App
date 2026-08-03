@@ -3,6 +3,7 @@
    Faithful replication of Stitch/Aura Marketing UI
    ============================================ */
 
+@import './tokens.css';   /* design tokens nuevos — migración gradual */
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
@@ -452,10 +453,10 @@ a { text-decoration: none; color: inherit; }
    ============================================ */
 .ios-group {
   background: var(--surface-container-lowest);
-  border-radius: 18px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   box-shadow: var(--shadow-card);
-  border: 0.5px solid var(--outline-variant);
+  border: var(--hairline);
 }
 .ios-row {
   display: flex; align-items: center; gap: 12px;
@@ -463,7 +464,7 @@ a { text-decoration: none; color: inherit; }
   background: transparent;
   transition: background 0.15s ease;
 }
-.ios-row + .ios-row { border-top: 0.5px solid var(--outline-variant); }
+.ios-row + .ios-row { border-top: var(--hairline); }
 .ios-row:active { background: var(--surface-container); }
 .ios-section-label {
   font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
@@ -495,16 +496,13 @@ a { text-decoration: none; color: inherit; }
   left: 0;
   top: 0;
   background: var(--surface-container-low);
-  border-right: 1px solid rgba(208, 195, 200, 0.30);
+  border-right: var(--hairline);
   padding: var(--space-xl) 0;
   z-index: var(--z-topbar);
   overflow: hidden;
 }
-.dark .desktop-sidebar {
-  border-right: 1px solid rgba(77,68,73,0.4);
-}
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .desktop-sidebar {
     display: flex;
   }
@@ -686,7 +684,7 @@ a { text-decoration: none; color: inherit; }
 }
 .scroll-x-row::-webkit-scrollbar { display: none; }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .app-main {
     margin-left: var(--sidebar-width);
     padding-top: 0;
@@ -738,14 +736,13 @@ a { text-decoration: none; color: inherit; }
   background: rgba(252, 251, 255, 0.68);
   backdrop-filter: blur(22px) saturate(180%);
   -webkit-backdrop-filter: blur(22px) saturate(180%);
-  border-bottom: 0.5px solid rgba(120, 110, 160, 0.14);
+  border-bottom: var(--hairline);
 }
 .dark .mobile-topbar {
   background: rgba(22, 21, 28, 0.62);
-  border-bottom: 0.5px solid rgba(255,255,255,0.08);
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .mobile-topbar { display: none; }
 }
 
@@ -822,7 +819,7 @@ a { text-decoration: none; color: inherit; }
 /* Grupos de tabs a cada lado del FAB */
 .bn-group { flex: 1; display: flex; align-items: center; justify-content: space-around; }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .mobile-bottom-nav-wrapper { display: none; }
 }
 
@@ -928,9 +925,9 @@ a { text-decoration: none; color: inherit; }
 .desktop-fab:hover .nav-icon { transform: rotate(90deg); transition: transform var(--transition-base); }
 .desktop-fab:active { transform: scale(0.95); }
 
-@media (min-width: 1024px) {
-  .desktop-fab { display: flex; }
-}
+/* Desktop: sin FAB flotante — el sidebar ya tiene el botón "+ Agregar"
+   (el FAB en 1440px es el delator de PWA sin adaptar). La clase queda
+   display:none por si se reusa. */
 
 /* ============================================
    CARDS — white bg, 24px radius, pink glow shadow
@@ -1166,7 +1163,7 @@ a { text-decoration: none; color: inherit; }
   background: white;
   border-radius: var(--radius-full);
   transition: transform var(--transition-spring);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: var(--shadow-soft);
 }
 
 /* Switch: sage green when on */
@@ -1319,7 +1316,7 @@ a { text-decoration: none; color: inherit; }
   left: 0;
   right: 0;
   background: var(--surface-container-lowest);
-  border-radius: 2rem 2rem 0 0;  /* 32px top */
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
   padding: var(--space-sm) var(--space-lg) var(--space-xl);
   z-index: var(--z-modal);
   max-height: 85dvh;
@@ -1523,11 +1520,11 @@ a { text-decoration: none; color: inherit; }
   );
   background-size: 800px 100%;
   animation: skeletonWave 1.4s ease-in-out infinite;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
 }
 .skeleton-text  { height: 14px; margin-bottom: 8px; }
 .skeleton-title { height: 20px; width: 60%; margin-bottom: 12px; }
-.skeleton-card  { height: 80px; border-radius: 20px; margin-bottom: 12px; }
+.skeleton-card  { height: 80px; border-radius: var(--radius-card); margin-bottom: 12px; }
 .skeleton-circle { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; }
 
 /* ── #10 Shake validation animation ── */
@@ -1546,12 +1543,19 @@ a { text-decoration: none; color: inherit; }
   box-shadow: 0 0 0 2.5px var(--error) !important;
 }
 
-/* ── #2 Completion burst ── */
+/* ── #2 Completion burst ──
+   El anillo sigue a --primary donde hay color-mix; fallback estático via
+   @supports (un doble box-shadow no sirve: la declaración con var() gana
+   el cascade aunque luego sea inválida en computed-value time). */
+:root { --burst-ring: rgba(124, 111, 228, 0.2); }
+@supports (color: color-mix(in srgb, red, blue)) {
+  :root { --burst-ring: color-mix(in srgb, var(--primary) 20%, transparent); }
+}
 @keyframes completionBurst {
   0%   { transform: scale(1); }
-  30%  { transform: scale(1.35); box-shadow: 0 0 0 8px rgba(84,99,71,0.2); }
+  30%  { transform: scale(1.35); box-shadow: 0 0 0 8px var(--burst-ring); }
   60%  { transform: scale(0.92); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(84,99,71,0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
 }
 .completion-burst {
   animation: completionBurst 0.5s var(--ease-spring) both;
@@ -1672,14 +1676,14 @@ button:focus-visible, a:focus-visible {
 
 .dark .ce-card {
   background: rgba(31, 31, 30, 0.85) !important;
-  border-color: rgba(77,68,73,0.3) !important;
+  border-color: var(--hairline-color) !important;
 }
 
 /* Glass effect cards */
 .dark .glass-card,
 .dark [class*="glass"] {
   background: rgba(31, 31, 30, 0.75) !important;
-  border-color: rgba(77,68,73,0.25) !important;
+  border-color: var(--hairline-color) !important;
 }
 
 /* ---- Inputs / Search bars ---- */
@@ -1708,7 +1712,7 @@ button:focus-visible, a:focus-visible {
 .dark .dp-popover,
 .dark .tp-panel {
   background: var(--surface-container-high) !important;
-  border-color: rgba(77,68,73,0.4) !important;
+  border-color: var(--hairline-color) !important;
 }
 .dark .dp-cell { color: var(--on-surface) !important; }
 .dark .dp-cell.other { color: var(--outline) !important; }
@@ -1734,16 +1738,16 @@ button:focus-visible, a:focus-visible {
 .dark .hbs-card,
 .dark .grat-card {
   background: var(--surface-container) !important;
-  border-color: rgba(77,68,73,0.2) !important;
+  border-color: var(--hairline-color) !important;
 }
 
 /* ---- Notification items ---- */
 .dark .notif-item {
   background: var(--surface-container) !important;
-  border-color: rgba(77,68,73,0.2) !important;
+  border-color: var(--hairline-color) !important;
 }
 .dark .notif-item.unread {
-  background: rgba(57,40,53,0.5) !important;
+  background: var(--accent-soft) !important;
 }
 
 /* ---- Journal / Diary cards ---- */
@@ -1777,7 +1781,7 @@ button:focus-visible, a:focus-visible {
 .dark .cg-card,
 .dark .ch-card {
   background: var(--surface-container) !important;
-  border-color: rgba(77,68,73,0.25) !important;
+  border-color: var(--hairline-color) !important;
 }
 .dark .ct-dt-field {
   background: var(--surface-container-high) !important;
@@ -1874,7 +1878,7 @@ button:focus-visible, a:focus-visible {
 .dark .med-card,
 .dark .dash-card,
 .dark .db-card {
-  border: 1px solid rgba(255,255,255,0.07) !important;
+  border: var(--hairline) !important;
   box-shadow: 0 2px 12px rgba(0,0,0,0.25) !important;
 }
 
@@ -1900,34 +1904,34 @@ button:focus-visible, a:focus-visible {
 .dark .settings-row,
 .dark .profile-stat-card {
   background: var(--surface-container) !important;
-  border: 1px solid rgba(255,255,255,0.07) !important;
+  border: var(--hairline) !important;
 }
 
 /* ── Calendar ── */
 .dark .cal-day {
   background: var(--surface-container-low) !important;
-  border: 1px solid rgba(255,255,255,0.05) !important;
+  border: var(--hairline) !important;
 }
 .dark .cal-day.today { background: var(--primary-container) !important; }
-.dark .cal-day.selected { background: rgba(87,64,77,0.5) !important; }
+.dark .cal-day.selected { background: var(--accent-soft) !important; }
 
 /* ── Task card hover is more visible ── */
 .dark .ts-card:hover {
   background: var(--surface-container-high) !important;
-  border-color: rgba(255,255,255,0.12) !important;
+  border-color: var(--hairline-color) !important;
 }
 
 /* ── Completed task card ── */
 .dark .ts-card.is-done {
   background: var(--surface-container-lowest) !important;
-  border-color: rgba(255,255,255,0.04) !important;
+  border-color: var(--hairline-color) !important;
   opacity: 0.55 !important;
 }
 
 /* ── Filter chips (inactive) ── */
 .dark .ts-chip {
   background: var(--surface-container-high) !important;
-  border-color: rgba(255,255,255,0.08) !important;
+  border-color: var(--hairline-color) !important;
   color: var(--on-surface-variant) !important;
 }
 .dark .ts-chip.active {
@@ -1939,7 +1943,7 @@ button:focus-visible, a:focus-visible {
 /* ── Search bar ── */
 .dark .ts-search {
   background: var(--surface-container-high) !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
+  border: var(--hairline) !important;
   color: var(--on-surface) !important;
 }
 
@@ -1948,26 +1952,26 @@ button:focus-visible, a:focus-visible {
 .dark .stats-banner,
 .dark .gls-overview {
   background: var(--surface-container) !important;
-  border: 1px solid rgba(255,255,255,0.07) !important;
+  border: var(--hairline) !important;
 }
 
 /* ── Goals cards ── */
 .dark .gls-card {
   background: var(--surface-container) !important;
-  border: 1px solid rgba(255,255,255,0.07) !important;
+  border: var(--hairline) !important;
 }
 
 /* ── Light gradients that need dark override ── */
 .dark .jrn-write-panel {
   background: var(--surface-container) !important;
-  border-color: rgba(255,255,255,0.07) !important;
+  border-color: var(--hairline-color) !important;
 }
 
 /* ── GratitudeScreen banner ── */
 .dark .grat-banner,
 .dark .grt-banner {
   background: linear-gradient(135deg, rgba(87,64,77,0.35), rgba(80,70,34,0.2)) !important;
-  border-color: rgba(77,68,73,0.3) !important;
+  border-color: var(--hairline-color) !important;
 }
 
 /* ── Notification items ── */
@@ -1975,8 +1979,8 @@ button:focus-visible, a:focus-visible {
   background: var(--surface-container) !important;
 }
 .dark .notif-item.unread {
-  background: rgba(87,64,77,0.25) !important;
-  border-color: rgba(221,190,206,0.15) !important;
+  background: var(--accent-soft) !important;
+  border-color: var(--hairline-color) !important;
 }
 
 /* ── Create screens ── */
@@ -1986,7 +1990,7 @@ button:focus-visible, a:focus-visible {
 .dark .ce-card,
 .dark .ch-card {
   background: var(--surface-container) !important;
-  border: 1px solid rgba(255,255,255,0.07) !important;
+  border: var(--hairline) !important;
 }
 .dark .ct-card-sm {
   background: var(--surface-container-high) !important;
@@ -1998,4 +2002,51 @@ button:focus-visible, a:focus-visible {
 .dark .rem-card-title,
 .dark .notif-title {
   color: var(--on-surface) !important;
+}
+
+/* ============================================
+   RESPONSIVE — breakpoint principal 768px
+   mobile < 768 ≤ desktop
+   ============================================ */
+
+/* Hover solo con puntero fino (mobile usa :active/pressed) */
+@media (hover: hover) and (pointer: fine) {
+  .ios-row:hover,
+  .cal-row:hover,
+  .notif-item:hover,
+  .sidebar-nav-item:not(.active):hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+  .dark .ios-row:hover,
+  .dark .cal-row:hover,
+  .dark .notif-item:hover,
+  .dark .sidebar-nav-item:not(.active):hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  /* CTAs aclaran ~8% al pasar el mouse */
+  .es-save-btn:hover,
+  .cal-rail-add:hover,
+  .cal-empty-add:hover,
+  .empty-state-cta:hover,
+  .upd-btn:hover {
+    filter: brightness(1.08);
+  }
+}
+
+/* Bottom sheet (mobile) → modal centrado (desktop).
+   Un sheet subiendo desde abajo en 1440px se ve raro. */
+@media (min-width: 768px) {
+  .bottom-sheet {
+    left: 50%; right: auto; bottom: auto; top: 50%;
+    width: min(480px, calc(100vw - 48px));
+    max-height: 82dvh;
+    border-radius: var(--radius-sheet);
+    transform: translate(-50%, -50%);
+    animation: modalCenterIn 0.28s var(--ease-out) both;
+  }
+  .bottom-sheet-handle { display: none; }
+}
+@keyframes modalCenterIn {
+  from { opacity: 0; transform: translate(-50%, -47%) scale(0.97); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }

@@ -126,6 +126,17 @@ export default function CalendarScreen() {
   // El ＋ desaparece al cambiar de mes
   useEffect(() => { setAddDay(null); }, [viewMonth, viewYear]);
 
+  // Desktop: layout de dos paneles (calendario + agenda del día)
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1080px)').matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1080px)');
+    const onChange = (e) => setIsDesktop(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
   const slide = (dir, fn) => { setSlideDir(dir); setTimeout(() => { fn(); setSlideDir(''); }, 180); };
 
   const selDate = new Date(viewYear, viewMonth, selectedDay);
@@ -252,14 +263,14 @@ export default function CalendarScreen() {
         .cal-month { font-family: var(--font-display); font-size: 21px; font-weight: 700; color: var(--heading); letter-spacing: -0.01em; white-space: nowrap; }
         .cal-month span { color: var(--on-surface-variant); font-weight: 700; }
         .cal-top-right { display: flex; align-items: center; gap: 6px; }
-        .cal-today-chip { min-width: 38px; height: 34px; padding: 0 11px; border-radius: 11px; border: 1px solid var(--primary); background: var(--primary-container); color: var(--on-primary-container); font-weight: 700; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: var(--font-body); transition: transform var(--transition-fast); }
+        .cal-today-chip { min-width: 38px; height: 34px; padding: 0 11px; border-radius: var(--radius-control); border: 1px solid var(--primary); background: var(--primary-container); color: var(--on-primary-container); font-weight: 700; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: var(--font-body); transition: transform var(--transition-fast); }
         .cal-today-chip:hover { transform: scale(1.05); }
         .cal-today-chip:active { transform: scale(0.94); }
         .cal-icon-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: transparent; color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .cal-icon-btn:hover { background: var(--surface-container); }
 
         /* ── Segmented control ── */
-        .cal-segs { display: flex; background: var(--surface-container); border-radius: 13px; padding: 3px; gap: 2px; margin-bottom: 12px; box-shadow: inset 0 1px 3px rgba(90,80,130,0.07); }
+        .cal-segs { display: flex; background: var(--surface-container); border-radius: calc(var(--radius-control) + 3px); padding: 3px; gap: 2px; margin-bottom: 12px; box-shadow: inset 0 1px 3px rgba(90,80,130,0.07); }
 
         /* Selector de espacio */
         .cal-spaces { display: flex; flex-wrap: nowrap; gap: 8px; margin-bottom: 10px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; margin-left: calc(-1 * var(--space-container)); margin-right: calc(-1 * var(--space-container)); padding: 0 var(--space-container) 2px; }
@@ -270,7 +281,7 @@ export default function CalendarScreen() {
         .cal-clients { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
         .cal-client { flex-shrink: 0; padding: 5px 12px; border-radius: 99px; border: none; background: var(--surface-container); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 12px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .cal-client.active { background: var(--secondary-container); color: var(--on-secondary-container); }
-        .cal-seg { flex: 1; padding: 9px 4px; border-radius: 10px; border: none; background: transparent; cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 700; letter-spacing: 0.03em; color: var(--on-surface-variant); transition: all var(--transition-fast); }
+        .cal-seg { flex: 1; padding: 9px 4px; border-radius: var(--radius-control); border: none; background: transparent; cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 700; letter-spacing: 0.03em; color: var(--on-surface-variant); transition: all var(--transition-fast); }
         .cal-seg.active { background: var(--primary); color: var(--on-primary); box-shadow: 0 1px 2px rgba(90,80,130,0.14), 0 3px 8px -2px rgba(140,150,220,0.4); }
 
         /* ── Slide anim ── */
@@ -281,7 +292,7 @@ export default function CalendarScreen() {
         .cal-view.is-month { flex: 1; min-height: 0; display: flex; flex-direction: column; }
         .cal-view.is-month .cal-grid-wrap { flex: 1; min-height: 0; display: flex; }
         .cal-view.is-month .cal-grid { flex: 1; min-height: 0; grid-auto-rows: minmax(72px, 1fr); }
-        @media (min-width: 900px) { .cal-view.is-month .cal-grid { grid-auto-rows: minmax(104px, 1fr); } }
+        @media (min-width: 768px) { .cal-view.is-month .cal-grid { grid-auto-rows: minmax(104px, 1fr); } }
 
         /* Post-its arrastrables sobre el calendario */
         .cal-grid-wrap { position: relative; }
@@ -291,6 +302,7 @@ export default function CalendarScreen() {
           cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
         .cal-postit:active { cursor: grabbing; }
         .cal-postit-text { font-family: var(--font-body); font-size: 12.5px; font-weight: 700; line-height: 1.35; color: #3d3a4e; white-space: pre-wrap; word-break: break-word; max-height: 5.4em; overflow: hidden; }
+        /* Tinta sobre papel de contenido (pastel fijo): NO sigue el tema/dark */
         .cal-postit.done .cal-postit-text { opacity: 0.55; text-decoration: line-through; text-decoration-color: rgba(226,85,122,0.7); }
         .cal-postit-stamp { position: absolute; top: 4px; right: 5px; transform: rotate(10deg); }
         .cal-postit-deco { position: absolute; z-index: 2; pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.18)); }
@@ -301,37 +313,37 @@ export default function CalendarScreen() {
         .cal-dow div:first-child, .cal-dow div:last-child { color: var(--secondary); }
 
         /* ── Month grid — enmarcado como tarjeta ── */
-        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--cal-line); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow-card); background: var(--surface-container-lowest); }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--cal-line); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow-card); background: var(--surface-container-lowest); }
         .cal-cell { position: relative; border-right: 1px solid var(--cal-line); border-bottom: 1px solid var(--cal-line); min-height: 0; padding: 6px 5px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; overflow: hidden; transition: background var(--transition-fast); }
         .cal-cell:nth-child(7n) { border-right: none; }
-        @media (min-width: 900px) { .cal-cell { padding: 8px 7px; } }
+        @media (min-width: 768px) { .cal-cell { padding: 8px 7px; } }
         .cal-cell:hover { background: var(--surface-container-low); }
         .cal-cell.other { color: var(--outline); cursor: default; }
         .cal-cell.other .cal-num { color: var(--outline); opacity: 0.55; }
-        .cal-cell.today, .cal-cell.sel { background: var(--lime-container); box-shadow: inset 0 0 0 2.5px var(--lime); border-radius: 8px; }
+        .cal-cell.today, .cal-cell.sel { background: var(--lime-container); box-shadow: inset 0 0 0 2.5px var(--lime); border-radius: var(--radius-control); }
         .cal-num { font-size: 13px; font-weight: 700; color: var(--on-surface); line-height: 1; align-self: flex-start; padding: 1px 2px; }
         .cal-cell.today .cal-num { color: var(--error); font-weight: 700; }
 
         .cal-chips { display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
         .cal-chip { display: flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 7px; font-size: 10px; font-weight: 700; line-height: 1.3; color: #3d3a4e; white-space: nowrap; overflow: hidden; }
-        @media (min-width: 900px) { .cal-chip { font-size: 11.5px; padding: 3px 8px; gap: 5px; } }
+        @media (min-width: 768px) { .cal-chip { font-size: 11.5px; padding: 3px 8px; gap: 5px; } }
         .cal-chip-t { overflow: hidden; text-overflow: ellipsis; }
         .cal-chip.done { opacity: 0.5; }
         .cal-chip.done .cal-chip-t { text-decoration: line-through; }
         .cal-chip-more { font-size: 8px; font-weight: 700; color: var(--on-surface-variant); padding-left: 3px; }
-        @media (min-width: 900px) { .cal-chip-more { font-size: 10px; } }
+        @media (min-width: 768px) { .cal-chip-more { font-size: 10px; } }
 
         /* Stickers agrupados al fondo de la casilla (máx 3) */
         .cal-stickers { margin-top: auto; display: flex; align-items: flex-end; justify-content: center; gap: 0; padding-top: 2px; }
         .cal-stickers > * { flex-shrink: 0; }
         .cal-stickers > * + * { margin-left: -5px; }   /* cluster: 3 caben en la celda angosta */
-        @media (min-width: 900px) { .cal-stickers { gap: 4px; } .cal-stickers > * + * { margin-left: 0; } }
+        @media (min-width: 768px) { .cal-stickers { gap: 4px; } .cal-stickers > * + * { margin-left: 0; } }
 
         /* ── Rows (lista/semana/día) ── */
         .cal-list { display: flex; flex-direction: column; gap: 9px; }
         .cal-date-head { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--heading); margin: 16px 0 8px; text-transform: capitalize; }
         .cal-date-head:first-child { margin-top: 4px; }
-        .cal-row { display: flex; align-items: center; gap: 11px; background: var(--surface-container-lowest); border-radius: 16px; border-left: 5px solid; box-shadow: var(--shadow-card); padding: 11px 13px; cursor: pointer; transition: box-shadow var(--transition-fast); }
+        .cal-row { display: flex; align-items: center; gap: 11px; background: var(--surface-container-lowest); border-radius: var(--radius-card); border-left: 5px solid; box-shadow: var(--shadow-card); padding: 11px 13px; cursor: pointer; transition: box-shadow var(--transition-fast); }
         .cal-row:hover { box-shadow: var(--shadow-md); }
         .cal-row { transition: box-shadow var(--transition-fast), transform 0.14s var(--ease-spring); }
         .cal-row:active { transform: scale(0.985); }
@@ -368,7 +380,7 @@ export default function CalendarScreen() {
         .cal-empty-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 99px; background: var(--primary); color: var(--on-primary); border: none; cursor: pointer; font-weight: 700; font-size: 14px; }
 
         /* ── ＋ para agregar en el día tocado (con onda) — paleta Mavia ── */
-        .cal-cell.adding { background: var(--primary-container, #e6e1f7); box-shadow: inset 0 0 0 2px var(--primary, #8478c8); border-radius: 8px; }
+        .cal-cell.adding { background: var(--primary-container, #e6e1f7); box-shadow: inset 0 0 0 2px var(--primary, #8478c8); border-radius: var(--radius-control); }
         .cal-add-fab { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; z-index: 4;
           background: var(--primary); color: var(--on-primary); display: flex; align-items: center; justify-content: center;
           box-shadow: 0 6px 16px -4px rgba(140,150,220,0.55), 0 2px 4px rgba(90,80,130,0.28);
@@ -376,13 +388,36 @@ export default function CalendarScreen() {
         .cal-add-fab:active { transform: translate(-50%,-50%) scale(0.9); }
         @keyframes calFabPop { from { opacity: 0; transform: translate(-50%,-50%) scale(0.3); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
         .cal-add-ripple { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; border-radius: 50%; z-index: 3; pointer-events: none;
-          background: rgba(132,120,200,0.40); transform: translate(-50%,-50%) scale(0.5);
+          background: color-mix(in srgb, var(--primary, #8478c8) 40%, transparent); transform: translate(-50%,-50%) scale(0.5);
           animation: calRipple 0.6s ease-out forwards; }
         @keyframes calRipple { from { opacity: 0.5; transform: translate(-50%,-50%) scale(0.5); } to { opacity: 0; transform: translate(-50%,-50%) scale(3.4); } }
         @media (prefers-reduced-motion: reduce) { .cal-add-fab, .cal-add-ripple { animation: none; } .cal-add-ripple { display: none; } }
+
+        /* ── Desktop: dos paneles (calendario ancho + agenda del día) ── */
+        .cal-body { display: contents; }
+        .cal-rail { display: none; }
+        @media (min-width: 1080px) {
+          .cal { max-width: 1200px; }
+          .cal-body { display: flex; flex-direction: row; align-items: stretch; gap: 22px; flex: 1; min-height: 0; }
+          .cal-body > .cal-view { flex: 1; min-width: 0; }
+          .cal-rail { display: flex; flex-direction: column; width: 336px; flex-shrink: 0; align-self: stretch; overflow-y: auto;
+            background: var(--surface-container-lowest); border: 1px solid var(--cal-line); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 18px 16px; }
+          .cal-rail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+          .cal-rail-date { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--heading); line-height: 1.2; }
+          .cal-rail-add { display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px; border-radius: 99px; border: none; cursor: pointer;
+            background: var(--primary); color: var(--on-primary); font-family: var(--font-body); font-weight: 700; font-size: 12.5px; white-space: nowrap; flex-shrink: 0; transition: transform var(--transition-fast); }
+          .cal-rail-add:hover { transform: scale(1.04); }
+          .cal-rail-add:active { transform: scale(0.95); }
+          .cal-rail .cal-list { display: flex; flex-direction: column; gap: 9px; }
+          .cal-rail-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; color: var(--on-surface-variant); padding: 14px 0 6px; }
+          .cal-rail-empty p { font-size: 13px; }
+          .cal-rail-next { margin-top: 16px; border-top: 1px solid var(--cal-line); padding-top: 12px; display: flex; flex-direction: column; gap: 4px; }
+          .cal-rail-next-h { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--heading); }
+          .cal-rail-next-date { font-size: 11.5px; font-weight: 700; color: var(--on-surface-variant); margin: 7px 0 5px; }
+        }
       `}</style>
 
-      <div className="cal" style={{ '--cal-line': 'rgba(130,120,170,0.16)' }}>
+      <div className="cal" style={{ '--cal-line': 'var(--hairline-color)' }}>
         {/* ── Topbar ── */}
         <div className="cal-top">
           <div className="cal-month-nav">
@@ -426,6 +461,7 @@ export default function CalendarScreen() {
           </div>
         )}
 
+        <div className="cal-body">
         <div className={`cal-view${slideDir ? ` slide-${slideDir}` : ''}${viewMode === 'month' ? ' is-month' : ''}`} {...swipe}>
 
           {/* ═══ MES ═══ */}
@@ -449,11 +485,13 @@ export default function CalendarScreen() {
                       className={['cal-cell', !isThisMonth ? 'other' : '', isToday ? 'today' : '', isSel ? 'sel' : '', addDay === cellDay ? 'adding' : ''].filter(Boolean).join(' ')}
                       onClick={() => {
                         if (!isThisMonth) return;
-                        if (dayEntries.length > 0) {                             // día con datos → a la lista
+                        if (isDesktop) {                                          // desktop → solo seleccionar; el rail muestra el día
+                          setSelectedDay(cellDay); setAddDay(null);
+                        } else if (dayEntries.length > 0) {                       // móvil, día con datos → a la lista
                           setSelectedDay(cellDay); setAddDay(null); setViewMode('day');
-                        } else if (addDay === cellDay) {                          // día vacío, 2º toque → agregar
+                        } else if (addDay === cellDay) {                          // móvil, día vacío, 2º toque → agregar
                           openEntrySheet({ date: toDS(viewYear, viewMonth, cellDay) });
-                        } else {                                                 // día vacío, 1er toque → ＋ con onda
+                        } else {                                                 // móvil, día vacío, 1er toque → ＋ con onda
                           setSelectedDay(cellDay); setAddDay(cellDay);
                         }
                       }}
@@ -551,6 +589,38 @@ export default function CalendarScreen() {
             </div>
           )}
 
+        </div>
+
+        {/* ── Panel de agenda del día (solo desktop, en vista Mes) ── */}
+        {viewMode === 'month' && (
+          <aside className="cal-rail">
+            <div className="cal-rail-head">
+              <div className="cal-rail-date">{dateHeading(selDate)}{selDS === todayDS ? ' · Hoy' : ''}</div>
+              <button className="cal-rail-add" onClick={() => openEntrySheet({ date: selDS })}>
+                <Plus size={15} strokeWidth={2} /> Agregar
+              </button>
+            </div>
+            {entriesFor(selDS).length === 0
+              ? <div className="cal-rail-empty"><Mascot size={110} /><p>Nada agendado este día</p></div>
+              : <div className="cal-list">{entriesFor(selDS).map(e => <EntryRow key={e.id} e={e} />)}</div>}
+            {(() => {
+              const nextUp = upcoming.filter(e => e.date > selDS).slice(0, 6);
+              if (!nextUp.length) return null;
+              const byDate = nextUp.reduce((acc, e) => { (acc[e.date] ||= []).push(e); return acc; }, {});
+              return (
+                <div className="cal-rail-next">
+                  <div className="cal-rail-next-h">Próximos</div>
+                  {Object.entries(byDate).map(([ds, items]) => (
+                    <div key={ds}>
+                      <div className="cal-rail-next-date">{ds === todayDS ? 'Hoy' : dateHeading(new Date(ds + 'T00:00:00'))}</div>
+                      <div className="cal-list">{items.map(e => <EntryRow key={e.id} e={e} />)}</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </aside>
+        )}
         </div>
       </div>
     </>

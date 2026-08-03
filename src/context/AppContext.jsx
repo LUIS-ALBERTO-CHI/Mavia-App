@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import { createContext, useContext, useReducer, useEffect, useLayoutEffect, useCallback } from 'react';
 import { onAuthChange, getCurrentUser } from '../lib/authService';
 import { loadUserData, saveTask, deleteTask,
          saveGoal, saveJournalEntry, deleteJournalEntry,
@@ -535,8 +535,10 @@ export function AppProvider({ children }) {
   }, []);
 
 
-  /* ── Dark mode class sync + re-aplicar paleta según el modo ── */
-  useEffect(() => {
+  /* ── Dark mode class sync + re-aplicar paleta según el modo ──
+     useLayoutEffect: la clase en html debe estar ANTES del primer paint,
+     si no los tokens (--hairline, etc.) pintan 1 frame con valores claros */
+  useLayoutEffect(() => {
     document.documentElement.classList.toggle('dark', state.darkMode);
     document.body.classList.toggle('dark', state.darkMode);
     applyTheme(getSavedTheme());   // el acento del tema se ajusta a claro/oscuro

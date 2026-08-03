@@ -106,7 +106,7 @@ export default function CreateEntrySheet() {
       <style>{`
         .es-backdrop {
           position: fixed; inset: 0; z-index: 9995;
-          background: rgba(40,36,60,0.38);
+          background: var(--overlay);
           backdrop-filter: blur(6px) saturate(160%); -webkit-backdrop-filter: blur(6px) saturate(160%);
           animation: fadeIn 0.2s ease both;
         }
@@ -114,20 +114,20 @@ export default function CreateEntrySheet() {
           position: fixed; left: 0; right: 0; bottom: 0; z-index: 9996;
           max-height: 92dvh; display: flex; flex-direction: column;
           background: var(--surface-container-lowest);
-          border-radius: 24px 24px 0 0;
+          border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
           box-shadow: 0 -8px 40px -8px rgba(40,36,60,0.28), 0 -1px 0 rgba(255,255,255,0.5) inset;
           animation: esUp 0.36s cubic-bezier(0.22,1,0.36,1) both;
           margin: 0 auto; max-width: 640px;
         }
         @keyframes esUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .es-handle { width: 38px; height: 5px; border-radius: 99px; background: rgba(120,110,150,0.4); margin: 10px auto 4px; flex-shrink: 0; }
+        .es-handle { width: 38px; height: 5px; border-radius: 99px; background: color-mix(in srgb, var(--text-secondary) 45%, transparent); margin: 10px auto 4px; flex-shrink: 0; }
         .es-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 20px 8px; flex-shrink: 0; }
         .es-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--heading); }
         .es-close { width: 34px; height: 34px; border-radius: 50%; background: var(--surface-container); border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; position: relative; }
         .es-close::after { content: ''; position: absolute; inset: -6px; }
         .es-scroll { overflow-y: auto; padding: 4px 20px 12px; }
 
-        .es-card { background: var(--surface-container-low); border-radius: 20px; padding: 16px; margin-bottom: 12px; }
+        .es-card { background: var(--surface-container-low); border-radius: var(--radius-card); padding: 16px; margin-bottom: 12px; }
         .es-label { display: flex; align-items: center; gap: 6px; font-size: var(--text-label-md); font-weight: 700; color: var(--on-surface); margin-bottom: 10px; }
         .es-label .material-symbols-outlined { font-size: 18px; }
 
@@ -143,15 +143,15 @@ export default function CreateEntrySheet() {
         .es-sticker-cap { font-family: var(--font-body); font-size: 13px; font-weight: 700; color: var(--heading); }
 
         /* Selector de pegatinas (modal) */
-        .es-pick-backdrop { position: fixed; inset: 0; z-index: 9997; background: rgba(40,36,60,0.42); backdrop-filter: blur(8px) saturate(160%); -webkit-backdrop-filter: blur(8px) saturate(160%); animation: fadeIn 0.18s ease both; }
-        .es-pick { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9998; max-height: 76dvh; display: flex; flex-direction: column; overflow-x: hidden; background: var(--surface-container-lowest); border-radius: 24px 24px 0 0; box-shadow: 0 -8px 40px -8px rgba(40,36,60,0.3), 0 -1px 0 rgba(255,255,255,0.5) inset; animation: esUp 0.34s cubic-bezier(0.22,1,0.36,1) both; margin: 0 auto; max-width: 640px; }
+        .es-pick-backdrop { position: fixed; inset: 0; z-index: 9997; background: var(--overlay); backdrop-filter: blur(8px) saturate(160%); -webkit-backdrop-filter: blur(8px) saturate(160%); animation: fadeIn 0.18s ease both; }
+        .es-pick { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9998; max-height: 76dvh; display: flex; flex-direction: column; overflow-x: hidden; background: var(--surface-container-lowest); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; box-shadow: 0 -8px 40px -8px rgba(40,36,60,0.3), 0 -1px 0 rgba(255,255,255,0.5) inset; animation: esUp 0.34s cubic-bezier(0.22,1,0.36,1) both; margin: 0 auto; max-width: 640px; }
         .es-pick-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 20px 10px; flex-shrink: 0; }
         .es-pick-tabs::-webkit-scrollbar { display: none; }
         .es-pick-tab { flex-shrink: 0; padding: 8px 16px; border-radius: 99px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .es-pick-tab.sel { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
         .es-pick-grid { overflow-y: auto; overflow-x: hidden; padding: 4px 20px calc(env(safe-area-inset-bottom,0px) + 20px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
         @media (min-width: 480px) { .es-pick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-        .es-pick-grid .es-sticker-cell { aspect-ratio: auto; min-height: 100px; padding: 10px; background: var(--surface-container-low); border-radius: 18px; min-width: 0; overflow: hidden; }
+        .es-pick-grid .es-sticker-cell { aspect-ratio: auto; min-height: 100px; padding: 10px; background: var(--surface-container-low); border-radius: var(--radius-card); min-width: 0; overflow: hidden; }
 
         .es-title-input {
           flex: 1; width: 100%; background: transparent; border: none;
@@ -165,7 +165,7 @@ export default function CreateEntrySheet() {
         .es-sticker-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 12px; }
         @media (max-width: 420px) { .es-sticker-grid { grid-template-columns: repeat(5, 1fr); } }
         .es-sticker-cell {
-          aspect-ratio: 1; border-radius: 14px; border: 2px solid transparent; background: var(--surface-container-lowest);
+          aspect-ratio: 1; border-radius: var(--radius-control); border: 2px solid transparent; background: var(--surface-container-lowest);
           cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all var(--transition-fast);
         }
         .es-sticker-cell:hover { transform: scale(1.06); }
@@ -183,7 +183,7 @@ export default function CreateEntrySheet() {
         .es-date-btn:active { opacity: 0.7; }
         .es-toggle { position: relative; width: 46px; height: 26px; border-radius: 99px; border: none; cursor: pointer; flex-shrink: 0; transition: background var(--transition-fast); }
         .es-toggle.on { background: var(--primary); } .es-toggle.off { background: var(--surface-variant); }
-        .es-toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: transform var(--transition-spring); }
+        .es-toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: var(--shadow-soft); transition: transform var(--transition-spring); }
         .es-toggle.on::after { transform: translateX(20px); }
 
         .es-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
@@ -192,14 +192,33 @@ export default function CreateEntrySheet() {
 
         .es-money-wrap { position: relative; }
         .es-money-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--tertiary); }
-        .es-input { width: 100%; padding: 13px 16px 13px 40px; border-radius: 16px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-size: var(--text-body-md); font-family: var(--font-body); outline: none; }
+        .es-input { width: 100%; padding: 13px 16px 13px 40px; border-radius: var(--radius-control); border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-size: var(--text-body-md); font-family: var(--font-body); outline: none; }
         .es-input:focus { border-color: var(--primary); }
-        .es-note { width: 100%; min-height: 80px; resize: vertical; padding: 13px 16px; border-radius: 16px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-size: var(--text-body-md); font-family: var(--font-body); outline: none; line-height: 1.5; }
+        .es-note { width: 100%; min-height: 80px; resize: vertical; padding: 13px 16px; border-radius: var(--radius-control); border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-size: var(--text-body-md); font-family: var(--font-body); outline: none; line-height: 1.5; }
         .es-note:focus { border-color: var(--primary); }
 
         .es-save-bar { padding: 12px 20px calc(env(safe-area-inset-bottom,0px) + 14px); border-top: 1px solid var(--outline-variant); flex-shrink: 0; background: var(--surface-container-lowest); }
         .es-save-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-size: var(--text-body-md); font-weight: 700; font-family: var(--font-body); box-shadow: var(--shadow-fab); transition: transform var(--transition-fast); }
         .es-save-btn:active { transform: scale(0.98); }
+
+        /* ── Desktop (≥768px): el sheet pasa a modal centrado ── */
+        @media (min-width: 768px) {
+          .es-sheet, .es-pick {
+            left: 50%; right: auto; bottom: auto; top: 50%;
+            width: min(480px, calc(100vw - 48px));
+            max-height: 84dvh;
+            border-radius: var(--radius-sheet);
+            transform: translate(-50%, -50%);
+            animation: esCenterIn 0.28s var(--ease-out, ease-out) both;
+          }
+          .es-handle { display: none; }
+          /* CTA: deja de ser full-width; 44px de alto con puntero fino */
+          .es-save-btn { width: auto; min-width: 220px; max-width: 360px; margin: 0 auto; padding: 12px 24px; }
+        }
+        @keyframes esCenterIn {
+          from { opacity: 0; transform: translate(-50%, -47%) scale(0.97); }
+          to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
       `}</style>
 
       <div className="es-backdrop" onClick={closeEntrySheet} />

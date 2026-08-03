@@ -129,7 +129,7 @@ export default function GoalsScreen() {
           width: 200px;
           height: 200px;
           border-radius: 50%;
-          background: rgba(255,255,255,0.06);
+          background: color-mix(in srgb, var(--on-primary, #fff) 6%, transparent);
         }
 
         .gls-ring-wrap {
@@ -220,12 +220,25 @@ export default function GoalsScreen() {
           flex-direction: column;
           gap: var(--space-lg);
         }
+        /* Desktop: lista vertical → grid de 2-3 columnas */
+        @media (min-width: 768px) {
+          .gls-grid { display: grid; grid-template-columns: repeat(2, 1fr); align-items: start; }
+          .gls-chip { padding: 5px 14px; font-size: 12.5px; }  /* chips 32 → 28px */
+        }
+        @media (min-width: 1100px) {
+          .gls-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        /* Puntero fino: editar/eliminar aparecen al hover de la card */
+        @media (hover: hover) and (pointer: fine) {
+          .gls-act { opacity: 0 !important; transition: opacity 0.15s ease; }
+          .gls-card:hover .gls-act, .gls-act:focus-visible { opacity: 0.75 !important; }
+        }
 
         .gls-card {
           border-radius: var(--radius-2xl);
           padding: var(--space-lg);
-          box-shadow: 0 4px 20px rgba(112,87,101,0.05);
-          border: 1px solid rgba(208,195,200,0.15);
+          box-shadow: var(--shadow-soft);
+          border: var(--hairline);
           transition: transform var(--transition-spring), box-shadow var(--transition-spring);
           cursor: pointer;
         }
@@ -282,7 +295,7 @@ export default function GoalsScreen() {
           flex-direction: column;
           gap: 8px;
           padding-top: var(--space-md);
-          border-top: 1px solid rgba(0,0,0,0.06);
+          border-top: var(--hairline);
         }
 
         .gls-task {
@@ -301,7 +314,7 @@ export default function GoalsScreen() {
         .gls-counter {
           display: flex; align-items: center; justify-content: space-between; gap: 12px;
           margin-top: var(--space-sm); padding-top: var(--space-sm);
-          border-top: 1px solid rgba(0,0,0,0.06);
+          border-top: var(--hairline);
         }
         .gls-count-label { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
         .gls-step {
@@ -314,7 +327,7 @@ export default function GoalsScreen() {
         .gls-step:active { transform: scale(0.9); }
         .gls-step-plus { border: none; color: #fff; box-shadow: var(--shadow-sm); }
         /* Pasos (checklist) */
-        .gls-steps { margin-top: var(--space-sm); padding-top: var(--space-sm); border-top: 1px solid rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 2px; }
+        .gls-steps { margin-top: var(--space-sm); padding-top: var(--space-sm); border-top: var(--hairline); display: flex; flex-direction: column; gap: 2px; }
         .gls-stepitem { display: flex; align-items: center; gap: 9px; padding: 7px 4px; background: none; border: none; cursor: pointer; text-align: left; font-family: var(--font-body); font-size: var(--text-label-md); color: var(--on-surface); }
         .gls-stepitem.done { opacity: 0.6; }
         .gls-stepitem.done span:last-child { text-decoration: line-through; }
@@ -449,6 +462,7 @@ export default function GoalsScreen() {
                       </div>
                       {/* Edit button */}
                       <button
+                        className="gls-act"
                         onClick={e => { e.stopPropagation(); navigate('createGoal', { goalId: goal.id }); }}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 8, color: style.text, opacity: 0.7, display: 'flex', alignItems: 'center', transition: 'opacity 0.15s' }}
                         aria-label="Editar objetivo"
@@ -466,6 +480,7 @@ export default function GoalsScreen() {
                         </div>
                       ) : (
                         <button
+                          className="gls-act"
                           onClick={e => { e.stopPropagation(); setConfirmDeleteId(goal.id); }}
                           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 8, color: 'var(--error)', opacity: 0.6, display: 'flex', alignItems: 'center', transition: 'opacity 0.15s' }}
                           aria-label="Eliminar objetivo"

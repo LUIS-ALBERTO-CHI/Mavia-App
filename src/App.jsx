@@ -126,11 +126,11 @@ function ConnDot() {
         display: 'inline-block',
         width: 7, height: 7,
         borderRadius: '50%',
-        background: online ? '#4ade80' : '#fb923c',
+        background: online ? 'var(--success)' : 'var(--warning)',
         flexShrink: 0,
         boxShadow: online
-          ? '0 0 0 2px rgba(74,222,128,0.25)'
-          : '0 0 0 2px rgba(251,146,60,0.3)',
+          ? '0 0 0 2px color-mix(in srgb, var(--success) 25%, transparent)'
+          : '0 0 0 2px color-mix(in srgb, var(--warning) 30%, transparent)',
         animation: online ? 'none' : 'connPulse 1.4s ease-in-out infinite',
       }}
     />
@@ -183,7 +183,7 @@ function DesktopSidebar() {
         ))}
 
         {/* Extra items */}
-        <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(208,195,200,0.2)', paddingTop: '0.75rem' }}>
+        <div style={{ marginTop: '1rem', borderTop: 'var(--hairline)', paddingTop: '0.75rem' }}>
           {[
             { id: 'reminders',     label: 'Recordatorios',   icon: 'alarm'         },
             { id: 'goals',         label: 'Objetivos',       icon: 'flag'          },
@@ -270,7 +270,7 @@ function MobileSideDrawer({ open, onClose }) {
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0, zIndex: 9990,
-          background: 'rgba(18,12,16,0.5)',
+          background: 'var(--overlay)',
           backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
           animation: 'fadeIn 0.2s ease both',
         }}
@@ -298,7 +298,9 @@ function MobileSideDrawer({ open, onClose }) {
         <div style={{
           position: 'relative',
           padding: '56px 22px 24px',
-          background: 'linear-gradient(160deg, #ff6fae 0%, #ec4b8b 55%, #c2306e 100%)',
+          /* Sólido --primary: --on-primary está calibrado contra él (los
+             gradientes de los temas tienen paradas casi blancas → ilegible) */
+          background: 'var(--primary)',
           flexShrink: 0,
           overflow: 'hidden',
         }}>
@@ -306,13 +308,13 @@ function MobileSideDrawer({ open, onClose }) {
           <div style={{
             position: 'absolute', top: -40, right: -40,
             width: 130, height: 130, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.06)',
+            background: 'color-mix(in srgb, var(--on-primary, #fff) 6%, transparent)',
             pointerEvents: 'none',
           }} />
           <div style={{
             position: 'absolute', bottom: -20, left: 60,
             width: 90, height: 90, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.04)',
+            background: 'color-mix(in srgb, var(--on-primary, #fff) 4%, transparent)',
             pointerEvents: 'none',
           }} />
 
@@ -323,10 +325,10 @@ function MobileSideDrawer({ open, onClose }) {
             style={{
               position: 'absolute', top: 14, right: 14,
               width: 32, height: 32, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.12)',
+              background: 'color-mix(in srgb, var(--on-primary, #fff) 12%, transparent)',
               border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'rgba(255,255,255,0.8)',
+              color: 'color-mix(in srgb, var(--on-primary, #fff) 80%, transparent)',
             }}
           >
             <span className="material-symbols-outlined" style={{ fontSize: 18 }}>close</span>
@@ -335,14 +337,14 @@ function MobileSideDrawer({ open, onClose }) {
           {/* Avatar */}
           <div style={{
             width: 64, height: 64, borderRadius: '50%',
-            border: '2.5px solid rgba(255,255,255,0.35)',
-            boxShadow: '0 0 0 5px rgba(255,255,255,0.08)',
+            border: '2.5px solid color-mix(in srgb, var(--on-primary, #fff) 35%, transparent)',
+            boxShadow: '0 0 0 5px color-mix(in srgb, var(--on-primary, #fff) 8%, transparent)',
             overflow: 'hidden',
             marginBottom: 14,
-            background: 'rgba(255,255,255,0.15)',
+            background: 'color-mix(in srgb, var(--on-primary, #fff) 15%, transparent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 24, fontWeight: 700,
-            color: 'white',
+            color: 'var(--on-primary, #fff)',
             fontFamily: 'var(--font-display)',
           }}>
             {user.photoURL
@@ -355,7 +357,7 @@ function MobileSideDrawer({ open, onClose }) {
           <div style={{
             fontFamily: 'var(--font-display)',
             fontSize: 20, fontWeight: 400,
-            color: 'white', lineHeight: 1.25,
+            color: 'var(--on-primary, #fff)', lineHeight: 1.25,
             letterSpacing: '-0.01em',
             marginBottom: 2,
           }}>
@@ -365,7 +367,7 @@ function MobileSideDrawer({ open, onClose }) {
           {/* Email */}
           {user.email && (
             <div style={{
-              fontSize: 12, color: 'rgba(255,255,255,0.6)',
+              fontSize: 12, color: 'color-mix(in srgb, var(--on-primary, #fff) 60%, transparent)',
               marginBottom: 10,
               fontFamily: 'var(--font-body)',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -377,13 +379,13 @@ function MobileSideDrawer({ open, onClose }) {
           {/* Online badge */}
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
-            background: 'rgba(255,255,255,0.1)',
-            border: '1px solid rgba(255,255,255,0.15)',
+            background: 'color-mix(in srgb, var(--on-primary, #fff) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--on-primary, #fff) 15%, transparent)',
             borderRadius: 99,
             padding: '3px 10px',
           }}>
             <ConnDot />
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontWeight: 600, fontFamily: 'var(--font-body)' }}>
+            <span style={{ fontSize: 11, color: 'color-mix(in srgb, var(--on-primary, #fff) 85%, transparent)', fontWeight: 600, fontFamily: 'var(--font-body)' }}>
               {online ? 'Online' : 'Sin conexión'}
             </span>
           </div>
@@ -432,7 +434,7 @@ function MobileSideDrawer({ open, onClose }) {
                   >
                     {/* Icon pill */}
                     <div style={{
-                      width: 36, height: 36, borderRadius: 12,
+                      width: 36, height: 36, borderRadius: 'var(--radius-control)',
                       background: isAct ? item.color : 'var(--surface-container)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0,
@@ -474,7 +476,7 @@ function MobileSideDrawer({ open, onClose }) {
 
         {/* ── Footer ── */}
         <div style={{
-          borderTop: '1px solid var(--outline-variant)',
+          borderTop: 'var(--hairline)',
           padding: '12px 14px calc(env(safe-area-inset-bottom,0px) + 16px)',
           display: 'flex', gap: 8,
           flexShrink: 0,
@@ -486,7 +488,7 @@ function MobileSideDrawer({ open, onClose }) {
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
               padding: '10px 8px',
               background: 'var(--surface-container)',
-              border: 'none', borderRadius: 14, cursor: 'pointer',
+              border: 'none', borderRadius: 'var(--radius-control)', cursor: 'pointer',
               color: 'var(--on-surface-variant)',
               fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 600,
               transition: 'background 0.15s ease',
@@ -503,7 +505,7 @@ function MobileSideDrawer({ open, onClose }) {
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
               padding: '10px 8px',
               background: 'var(--error-container, #fce8e8)',
-              border: 'none', borderRadius: 14, cursor: 'pointer',
+              border: 'none', borderRadius: 'var(--radius-control)', cursor: 'pointer',
               color: 'var(--error, #c0392b)',
               fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 600,
               transition: 'background 0.15s ease',
