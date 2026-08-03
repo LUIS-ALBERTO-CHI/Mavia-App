@@ -213,6 +213,10 @@ export async function saveJournalEntry(uid, entry) {
   await setDoc(docRef(uid, 'journalEntries', id || entry.date), data);
 }
 
+export async function deleteJournalEntry(uid, id) {
+  await deleteDoc(docRef(uid, 'journalEntries', id));
+}
+
 // ─── FCM Token ─────────────────────────────────────────────────────────────
 
 /**

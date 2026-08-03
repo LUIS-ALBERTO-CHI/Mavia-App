@@ -1,7 +1,7 @@
 import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { onAuthChange, getCurrentUser } from '../lib/authService';
 import { loadUserData, saveTask, deleteTask,
-         saveGoal, saveJournalEntry,
+         saveGoal, saveJournalEntry, deleteJournalEntry,
          markNotificationRead, markAllNotificationsRead, saveUserProfile,
          deleteNotification, deleteReadNotifications, saveNotification,
          saveSettings,
@@ -258,6 +258,14 @@ function reducer(state, action) {
       }
       return { ...state, journalEntries };
     }
+
+    /* ── Notas (post-its) — CRUD por id ── */
+    case 'ADD_NOTE':
+      return { ...state, journalEntries: [action.note, ...state.journalEntries] };
+    case 'UPDATE_NOTE':
+      return { ...state, journalEntries: state.journalEntries.map(n => n.id === action.note.id ? { ...n, ...action.note } : n) };
+    case 'DELETE_NOTE':
+      return { ...state, journalEntries: state.journalEntries.filter(n => n.id !== action.id) };
 
     /* ── Notifications ── */
     case 'ADD_NOTIFICATION': {
@@ -616,6 +624,15 @@ export function AppProvider({ children }) {
 
         case 'ADD_JOURNAL':
           await saveJournalEntry(uid, enrichedAction.entry);
+          break;
+
+        case 'ADD_NOTE':
+        case 'UPDATE_NOTE':
+          await saveJournalEntry(uid, enrichedAction.note);
+          break;
+
+        case 'DELETE_NOTE':
+          await deleteJournalEntry(uid, enrichedAction.id);
           break;
 
         case 'ADD_NOTIFICATION': {

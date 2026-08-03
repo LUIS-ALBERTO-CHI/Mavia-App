@@ -1,586 +1,257 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
-import { useTranslation } from '../hooks/useTranslation';
-import { Edit2, Plus, X, Bookmark, BookOpen, Hash, ChevronRight } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
+import { Plus, X, Check, Pin, Trash2, Sparkles } from 'lucide-react';
+import Sticker, { STICKERS, STICKER_CATEGORIES } from '../components/Sticker';
+import Mascot from '../components/Mascot';
 
-const MOODS = [
-  { emoji: '😊', label: 'Feliz',     color: '#F8D7E8' },
-  { emoji: '😌', label: 'En paz',    color: '#D5E5C2' },
-  { emoji: '😐', label: 'Neutral',   color: '#E4E2E0' },
-  { emoji: '😔', label: 'Triste',    color: '#EDE7F6' },
-  { emoji: '😤', label: 'Estresada', color: '#FFD6EC' },
-  { emoji: '✨', label: 'Inspirada', color: '#F2E2B1' },
-];
+/* Colores de post-it (papel) */
+const POSTIT_COLORS = ['#FDE68A', '#BBF7D0', '#FBCFE8', '#BFDBFE', '#FED7AA', '#DDD6FE'];
+const DEFAULT_POSTIT = '#FDE68A';
 
-const today = new Date().toISOString().split('T')[0];
-
-function formatEntryDate(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  const todayD = new Date(today + 'T00:00:00');
-  const diff = Math.round((todayD - d) / 86400000);
-  if (diff === 0) return 'Hoy';
-  if (diff === 1) return 'Ayer';
-  return d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })
-    .replace(/^\w/, c => c.toUpperCase());
+/* Inclinación determinista por id (para que no salte al re-renderizar) */
+function tiltOf(id) {
+  let h = 0;
+  for (const c of String(id || '')) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return (h % 5) - 2; // -2..2 grados
 }
+
+/* Posición de cada sticker de decoración (hasta 4 esquinas) */
+const CORNERS = [
+  { top: -12, left: -10 },
+  { top: -12, right: -10 },
+  { bottom: -12, left: -10 },
+  { bottom: -12, right: -10 },
+];
 
 export default function JournalScreen() {
   const { state, dispatch, showToast } = useApp();
-  const { t } = useTranslation();
-  const { journalEntries } = state;
+  const notes = state.journalEntries || [];
 
-  const [writing,  setWriting]  = useState(false);
-  const [form,     setForm]     = useState({ date: today, content: '', mood: '😊', tags: [] });
-  const [tagInput, setTagInput] = useState('');
-  const [expanded, setExpanded] = useState(null);
+  const [editing, setEditing] = useState(null);  // null | {id?, ...form}
+  const [stickerCat, setStickerCat] = useState(STICKER_CATEGORIES[0]?.id || null);
 
-  const todayEntry = journalEntries.find(e => e.date === today);
+  const sorted = [...notes].sort((a, b) =>
+    (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) ||
+    String(b.createdAt || b.id || '').localeCompare(String(a.createdAt || a.id || ''))
+  );
 
-  const handleSave = () => {
-    if (!form.content.trim()) return;
-    dispatch({ type: 'ADD_JOURNAL', entry: { ...form, id: Date.now().toString(), images: [] } });
-    showToast(t('journal.saved'), 'success');
-    setWriting(false);
+  const openNew  = () => { setStickerCat(STICKER_CATEGORIES[0]?.id || null); setEditing({ text: '', color: DEFAULT_POSTIT, done: false, pinned: false, stickers: [] }); };
+  const openEdit = (n) => setEditing({ id: n.id, text: n.text ?? n.content ?? '', color: n.color || DEFAULT_POSTIT, done: !!n.done, pinned: !!n.pinned, stickers: n.stickers || [] });
+
+  const set = (k, v) => setEditing(e => ({ ...e, [k]: v }));
+  const toggleSticker = (sid) => setEditing(e => {
+    const has = e.stickers.includes(sid);
+    if (has) return { ...e, stickers: e.stickers.filter(s => s !== sid) };
+    if (e.stickers.length >= 4) { showToast('Máximo 4 stickers', 'default'); return e; }
+    return { ...e, stickers: [...e.stickers, sid] };
+  });
+
+  const save = () => {
+    if (!editing.text.trim()) { showToast('Escribe algo', 'error'); return; }
+    const note = {
+      id: editing.id || `note_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      text: editing.text.trim(),
+      color: editing.color,
+      done: editing.done,
+      pinned: editing.pinned,
+      stickers: editing.stickers,
+      createdAt: editing.id ? undefined : new Date().toISOString(),
+    };
+    dispatch({ type: editing.id ? 'UPDATE_NOTE' : 'ADD_NOTE', note });
+    showToast(editing.id ? 'Guardado' : '¡Nota creada!', 'success');
+    setEditing(null);
   };
 
-  const addTag = () => {
-    const t = tagInput.trim().toLowerCase();
-    if (t && !form.tags.includes(t)) {
-      setForm(f => ({ ...f, tags: [...f.tags, t] }));
-      setTagInput('');
-    }
+  const remove = () => {
+    if (editing?.id) dispatch({ type: 'DELETE_NOTE', id: editing.id });
+    showToast('Nota eliminada');
+    setEditing(null);
   };
-
-  const selectedMood = MOODS.find(m => m.emoji === form.mood) || MOODS[0];
 
   return (
     <>
       <style>{`
-        /* ======= JOURNAL SCREEN ======= */
-        .jrn-screen {
-          padding: var(--space-lg) var(--space-container) var(--space-xxl);
-          animation: screenEnter 0.45s var(--ease-out) both;
-          max-width: 860px;
-          margin: 0 auto;
-        }
+        .nt-screen { max-width: 820px; margin: 0 auto; padding: var(--space-md) var(--space-container) var(--space-8); animation: screenEnter 0.4s var(--ease-out) both; }
+        .nt-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+        .nt-title { font-family: var(--font-display); font-size: var(--text-headline-lg); font-weight: 800; color: var(--heading); }
+        .nt-sub { font-size: var(--text-body-md); color: var(--on-surface-variant); margin-top: 2px; }
+        .nt-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 99px; border: none; cursor: pointer; background: var(--gradient-primary); color: #fff; font-family: var(--font-body); font-weight: 800; font-size: 14px; box-shadow: var(--shadow-fab); flex-shrink: 0; }
+        .nt-add:active { transform: scale(0.96); }
 
-        /* ── Hero ── */
-        .jrn-hero {
-          margin-bottom: var(--space-xl);
-        }
-        .jrn-hero-title {
-          font-family: var(--font-display);
-          font-size: var(--text-headline-lg);
-          font-weight: 700;
-          color: var(--heading);
-          line-height: 1.15;
-          margin-bottom: 6px;
-        }
-        .jrn-hero-sub {
-          font-size: var(--text-body-md);
-          color: var(--on-surface-variant);
-          opacity: 0.85;
-        }
+        /* Mural tipo mosaico */
+        .nt-wall { columns: 2; column-gap: 12px; }
+        @media (min-width: 640px) { .nt-wall { columns: 3; } }
+        @media (min-width: 900px) { .nt-wall { columns: 4; } }
 
-        /* ── Today Banner ── */
-        .jrn-banner {
-          display: flex;
-          align-items: center;
-          gap: var(--space-lg);
-          background: linear-gradient(135deg, #FDF0F7 0%, #EDE7F6 100%);
-          border-radius: var(--radius-2xl);
-          padding: var(--space-lg);
-          margin-bottom: var(--space-xl);
-          cursor: pointer;
-          border: 1px solid rgba(208,195,200,0.2);
-          box-shadow: 0 8px 32px rgba(112,87,101,0.06);
-          transition: transform var(--transition-spring);
-        }
-        .dark .jrn-banner {
-          background: linear-gradient(135deg, rgba(87,64,77,0.4) 0%, rgba(68,56,87,0.25) 100%);
-          border-color: rgba(77,68,73,0.35);
-          box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-        }
-        .jrn-banner:hover { transform: scale(1.008); }
-        .jrn-banner:active { transform: scale(0.98); }
+        .nt-card { break-inside: avoid; margin: 0 0 16px; position: relative; border-radius: 10px; padding: 16px 14px 18px; cursor: pointer;
+          box-shadow: 0 6px 16px -6px rgba(90,80,130,0.28), 0 1px 2px rgba(90,80,130,0.12);
+          transition: transform 0.16s var(--ease-spring), box-shadow 0.16s ease; }
+        .nt-card:hover  { box-shadow: 0 12px 26px -8px rgba(90,80,130,0.34); }
+        .nt-card:active { transform: scale(0.98) !important; }
+        .nt-card-text { font-family: var(--font-body); font-size: 15px; font-weight: 700; line-height: 1.45; color: #3d3a4e; white-space: pre-wrap; word-break: break-word; }
+        .nt-card.done .nt-card-text { opacity: 0.55; text-decoration: line-through; text-decoration-color: rgba(226,85,122,0.7); }
 
-        .jrn-banner-icon {
-          width: 56px;
-          height: 56px;
-          border-radius: var(--radius-xl);
-          background: var(--surface-container);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
+        .nt-pin { position: absolute; top: -8px; left: 50%; transform: translateX(-50%) rotate(-8deg); color: var(--error); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
+        .nt-stamp { position: absolute; top: 6px; right: 8px; color: var(--error); transform: rotate(12deg); opacity: 0.9; }
+        .nt-deco { position: absolute; z-index: 2; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.18)); pointer-events: none; }
 
-        .jrn-banner-body { flex: 1; }
-        .jrn-banner-title {
-          font-family: var(--font-display);
-          font-size: var(--text-headline-md);
-          font-weight: 500;
-          color: var(--on-surface);
-          margin-bottom: 3px;
-        }
-        .jrn-banner-sub {
-          font-size: var(--text-label-md);
-          color: var(--on-surface-variant);
-        }
+        .nt-empty { text-align: center; padding: var(--space-lg); min-height: 56vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+        .nt-empty p { color: var(--on-surface-variant); font-size: var(--text-body-md); }
 
-        /* ── Write panel ── */
-        .jrn-write-panel {
-          background: var(--surface-container-lowest);
-          border-radius: var(--radius-2xl);
-          padding: var(--space-lg);
-          margin-bottom: var(--space-xl);
-          border: 1px solid rgba(208,195,200,0.15);
-          box-shadow: 0 8px 40px rgba(112,87,101,0.07);
-          animation: scaleIn 0.3s var(--ease-spring);
-        }
+        /* ── Editor (bottom sheet) ── */
+        .nte-backdrop { position: fixed; inset: 0; z-index: 9995; background: rgba(40,36,60,0.4); backdrop-filter: blur(6px) saturate(160%); -webkit-backdrop-filter: blur(6px) saturate(160%); animation: fadeIn 0.2s ease both; }
+        .nte-sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9996; max-height: 92dvh; display: flex; flex-direction: column; background: var(--surface-container-lowest); border-radius: 24px 24px 0 0; box-shadow: 0 -8px 40px -8px rgba(40,36,60,0.28); animation: esUp 0.36s cubic-bezier(0.22,1,0.36,1) both; margin: 0 auto; max-width: 640px; }
+        @keyframes esUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .nte-handle { width: 38px; height: 5px; border-radius: 99px; background: rgba(120,110,150,0.4); margin: 10px auto 4px; flex-shrink: 0; }
+        .nte-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 20px 8px; flex-shrink: 0; }
+        .nte-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; color: var(--heading); }
+        .nte-close { width: 34px; height: 34px; border-radius: 50%; background: var(--surface-container); border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; }
+        .nte-scroll { overflow-y: auto; padding: 4px 20px 12px; }
 
-        .jrn-write-heading {
-          font-family: var(--font-display);
-          font-size: var(--text-headline-md);
-          font-weight: 700;
-          color: var(--heading);
-          margin-bottom: var(--space-lg);
-        }
+        .nte-paper { border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 4px 14px -6px rgba(90,80,130,0.3); }
+        .nte-textarea { width: 100%; min-height: 120px; resize: vertical; background: transparent; border: none; outline: none; font-family: var(--font-body); font-size: 16px; font-weight: 700; line-height: 1.5; color: #3d3a4e; }
+        .nte-textarea::placeholder { color: rgba(61,58,78,0.45); font-weight: 600; }
 
-        /* ── Mood selector ── */
-        .jrn-mood-row {
-          display: flex;
-          gap: var(--space-sm);
-          flex-wrap: wrap;
-          margin-bottom: var(--space-lg);
-        }
+        .nte-label { font-size: var(--text-label-md); font-weight: 800; color: var(--on-surface); margin: 14px 0 8px; display: flex; align-items: center; gap: 6px; }
+        .nte-colors { display: flex; gap: 10px; flex-wrap: wrap; }
+        .nte-color { width: 36px; height: 36px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; display: flex; align-items: center; justify-content: center; transition: transform var(--transition-fast); }
+        .nte-color:active { transform: scale(0.9); }
+        .nte-color.sel { border-color: var(--on-surface); }
 
-        .jrn-mood-btn {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 3px;
-          padding: 10px 12px;
-          border-radius: var(--radius-xl);
-          border: 2px solid transparent;
-          cursor: pointer;
-          background: var(--surface-container-low);
-          transition: all var(--transition-spring);
-          min-width: 58px;
-        }
-        .jrn-mood-btn:hover { background: var(--surface-container); }
-        .jrn-mood-btn.selected {
-          border-color: var(--primary);
-          transform: scale(1.07);
-          box-shadow: 0 4px 12px rgba(112,87,101,0.15);
-        }
-        .jrn-mood-emoji { font-size: 1.6rem; }
-        .jrn-mood-label {
-          font-size: 10px;
-          font-weight: 600;
-          color: var(--on-surface-variant);
-          line-height: 1;
-        }
-        .jrn-mood-btn.selected .jrn-mood-label { color: var(--primary); }
+        .nte-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; }
+        .nte-row-l { display: flex; align-items: center; gap: 8px; font-size: var(--text-body-md); font-weight: 700; color: var(--on-surface); }
+        .nte-toggle { position: relative; width: 46px; height: 26px; border-radius: 99px; border: none; cursor: pointer; flex-shrink: 0; transition: background var(--transition-fast); }
+        .nte-toggle.on { background: var(--primary); } .nte-toggle.off { background: var(--surface-variant); }
+        .nte-toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: transform var(--transition-spring); }
+        .nte-toggle.on::after { transform: translateX(20px); }
 
-        /* ── Journal textarea ── */
-        .jrn-textarea {
-          width: 100%;
-          min-height: 180px;
-          padding: var(--space-lg);
-          background: var(--surface-container-low);
-          border: 1.5px solid var(--outline-variant);
-          border-radius: var(--radius-xl);
-          font-family: var(--font-display);
-          font-size: var(--text-body-lg);
-          font-style: italic;
-          color: var(--on-surface);
-          line-height: var(--leading-relaxed);
-          outline: none;
-          resize: none;
-          margin-bottom: var(--space-md);
-          transition: all var(--transition-fast);
-        }
-        .jrn-textarea:focus {
-          border-color: var(--primary);
-          background: var(--surface-container-lowest);
-          box-shadow: 0 0 0 3px rgba(112,87,101,0.1);
-        }
-        .jrn-textarea::placeholder { color: var(--outline); font-style: italic; }
+        .nte-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 6px; }
+        .nte-tabs::-webkit-scrollbar { display: none; }
+        .nte-tab { flex-shrink: 0; padding: 6px 14px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 12.5px; font-weight: 700; cursor: pointer; }
+        .nte-tab.sel { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
+        .nte-sgrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 8px; }
+        .nte-scell { aspect-ratio: 1; border-radius: 14px; border: 2px solid transparent; background: var(--surface-container-low); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; }
+        .nte-scell.sel { border-color: var(--primary); background: var(--primary-container); }
 
-        /* ── Tags ── */
-        .jrn-tags-row {
-          display: flex;
-          gap: var(--space-sm);
-          flex-wrap: wrap;
-          margin-bottom: var(--space-md);
-        }
-
-        .jrn-tag {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 4px 12px;
-          border-radius: var(--radius-full);
-          background: var(--primary-container);
-          color: var(--on-primary-container);
-          font-size: var(--text-label-sm);
-          font-weight: 600;
-        }
-        .jrn-tag-remove {
-          background: none;
-          border: none;
-          cursor: pointer;
-          color: inherit;
-          opacity: 0.7;
-          padding: 0;
-          line-height: 1;
-          display: flex;
-          align-items: center;
-        }
-        .jrn-tag-remove:hover { opacity: 1; }
-
-        .jrn-tag-add-row {
-          display: flex;
-          gap: var(--space-sm);
-          margin-bottom: var(--space-lg);
-          align-items: center;
-        }
-
-        /* ── Entry cards ── */
-        .jrn-entry-list {
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-md);
-        }
-
-        .jrn-entry-card {
-          background: var(--surface-container-lowest);
-          border-radius: var(--radius-2xl);
-          padding: var(--space-lg);
-          border: 1px solid rgba(208,195,200,0.15);
-          box-shadow: 0 4px 20px rgba(112,87,101,0.04);
-          cursor: pointer;
-          transition: all var(--transition-spring);
-        }
-        .jrn-entry-card:hover {
-          box-shadow: 0 8px 32px rgba(112,87,101,0.10);
-          transform: scale(1.005);
-        }
-        .jrn-entry-card:active { transform: scale(0.99); }
-
-        .jrn-entry-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: var(--space-md);
-        }
-
-        .jrn-entry-date-wrap { display: flex; flex-direction: column; gap: 2px; }
-
-        .jrn-entry-date {
-          font-size: var(--text-label-sm);
-          font-weight: 700;
-          color: var(--on-surface-variant);
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-        }
-
-        .jrn-entry-right {
-          display: flex;
-          align-items: center;
-          gap: var(--space-sm);
-        }
-
-        .jrn-entry-mood-badge {
-          width: 36px;
-          height: 36px;
-          border-radius: var(--radius-full);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.25rem;
-        }
-
-        .jrn-entry-preview {
-          font-family: var(--font-display);
-          font-size: var(--text-body-md);
-          font-style: italic;
-          color: var(--on-surface-variant);
-          line-height: var(--leading-relaxed);
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-          margin-bottom: var(--space-md);
-        }
-
-        .jrn-entry-expanded {
-          font-family: var(--font-display);
-          font-size: var(--text-body-md);
-          font-style: italic;
-          color: var(--on-surface-variant);
-          line-height: var(--leading-relaxed);
-          margin-bottom: var(--space-md);
-          white-space: pre-wrap;
-        }
-
-        .jrn-entry-tags {
-          display: flex;
-          flex-wrap: wrap;
-          gap: var(--space-xs);
-        }
-
-        .jrn-entry-tag {
-          display: inline-flex;
-          align-items: center;
-          gap: 3px;
-          font-size: var(--text-label-sm);
-          color: var(--on-surface-variant);
-        }
-
-        /* ── Divider label ── */
-        .jrn-section-head {
-          display: flex;
-          align-items: center;
-          gap: var(--space-md);
-          margin-bottom: var(--space-lg);
-        }
-        .jrn-section-label {
-          font-size: var(--text-label-sm);
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: var(--on-surface-variant);
-          white-space: nowrap;
-        }
-        .jrn-section-line {
-          flex: 1;
-          height: 1px;
-          background: rgba(208,195,200,0.3);
-        }
-
-        /* ── Empty state ── */
-        .jrn-empty {
-          text-align: center;
-          padding: var(--space-xxl) var(--space-xl);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: var(--space-md);
-        }
-        .jrn-empty-icon {
-          width: 80px;
-          height: 80px;
-          border-radius: var(--radius-full);
-          background: linear-gradient(135deg, #FDF0F7, #EDE7F6);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .jrn-empty-title {
-          font-family: var(--font-display);
-          font-size: var(--text-headline-lg-mobile);
-          font-weight: 500;
-          color: var(--on-surface);
-        }
-        .jrn-empty-sub {
-          font-size: var(--text-body-md);
-          color: var(--on-surface-variant);
-          max-width: 280px;
-          line-height: var(--leading-relaxed);
-        }
+        .nte-bar { padding: 12px 20px calc(env(safe-area-inset-bottom,0px) + 14px); border-top: 1px solid var(--outline-variant); flex-shrink: 0; background: var(--surface-container-lowest); display: flex; gap: 10px; }
+        .nte-save { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 99px; border: none; cursor: pointer; background: var(--gradient-primary); color: #fff; font-size: var(--text-body-md); font-weight: 800; font-family: var(--font-body); box-shadow: var(--shadow-fab); }
+        .nte-save:active { transform: scale(0.98); }
+        .nte-del { width: 52px; border-radius: 99px; border: 1.5px solid var(--error-container); background: var(--surface-container-lowest); color: var(--error); cursor: pointer; display: flex; align-items: center; justify-content: center; }
       `}</style>
 
-      <div className="jrn-screen">
-
-        {/* ── Hero ── */}
-        <div className="jrn-hero">
-          <h1 className="jrn-hero-title">Notas</h1>
-          <p className="jrn-hero-sub">Apunta ideas, pendientes y detalles de clientes en un solo lugar.</p>
+      <div className="nt-screen">
+        <div className="nt-head">
+          <div>
+            <div className="nt-title">Notas</div>
+            <div className="nt-sub">Tus manifestaciones, ideas y recordatorios.</div>
+          </div>
+          <button className="nt-add" onClick={openNew} id="nt-add"><Plus size={17} strokeWidth={2.5} /> Nueva</button>
         </div>
 
-        {/* ── Today banner (write button) ── */}
-        {!writing && (
-          <div
-            className="jrn-banner"
-            onClick={() => {
-              setForm({ date: today, content: todayEntry?.content || '', mood: todayEntry?.mood || '😊', tags: todayEntry?.tags || [] });
-              setWriting(true);
-            }}
-            id="jrn-open"
-          >
-            <div className="jrn-banner-icon">
-              <BookOpen size={28} color="var(--primary)" strokeWidth={1.5} />
-            </div>
-            <div className="jrn-banner-body">
-              <div className="jrn-banner-title">
-                {todayEntry ? 'Continuar nota de hoy' : 'Escribe una nota'}
-              </div>
-              <div className="jrn-banner-sub">
-                {todayEntry ? 'Toca para editar la nota de hoy' : 'Anota ideas, tareas o notas de clientes'}
-              </div>
-            </div>
-            <Edit2 size={20} color="var(--primary)" strokeWidth={1.75} />
+        {sorted.length === 0 ? (
+          <div className="nt-empty">
+            <Mascot size={210} />
+            <p>Aún no hay notas<br/><span style={{ fontSize: 13, opacity: 0.7 }}>Toca “Nueva” para tu primera manifestación ✨</span></p>
+          </div>
+        ) : (
+          <div className="nt-wall">
+            {sorted.map(n => {
+              const text = n.text ?? n.content ?? '';
+              const decos = (n.stickers || []).slice(0, 4);
+              return (
+                <div key={n.id} className={`nt-card${n.done ? ' done' : ''}`}
+                  style={{ background: n.color || DEFAULT_POSTIT, transform: `rotate(${tiltOf(n.id)}deg)` }}
+                  onClick={() => openEdit(n)}>
+                  {n.pinned && <Pin size={18} className="nt-pin" fill="currentColor" />}
+                  {n.done && (
+                    <svg className="nt-stamp" width="30" height="30" viewBox="0 0 30 30" fill="none">
+                      <circle cx="15" cy="15" r="12" stroke="var(--error)" strokeWidth="2.5" />
+                      <path d="M9 15 l4 4 l8 -9" stroke="var(--error)" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                  {decos.map((sid, i) => (
+                    <span key={sid} className="nt-deco" style={CORNERS[i]}><Sticker id={sid} size={30} /></span>
+                  ))}
+                  <div className="nt-card-text">{text}</div>
+                </div>
+              );
+            })}
           </div>
         )}
+      </div>
 
-        {/* ── Write panel ── */}
-        {writing && (
-          <div className="jrn-write-panel">
-            <div className="jrn-write-heading">Nueva nota</div>
-
-            {/* Mood selector */}
-            <div className="jrn-mood-row">
-              {MOODS.map(m => (
-                <button
-                  key={m.emoji}
-                  className={`jrn-mood-btn${form.mood === m.emoji ? ' selected' : ''}`}
-                  onClick={() => setForm(f => ({ ...f, mood: m.emoji }))}
-                  id={`mood-${m.label}`}
-                  style={form.mood === m.emoji ? { background: m.color } : {}}
-                  type="button"
-                >
-                  <span className="jrn-mood-emoji">{m.emoji}</span>
-                  <span className="jrn-mood-label">{m.label}</span>
-                </button>
-              ))}
+      {/* Editor */}
+      {editing && createPortal(
+        <>
+          <div className="nte-backdrop" onClick={() => setEditing(null)} />
+          <div className="nte-sheet" role="dialog" aria-modal="true" aria-label={editing.id ? 'Editar nota' : 'Nueva nota'}>
+            <div className="nte-handle" />
+            <div className="nte-head">
+              <span className="nte-title">{editing.id ? 'Editar nota' : 'Nueva nota'}</span>
+              <button className="nte-close" onClick={() => setEditing(null)} aria-label="Cerrar"><X size={18} /></button>
             </div>
 
-            {/* Textarea */}
-            <textarea
-              className="jrn-textarea"
-              placeholder="Escribe tu nota… ideas, pendientes, detalles de un cliente…"
-              value={form.content}
-              onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
-              id="journal-text"
-              autoFocus
-            />
+            <div className="nte-scroll">
+              {/* Papel */}
+              <div className="nte-paper" style={{ background: editing.color }}>
+                <textarea className="nte-textarea" autoFocus placeholder="Escribe tu manifestación, idea o recordatorio…"
+                  value={editing.text} onChange={e => set('text', e.target.value)} id="nte-text" />
+              </div>
 
-            {/* Tags */}
-            {form.tags.length > 0 && (
-              <div className="jrn-tags-row">
-                {form.tags.map(tag => (
-                  <span key={tag} className="jrn-tag">
-                    <Hash size={11} strokeWidth={2.5} />
-                    {tag}
-                    <button
-                      className="jrn-tag-remove"
-                      onClick={() => setForm(f => ({ ...f, tags: f.tags.filter(tag2 => tag2 !== tag) }))}
-                      type="button"
-                    >
-                      <X size={12} />
-                    </button>
-                  </span>
+              {/* Color */}
+              <div className="nte-label">Color</div>
+              <div className="nte-colors">
+                {POSTIT_COLORS.map(col => (
+                  <button key={col} type="button" className={`nte-color${editing.color === col ? ' sel' : ''}`}
+                    style={{ background: col }} onClick={() => set('color', col)} aria-label={`Color ${col}`}>
+                    {editing.color === col && <Check size={16} color="#3d3a4e" strokeWidth={3} />}
+                  </button>
                 ))}
               </div>
-            )}
 
-            {/* Tag input */}
-            <div className="jrn-tag-add-row">
-              <Input
-                placeholder="Etiqueta (ej: cliente, idea)"
-                value={tagInput}
-                onChange={e => setTagInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                id="tag-input"
-                className="flex-1"
-              />
-              <Button type="button" variant="soft" size="sm" onClick={addTag} id="tag-add">
-                <Plus size={16} />
-              </Button>
+              {/* Toggles */}
+              <div className="nte-row">
+                <div className="nte-row-l"><Check size={17} color="var(--error)" /> Cumplido</div>
+                <button type="button" className={`nte-toggle ${editing.done ? 'on' : 'off'}`} onClick={() => set('done', !editing.done)} aria-label="Cumplido" />
+              </div>
+              <div className="nte-row" style={{ paddingTop: 0 }}>
+                <div className="nte-row-l"><Pin size={16} /> Fijar arriba</div>
+                <button type="button" className={`nte-toggle ${editing.pinned ? 'on' : 'off'}`} onClick={() => set('pinned', !editing.pinned)} aria-label="Fijar" />
+              </div>
+
+              {/* Decorar con stickers */}
+              <div className="nte-label"><Sparkles size={16} /> Decorar <span style={{ fontWeight: 500, color: 'var(--outline)' }}>· máx 4</span></div>
+              {STICKER_CATEGORIES.length > 1 && (
+                <div className="nte-tabs">
+                  {STICKER_CATEGORIES.map(c => (
+                    <button key={c.id} type="button" className={`nte-tab${stickerCat === c.id ? ' sel' : ''}`} onClick={() => setStickerCat(c.id)}>{c.label}</button>
+                  ))}
+                </div>
+              )}
+              <div className="nte-sgrid">
+                {STICKERS.filter(s => s.category === stickerCat).map(s => (
+                  <button key={s.id} type="button" className={`nte-scell${editing.stickers.includes(s.id) ? ' sel' : ''}`}
+                    onClick={() => toggleSticker(s.id)} aria-label={s.label} title={s.label}>
+                    <Sticker id={s.id} size={40} />
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
-              <Button type="button" variant="outline" className="flex-1" onClick={() => setWriting(false)} id="journal-cancel">
-                Cancelar
-              </Button>
-              <Button type="button" className="flex-1" onClick={handleSave} id="journal-save" disabled={!form.content.trim()}>
-                <Bookmark size={16} />
-                Guardar nota
-              </Button>
+            <div className="nte-bar">
+              {editing.id && (
+                <button className="nte-del" onClick={remove} aria-label="Eliminar nota"><Trash2 size={18} /></button>
+              )}
+              <button className="nte-save" onClick={save} id="nte-save">
+                <Check size={20} strokeWidth={3} />
+                {editing.id ? 'Guardar' : 'Crear nota'}
+              </button>
             </div>
           </div>
-        )}
-
-        {/* ── Past entries ── */}
-        {journalEntries.length > 0 ? (
-          <>
-            <div className="jrn-section-head">
-              <span className="jrn-section-label">Notas anteriores</span>
-              <div className="jrn-section-line" />
-            </div>
-
-            <div className="jrn-entry-list">
-              {[...journalEntries].reverse().map(entry => {
-                const moodData = MOODS.find(m => m.emoji === entry.mood) || MOODS[0];
-                const isExpanded = expanded === entry.id;
-                return (
-                  <div
-                    key={entry.id}
-                    className="jrn-entry-card"
-                    onClick={() => setExpanded(isExpanded ? null : entry.id)}
-                    id={`jrn-entry-${entry.id}`}
-                  >
-                    {/* Header */}
-                    <div className="jrn-entry-header">
-                      <div className="jrn-entry-date-wrap">
-                        <span className="jrn-entry-date">{formatEntryDate(entry.date)}</span>
-                      </div>
-                      <div className="jrn-entry-right">
-                        <div
-                          className="jrn-entry-mood-badge"
-                          style={{ background: moodData.color }}
-                          title={moodData.label}
-                        >
-                          {entry.mood}
-                        </div>
-                        <ChevronRight
-                          size={18}
-                          color="var(--outline)"
-                          strokeWidth={2}
-                          style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <p className={isExpanded ? 'jrn-entry-expanded' : 'jrn-entry-preview'}>
-                      "{entry.content}"
-                    </p>
-
-                    {/* Tags */}
-                    {entry.tags?.length > 0 && (
-                      <div className="jrn-entry-tags">
-                        {entry.tags.map(tag => (
-                          <span key={tag} className="jrn-entry-tag">
-                            <Hash size={11} strokeWidth={2} />
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        ) : !writing && (
-          <div className="jrn-empty">
-            <div className="jrn-empty-icon">
-              <BookOpen size={38} color="var(--primary)" strokeWidth={1.25} />
-            </div>
-            <div className="jrn-empty-title">Aún no hay notas</div>
-            <p className="jrn-empty-sub">
-              Crea tu primera nota para guardar ideas, pendientes y detalles de tus clientes.
-            </p>
-          </div>
-        )}
-
-      </div>
+        </>,
+        document.body
+      )}
     </>
   );
 }
