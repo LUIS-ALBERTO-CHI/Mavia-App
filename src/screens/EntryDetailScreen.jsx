@@ -1,7 +1,42 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { ArrowLeft, Pencil, Trash2, Check, Bell, Repeat, CalendarDays, Users } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Check, Bell, Repeat, CalendarDays, Users, CalendarPlus } from 'lucide-react';
 import { formatTime12h } from '../lib/utils';
+
+/* ── Exportar a calendario nativo (.ics) ── */
+const _p = (n) => String(n).padStart(2, '0');
+const _esc = (s) => (s || '').replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n');
+function buildICS(e) {
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  let when;
+  if (e.reminder && e.reminderTime) {
+    const [Y, M, D] = e.date.split('-');
+    const [h, m] = e.reminderTime.split(':').map(Number);
+    const start = `${Y}${M}${D}T${_p(h)}${_p(m)}00`;
+    const end   = `${Y}${M}${D}T${_p((h + 1) % 24)}${_p(m)}00`;
+    when = `DTSTART:${start}\r\nDTEND:${end}\r\nBEGIN:VALARM\r\nTRIGGER:PT0M\r\nACTION:DISPLAY\r\nDESCRIPTION:${_esc(e.title)}\r\nEND:VALARM`;
+  } else {
+    const d = e.date.replace(/-/g, '');
+    const nd = new Date(e.date + 'T00:00:00'); nd.setDate(nd.getDate() + 1);
+    const end = `${nd.getFullYear()}${_p(nd.getMonth() + 1)}${_p(nd.getDate())}`;
+    when = `DTSTART;VALUE=DATE:${d}\r\nDTEND;VALUE=DATE:${end}`;
+  }
+  return [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Mavia//ES', 'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT', `UID:${e.id}@mavia`, `DTSTAMP:${stamp}`, when,
+    `SUMMARY:${_esc(e.title)}`, e.note ? `DESCRIPTION:${_esc(e.note)}` : '',
+    'END:VEVENT', 'END:VCALENDAR',
+  ].filter(Boolean).join('\r\n');
+}
+function downloadICS(e) {
+  const blob = new Blob([buildICS(e)], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${(e.title || 'evento').replace(/[^\w\- ]/g, '').slice(0, 40) || 'evento'}.ics`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 import Sticker from '../components/Sticker';
 import { formatAmount } from '../lib/entryStyle';
 
@@ -110,6 +145,8 @@ export default function EntryDetailScreen() {
         .ed-row-value { font-size: var(--text-body-md); color: var(--on-surface); font-weight: 600; }
 
         .ed-note-card { background: var(--surface-container-lowest); border-radius: var(--radius-2xl); border: 1px solid var(--outline-variant); padding: var(--space-lg); margin-bottom: var(--space-lg); }
+        .ed-ics-btn { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px; border-radius: 16px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-weight: 700; font-size: var(--text-body-md); cursor: pointer; margin-bottom: var(--space-lg); transition: transform var(--transition-fast); }
+        .ed-ics-btn:active { transform: scale(0.98); }
         .ed-note-label { font-size: var(--text-label-sm); font-weight: 700; color: var(--on-surface-variant); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
         .ed-note-text { font-size: var(--text-body-md); color: var(--on-surface); line-height: 1.6; white-space: pre-wrap; }
 
@@ -182,6 +219,11 @@ export default function EntryDetailScreen() {
             <div className="ed-note-text">{entry.note || entry.notes}</div>
           </div>
         )}
+
+        {/* Agregar al calendario nativo (.ics) */}
+        <button className="ed-ics-btn" onClick={() => { downloadICS(entry); showToast('Descargado — ábrelo para agregarlo'); }} id="ed-ics">
+          <CalendarPlus size={17} strokeWidth={2} /> Agregar al calendario del teléfono
+        </button>
 
         {/* Confirmar borrado */}
         {confirmDelete && (
