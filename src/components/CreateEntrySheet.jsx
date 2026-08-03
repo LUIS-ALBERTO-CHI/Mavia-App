@@ -29,7 +29,7 @@ import { HIGHLIGHTERS, DEFAULT_COLOR, REPEAT_OPTIONS } from '../lib/entryStyle';
  * Se muestra como overlay sobre la pantalla actual (state.entrySheet != null).
  */
 export default function CreateEntrySheet() {
-  const { state, dispatch, showToast, closeEntrySheet, addClient } = useApp();
+  const { state, showToast, closeEntrySheet, addClient, createEntry, updateEntry } = useApp();
 
   const params    = state.entrySheet || {};
   const entryId   = params.entryId || null;
@@ -63,6 +63,7 @@ export default function CreateEntrySheet() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showDate, setShowDate]     = useState(false);
   const [stickerCat, setStickerCat] = useState(STICKER_CATEGORIES[0]?.id || null);
+  const [seriesScope, setSeriesScope] = useState('series');   // al editar una serie: 'one' | 'series'
   const [customReminder, setCustomReminder] = useState(
     !!(editEntry?.reminder && editEntry?.reminderTime && !PRESET_TIMES.includes(editEntry.reminderTime))
   );
@@ -91,11 +92,11 @@ export default function CreateEntrySheet() {
       client: isShared ? (form.client || '') : '',
     };
     if (isEdit) {
-      dispatch({ type: 'UPDATE_TASK', task: { ...editEntry, ...base } });
+      updateEntry(editEntry, base, editEntry.seriesId ? seriesScope : 'one');
       showToast('Guardado', 'success');
     } else {
-      dispatch({ type: 'ADD_TASK', task: { ...base, completed: false } });
-      showToast('¡Agregado!', 'success');
+      createEntry(base);
+      showToast(base.repeat && base.repeat !== 'No repetir' ? '¡Serie creada!' : '¡Agregado!', 'success');
     }
     closeEntrySheet();
   };
@@ -338,15 +339,28 @@ export default function CreateEntrySheet() {
             )}
           </div>
 
-          {/* Repetir */}
-          <div className="es-card">
-            <div className="es-label"><Repeat size={17} />Repetir</div>
-            <div className="es-pills" style={{ marginTop: 0 }}>
-              {REPEAT_OPTIONS.map(r => (
-                <button key={r} type="button" className={`es-pill${form.repeat === r ? ' sel' : ''}`} onClick={() => set('repeat', r)}>{r}</button>
-              ))}
+          {/* Repetir (crear / editar no-serie) o alcance de la serie (editar serie) */}
+          {isEdit && editEntry?.seriesId ? (
+            <div className="es-card">
+              <div className="es-label"><Repeat size={17} />Se repite · {editEntry.repeat}</div>
+              <div className="es-pills" style={{ marginTop: 0 }}>
+                <button type="button" className={`es-pill${seriesScope === 'one' ? ' sel' : ''}`} onClick={() => setSeriesScope('one')}>Solo esta</button>
+                <button type="button" className={`es-pill${seriesScope === 'series' ? ' sel' : ''}`} onClick={() => setSeriesScope('series')}>Esta y futuras</button>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--outline)', marginTop: 8 }}>
+                {seriesScope === 'series' ? 'Los cambios se aplican a este día y a todas las próximas.' : 'Los cambios se aplican solo a este día.'}
+              </p>
             </div>
-          </div>
+          ) : (
+            <div className="es-card">
+              <div className="es-label"><Repeat size={17} />Repetir</div>
+              <div className="es-pills" style={{ marginTop: 0 }}>
+                {REPEAT_OPTIONS.map(r => (
+                  <button key={r} type="button" className={`es-pill${form.repeat === r ? ' sel' : ''}`} onClick={() => set('repeat', r)}>{r}</button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="es-save-bar">

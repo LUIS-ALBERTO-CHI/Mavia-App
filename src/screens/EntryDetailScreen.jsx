@@ -22,7 +22,7 @@ function formatDate(dateStr) {
  * Reemplaza TaskDetail + EventDetail.
  */
 export default function EntryDetailScreen() {
-  const { state, dispatch, navigate, goBack, showToast, openEntrySheet } = useApp();
+  const { state, dispatch, navigate, goBack, showToast, openEntrySheet, deleteEntry } = useApp();
 
   const entryId = state.screenParams?.entryId || state.screenParams?.taskId || state.screenParams?.eventId || null;
   const entry   = entryId ? state.tasks.find(t => t.id === entryId) : null;
@@ -55,9 +55,9 @@ export default function EntryDetailScreen() {
     dispatch({ type: 'TOGGLE_TASK', id: entry.id });
     showToast(done ? 'Marcada como pendiente' : (amount ? '¡Pagado!' : '¡Hecho!'), 'success');
   };
-  const handleDelete = () => {
-    dispatch({ type: 'DELETE_TASK', id: entry.id });
-    showToast('Eliminado');
+  const handleDelete = (scope = 'one') => {
+    deleteEntry(entry, scope);
+    showToast(scope === 'series' ? 'Serie eliminada' : 'Eliminado');
     goBack();
   };
 
@@ -186,10 +186,17 @@ export default function EntryDetailScreen() {
         {/* Confirmar borrado */}
         {confirmDelete && (
           <div className="ed-del-banner">
-            <span className="ed-del-text">¿Eliminar esto?</span>
+            <span className="ed-del-text">{entry.seriesId ? 'Esta entrada se repite. ¿Qué eliminas?' : '¿Eliminar esto?'}</span>
             <div className="ed-del-actions">
               <button className="ed-del-btn" style={{ background: 'transparent', color: 'var(--on-error-container)' }} onClick={() => setConfirmDelete(false)}>Cancelar</button>
-              <button className="ed-del-btn" style={{ background: 'var(--error)', color: '#fff' }} onClick={handleDelete}>Eliminar</button>
+              {entry.seriesId ? (
+                <>
+                  <button className="ed-del-btn" style={{ background: 'var(--error-container)', color: 'var(--error)' }} onClick={() => handleDelete('one')}>Solo esta</button>
+                  <button className="ed-del-btn" style={{ background: 'var(--error)', color: '#fff' }} onClick={() => handleDelete('series')}>Esta y futuras</button>
+                </>
+              ) : (
+                <button className="ed-del-btn" style={{ background: 'var(--error)', color: '#fff' }} onClick={() => handleDelete('one')}>Eliminar</button>
+              )}
             </div>
           </div>
         )}

@@ -15,6 +15,7 @@ import {
   cancelReminder,
   getCachedFCMToken,
 } from '../lib/notificationService';
+import { expandRepeatDates } from '../lib/entryStyle';
 
 /* ============================================
    SEED DATA — only profile is created for new users.
@@ -552,30 +553,7 @@ export function AppProvider({ children }) {
             const nowCompleted = !existingTask.completed;
             await persistTask({ ...existingTask, completed: nowCompleted });
             if (nowCompleted && !isSpaceEntry(existingTask)) cancelReminder(enrichedAction.id, uid);
-
-            // ── Repeat logic: auto-create next occurrence (mismo espacio) ──
-            if (nowCompleted && existingTask.repeat && existingTask.repeat !== 'No repetir' && existingTask.date) {
-              const nextDate = (() => {
-                const d = new Date(existingTask.date + 'T00:00:00');
-                if (existingTask.repeat === 'Diario')   d.setDate(d.getDate() + 1);
-                if (existingTask.repeat === 'Semanal')  d.setDate(d.getDate() + 7);
-                if (existingTask.repeat === 'Mensual')  d.setMonth(d.getMonth() + 1);
-                return d.toLocaleDateString('en-CA'); // YYYY-MM-DD
-              })();
-              const nextTask = {
-                ...existingTask,
-                id: genId('t'),
-                date: nextDate,
-                completed: false,
-                createdAt: new Date().toISOString(),
-              };
-              dispatch({ type: 'ADD_TASK', task: nextTask });
-              await persistTask(nextTask);
-              if (nextTask.reminder && !isSpaceEntry(nextTask)) {
-                const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
-                scheduleTaskReminder(nextTask, uid, token);
-              }
-            }
+            // Las series ahora se generan por adelantado (ver createEntry); no se regenera al completar.
           }
           break;
         }
@@ -702,6 +680,38 @@ export function AppProvider({ children }) {
   const closeEntrySheet = ()            => dispatch({ type: 'CLOSE_ENTRY_SHEET' });
   const setSelectedDate = (date)        => dispatch({ type: 'SET_SELECTED_DATE', date });
 
+  /* ── Entradas con series que se repiten ── */
+  // Crea una entrada. Si repite, genera las ocurrencias futuras con un seriesId común.
+  const createEntry = (base) => {
+    const rep = base.repeat;
+    if (rep && rep !== 'No repetir') {
+      const seriesId = `series_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+      expandRepeatDates(base.date, rep).forEach(date => {
+        dispatchWithSync({ type: 'ADD_TASK', task: { ...base, date, seriesId, completed: false } });
+      });
+    } else {
+      dispatchWithSync({ type: 'ADD_TASK', task: { ...base, completed: false } });
+    }
+  };
+  // Edita una entrada. scope 'series' aplica los cambios a esta y las futuras de la misma serie.
+  const updateEntry = (original, changes, scope = 'one') => {
+    if (scope === 'series' && original.seriesId) {
+      const affected = state.tasks.filter(t => t.seriesId === original.seriesId && t.date >= original.date);
+      affected.forEach(t => dispatchWithSync({ type: 'UPDATE_TASK', task: { ...t, ...changes, date: t.date } }));
+    } else {
+      dispatchWithSync({ type: 'UPDATE_TASK', task: { ...original, ...changes } });
+    }
+  };
+  // Elimina una entrada. scope 'series' borra esta y las futuras de la misma serie.
+  const deleteEntry = (original, scope = 'one') => {
+    if (scope === 'series' && original.seriesId) {
+      const affected = state.tasks.filter(t => t.seriesId === original.seriesId && t.date >= original.date);
+      affected.forEach(t => dispatchWithSync({ type: 'DELETE_TASK', id: t.id }));
+    } else {
+      dispatchWithSync({ type: 'DELETE_TASK', id: original.id });
+    }
+  };
+
   /* ── Espacios compartidos ── */
   const setCurrentSpace = (spaceId) => {
     try { localStorage.setItem('mavia_space', spaceId); } catch {}
@@ -744,6 +754,9 @@ export function AppProvider({ children }) {
     openEntrySheet,
     closeEntrySheet,
     setSelectedDate,
+    createEntry,
+    updateEntry,
+    deleteEntry,
     setCurrentSpace,
     createSharedSpace,
     inviteEmail,

@@ -26,6 +26,31 @@ export function normalizeColor(hex) {
 /** Opciones de repetición */
 export const REPEAT_OPTIONS = ['No repetir', 'Diario', 'Semanal', 'Mensual'];
 
+/** Cuántas ocurrencias se generan por adelantado según la frecuencia */
+const REPEAT_HORIZON = { Diario: 21, Semanal: 12, Mensual: 6 };
+
+function _pad(n) { return String(n).padStart(2, '0'); }
+function _toDS(d) { return `${d.getFullYear()}-${_pad(d.getMonth() + 1)}-${_pad(d.getDate())}`; }
+
+/**
+ * Devuelve las fechas (YYYY-MM-DD) de una serie que repite, empezando en startDS.
+ * Incluye la fecha inicial. Si no repite, devuelve solo [startDS].
+ */
+export function expandRepeatDates(startDS, repeat) {
+  if (!repeat || repeat === 'No repetir' || !startDS) return [startDS];
+  const count = REPEAT_HORIZON[repeat];
+  if (!count) return [startDS];
+  const out = [];
+  const d = new Date(startDS + 'T00:00:00');
+  for (let i = 0; i <= count; i++) {
+    out.push(_toDS(d));
+    if (repeat === 'Diario')  d.setDate(d.getDate() + 1);
+    if (repeat === 'Semanal') d.setDate(d.getDate() + 7);
+    if (repeat === 'Mensual') d.setMonth(d.getMonth() + 1);
+  }
+  return out;
+}
+
 /** Offsets de recordatorio (minutos antes) */
 export const REMINDER_OFFSETS = [5, 10, 15, 30, 60];
 
