@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
-import { ArrowLeft, Target, Calendar, Plus, X, Edit2 } from 'lucide-react';
+import { ArrowLeft, Target, Calendar, Edit2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { DatePicker } from '../components/ui/date-picker';
@@ -27,51 +27,40 @@ export default function CreateGoalScreen() {
     category: editGoal.category || 'Personal',
     deadline: editGoal.deadline || '',
     color:    editGoal.color    || '#F8D7E8',
-    progress: editGoal.progress || 0,
+    target:   editGoal.target != null ? String(editGoal.target) : '',
+    unit:     editGoal.unit     || '',
   } : {
     title:    '',
     category: 'Personal',
     deadline: '',
     color:    '#F8D7E8',
-    progress: 0,
+    target:   '',
+    unit:     '',
   });
 
-  const [tasks, setTasks]   = useState(() =>
-    isEdit && editGoal.tasks?.length ? editGoal.tasks : ['']
-  );
   const [saving, setSaving] = useState(false);
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
-  const addTask  = () => setTasks(t => [...t, '']);
-  const rmTask   = (i) => setTasks(t => t.filter((_, idx) => idx !== i));
-  const upTask   = (i, v) => setTasks(t => t.map((x, idx) => idx === i ? v : x));
-
   const handleSave = () => {
     if (!form.title.trim()) return;
-    const filledTasks = tasks.filter(g => g.trim());
+    const target = Math.max(0, Math.round(Number(form.target) || 0));
     setSaving(true);
     setTimeout(() => {
+      const base = {
+        title: form.title.trim(),
+        category: form.category,
+        deadline: form.deadline,
+        color: form.color,
+        type: 'count',
+        target,
+        unit: form.unit.trim(),
+      };
       if (isEdit) {
-        dispatch({
-          type: 'UPDATE_GOAL',
-          goal: {
-            ...editGoal,
-            ...form,
-            tasks: filledTasks,
-          },
-        });
+        dispatch({ type: 'UPDATE_GOAL', goal: { ...editGoal, ...base, current: editGoal.current || 0 } });
         showToast('Objetivo actualizado', 'success');
       } else {
-        dispatch({
-          type: 'ADD_GOAL',
-          goal: {
-            ...form,
-            tasks: filledTasks,
-            completedTasks: 0,
-            progress: 0,
-          },
-        });
+        dispatch({ type: 'ADD_GOAL', goal: { ...base, current: 0 } });
         showToast('¡Objetivo creado!', 'success');
       }
       goBack();
@@ -240,44 +229,29 @@ export default function CreateGoalScreen() {
           />
         </div>
 
-        {/* Tasks / milestones */}
+        {/* Meta (cantidad) */}
         <div className="cg-card">
-          <span className="cg-label">Hitos o sub-tareas</span>
-          {tasks.map((t, i) => (
-            <div key={i} className="cg-task-row">
-              <div className="cg-task-num">{i + 1}</div>
-              <Input
-                placeholder={`Hito ${i + 1}…`}
-                value={t}
-                onChange={e => upTask(i, e.target.value)}
-                id={`cg-task-${i}`}
-                className="flex-1"
-              />
-              {tasks.length > 1 && (
-                <button className="cg-rm-btn" onClick={() => rmTask(i)}>
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            onClick={addTask}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              marginTop: 8,
-              padding: '7px 14px',
-              borderRadius: 'var(--radius-full)',
-              border: '1.5px dashed var(--outline-variant)',
-              background: 'none',
-              color: 'var(--on-surface-variant)',
-              fontSize: 'var(--text-label-md)',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-            id="cg-add-task"
-          >
-            <Plus size={14} /> Añadir hito
-          </button>
+          <span className="cg-label">¿Cuánto quieres lograr?</span>
+          <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
+            <Input
+              type="number" inputMode="numeric" min={1}
+              placeholder="Ej. 7"
+              value={form.target}
+              onChange={e => set('target', e.target.value)}
+              id="cg-target"
+              style={{ flex: '0 0 110px' }}
+            />
+            <Input
+              placeholder="unidad (días, $, libros…)"
+              value={form.unit}
+              onChange={e => set('unit', e.target.value)}
+              id="cg-unit"
+              className="flex-1"
+            />
+          </div>
+          <p style={{ fontSize: 12, color: 'var(--on-surface-variant)', marginTop: 8 }}>
+            El avance se calcula solo: marcas <b>+1</b> cada vez y la barra se llena hasta la meta.
+          </p>
         </div>
 
         <Button

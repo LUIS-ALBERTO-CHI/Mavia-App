@@ -1,10 +1,11 @@
 ﻿import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
-import { Target, Calendar, CheckCircle2, Circle, TrendingUp, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Target, Calendar, TrendingUp, Plus, Edit2, Trash2 } from 'lucide-react';
 import { Progress } from '../components/ui/progress';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
+import { progressOf, goalCountLabel } from '../lib/goalUtils';
 
 const CAT_STYLE = {
   Marketing:  { bg: '#EDE7F6', text: '#5E4A8E', bar: 'secondary', badge: 'secondary'  },
@@ -43,17 +44,28 @@ export default function GoalsScreen() {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const avgProgress = goals.length
-    ? Math.round(goals.reduce((a, g) => a + (Number(g.progress) || 0), 0) / goals.length)
+    ? Math.round(goals.reduce((a, g) => a + progressOf(g), 0) / goals.length)
     : 0;
 
-  const completed = goals.filter(g => g.progress >= 100).length;
-  const inProgress = goals.filter(g => g.progress < 100).length;
+  const completed = goals.filter(g => progressOf(g) >= 100).length;
+  const inProgress = goals.filter(g => progressOf(g) < 100).length;
 
   const filtered = goals.filter(g => {
-    if (filter === 'Completados') return g.progress >= 100;
-    if (filter === 'En progreso') return g.progress < 100;
+    const p = progressOf(g);
+    if (filter === 'Completados') return p >= 100;
+    if (filter === 'En progreso') return p < 100;
     return true;
   });
+
+  // + / − al contador del objetivo
+  const bump = (goal, delta) => {
+    const target = Number(goal.target) || 0;
+    const cur = Number(goal.current) || 0;
+    const next = Math.max(0, target > 0 ? Math.min(cur + delta, target) : cur + delta);
+    if (next === cur) return;
+    dispatch({ type: 'UPDATE_GOAL', goal: { ...goal, current: next } });
+    if (target > 0 && next >= target) showToast('¡Objetivo completado! 🎉', 'success');
+  };
 
   return (
     <>
@@ -273,42 +285,22 @@ export default function GoalsScreen() {
         .gls-task.done { opacity: 0.55; }
         .gls-task.done span { text-decoration: line-through; }
 
-        /* ── Progress slider — inline update ── */
-        .gls-slider-wrap {
-          margin-top: var(--space-sm);
-          padding-top: var(--space-sm);
+        /* ── Contador + / − ── */
+        .gls-counter {
+          display: flex; align-items: center; justify-content: space-between; gap: 12px;
+          margin-top: var(--space-sm); padding-top: var(--space-sm);
           border-top: 1px solid rgba(0,0,0,0.06);
         }
-        .gls-slider-label {
-          font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
-          text-transform: uppercase; color: var(--outline);
-          margin-bottom: 6px;
+        .gls-count-label { font-family: var(--font-display); font-size: 17px; font-weight: 800; }
+        .gls-step {
+          width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,0.12);
+          background: rgba(255,255,255,0.7); color: var(--on-surface);
+          font-size: 22px; font-weight: 700; line-height: 1; cursor: pointer;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+          transition: transform var(--transition-fast);
         }
-        .gls-slider {
-          -webkit-appearance: none;
-          width: 100%; height: 6px;
-          border-radius: 99px;
-          outline: none; cursor: pointer;
-          transition: opacity 0.15s;
-        }
-        .gls-slider:hover { opacity: 0.9; }
-        .gls-slider::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          width: 20px; height: 20px;
-          border-radius: 50%;
-          background: white;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-          cursor: pointer;
-          border: 2px solid currentColor;
-        }
-        .gls-slider::-moz-range-thumb {
-          width: 20px; height: 20px;
-          border-radius: 50%;
-          background: white;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-          cursor: pointer;
-          border: 2px solid currentColor;
-        }
+        .gls-step:active { transform: scale(0.9); }
+        .gls-step-plus { border: none; color: #fff; box-shadow: var(--shadow-sm); }
 
         /* ── Empty ── */
         .gls-empty {
@@ -408,7 +400,9 @@ export default function GoalsScreen() {
           <div className="gls-grid">
             {filtered.map(goal => {
               const style = CAT_STYLE[goal.category] || CAT_STYLE.Personal;
-              const isComplete = goal.progress >= 100;
+              const pct = progressOf(goal);
+              const isComplete = pct >= 100;
+              const hasTarget = (Number(goal.target) || 0) > 0;
 
               return (
                 <div
@@ -430,7 +424,7 @@ export default function GoalsScreen() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <div className="gls-card-pct" style={{ color: style.text }}>
-                        {goal.progress}%
+                        {pct}%
                       </div>
                       {/* Edit button */}
                       <button
@@ -463,36 +457,23 @@ export default function GoalsScreen() {
                     </div>
                   </div>
 
-                  {/* Progress bar */}
-                  <Progress value={goal.progress} color={style.bar} className="mb-3" />
+                  {/* Progress bar (calculada) */}
+                  <Progress value={pct} color={style.bar} className="mb-3" />
 
-                  {/* Inline progress slider */}
-                  <div className="gls-slider-wrap" onClick={e => e.stopPropagation()}>
-                    <div className="gls-slider-label">Desliza para actualizar — {goal.progress}%</div>
-                    <input
-                      type="range"
-                      min="0" max="100" step="5"
-                      value={goal.progress}
-                      className="gls-slider"
-                      style={{
-                        background: `linear-gradient(to right, ${style.text} ${goal.progress}%, var(--surface-container-high) ${goal.progress}%)`,
-                        color: style.text,
-                      }}
-                      onChange={e => {
-                        const val = Number(e.target.value);
-                        dispatch({ type: 'UPDATE_GOAL_PROGRESS', id: goal.id, progress: val });
-                        if (val === 100) showToast('¡Objetivo completado!');
-                      }}
-                      id={`gls-slider-${goal.id}`}
-                      aria-label={`Progreso de ${goal.title}`}
-                    />
-                  </div>
+                  {/* Contador + / − (objetivo de cantidad) */}
+                  {hasTarget && (
+                    <div className="gls-counter" onClick={e => e.stopPropagation()}>
+                      <button className="gls-step" onClick={() => bump(goal, -1)} aria-label="Restar uno" id={`gls-minus-${goal.id}`}>−</button>
+                      <div className="gls-count-label" style={{ color: style.text }}>{goalCountLabel(goal)}</div>
+                      <button className="gls-step gls-step-plus" style={{ background: style.text }} onClick={() => bump(goal, 1)} aria-label="Sumar uno" id={`gls-plus-${goal.id}`}>+</button>
+                    </div>
+                  )}
 
                   {/* Meta */}
                   <div className="gls-card-meta">
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <TrendingUp size={14} strokeWidth={2} />
-                      {goal.completedTasks ?? 0} de {(goal.tasks ?? []).length} tareas
+                      {goalCountLabel(goal)}
                     </span>
                     <span className="gls-deadline">
                       <Calendar size={13} strokeWidth={2} />
@@ -500,22 +481,6 @@ export default function GoalsScreen() {
                         ? new Date(goal.deadline + 'T00:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
                         : 'Sin fecha'}
                     </span>
-                  </div>
-
-                  {/* Task list */}
-                  <div className="gls-tasks">
-                    {(goal.tasks ?? []).map((t, i) => {
-                      const done = i < (goal.completedTasks ?? 0);
-                      return (
-                        <div key={i} className={`gls-task${done ? ' done' : ''}`}>
-                          {done
-                            ? <CheckCircle2 size={16} color="var(--secondary)" strokeWidth={2} style={{ flexShrink: 0 }} />
-                            : <Circle size={16} color="var(--outline)" strokeWidth={1.75} style={{ flexShrink: 0 }} />
-                          }
-                          <span>{t}</span>
-                        </div>
-                      );
-                    })}
                   </div>
                 </div>
               );
