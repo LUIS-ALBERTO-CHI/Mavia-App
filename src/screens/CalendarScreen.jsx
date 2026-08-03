@@ -367,16 +367,16 @@ export default function CalendarScreen() {
         .cal-empty p { color: var(--on-surface-variant); font-size: var(--text-body-md); }
         .cal-empty-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 99px; background: var(--gradient-primary); color: #fff; border: none; cursor: pointer; font-weight: 800; font-size: 14px; }
 
-        /* ── ＋ para agregar en el día tocado (con onda) ── */
-        .cal-cell.adding { background: var(--tertiary-container, #dff2e8); box-shadow: inset 0 0 0 2px var(--tertiary, #6bbd8e); border-radius: 8px; }
+        /* ── ＋ para agregar en el día tocado (con onda) — paleta Mavia ── */
+        .cal-cell.adding { background: var(--primary-container, #e6e1f7); box-shadow: inset 0 0 0 2px var(--primary, #8478c8); border-radius: 8px; }
         .cal-add-fab { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; z-index: 4;
-          background: linear-gradient(135deg, #7ecaa0, #5fb488); color: #fff; display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 6px 16px -4px rgba(75,150,110,0.6), 0 2px 4px rgba(75,150,110,0.3);
+          background: var(--gradient-primary); color: #fff; display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 6px 16px -4px rgba(140,150,220,0.55), 0 2px 4px rgba(90,80,130,0.28);
           animation: calFabPop 0.3s var(--ease-spring, cubic-bezier(0.22,1,0.36,1)) both; }
         .cal-add-fab:active { transform: translate(-50%,-50%) scale(0.9); }
         @keyframes calFabPop { from { opacity: 0; transform: translate(-50%,-50%) scale(0.3); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
         .cal-add-ripple { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; border-radius: 50%; z-index: 3; pointer-events: none;
-          background: rgba(107,189,142,0.45); transform: translate(-50%,-50%) scale(0.5);
+          background: rgba(132,120,200,0.40); transform: translate(-50%,-50%) scale(0.5);
           animation: calRipple 0.6s ease-out forwards; }
         @keyframes calRipple { from { opacity: 0.5; transform: translate(-50%,-50%) scale(0.5); } to { opacity: 0; transform: translate(-50%,-50%) scale(3.4); } }
         @media (prefers-reduced-motion: reduce) { .cal-add-fab, .cal-add-ripple { animation: none; } .cal-add-ripple { display: none; } }
