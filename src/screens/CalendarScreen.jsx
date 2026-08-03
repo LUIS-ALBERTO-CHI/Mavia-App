@@ -121,6 +121,10 @@ export default function CalendarScreen() {
   const [viewMode,    setViewMode]    = useState('month');
   const [slideDir,    setSlideDir]    = useState('');
   const [clientFilter, setClientFilter] = useState('all');
+  const [addDay,      setAddDay]      = useState(null);   // día con el botón ＋ visible (tras tocarlo)
+
+  // El ＋ desaparece al cambiar de mes
+  useEffect(() => { setAddDay(null); }, [viewMonth, viewYear]);
 
   const slide = (dir, fn) => { setSlideDir(dir); setTimeout(() => { fn(); setSlideDir(''); }, 180); };
 
@@ -362,6 +366,20 @@ export default function CalendarScreen() {
         .cal-empty { text-align: center; padding: var(--space-lg) var(--space-md); min-height: 58vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
         .cal-empty p { color: var(--on-surface-variant); font-size: var(--text-body-md); }
         .cal-empty-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 99px; background: var(--gradient-primary); color: #fff; border: none; cursor: pointer; font-weight: 800; font-size: 14px; }
+
+        /* ── ＋ para agregar en el día tocado (con onda) ── */
+        .cal-cell.adding { background: var(--tertiary-container, #dff2e8); box-shadow: inset 0 0 0 2px var(--tertiary, #6bbd8e); border-radius: 8px; }
+        .cal-add-fab { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; z-index: 4;
+          background: linear-gradient(135deg, #7ecaa0, #5fb488); color: #fff; display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 6px 16px -4px rgba(75,150,110,0.6), 0 2px 4px rgba(75,150,110,0.3);
+          animation: calFabPop 0.3s var(--ease-spring, cubic-bezier(0.22,1,0.36,1)) both; }
+        .cal-add-fab:active { transform: translate(-50%,-50%) scale(0.9); }
+        @keyframes calFabPop { from { opacity: 0; transform: translate(-50%,-50%) scale(0.3); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
+        .cal-add-ripple { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; border-radius: 50%; z-index: 3; pointer-events: none;
+          background: rgba(107,189,142,0.45); transform: translate(-50%,-50%) scale(0.5);
+          animation: calRipple 0.6s ease-out forwards; }
+        @keyframes calRipple { from { opacity: 0.5; transform: translate(-50%,-50%) scale(0.5); } to { opacity: 0; transform: translate(-50%,-50%) scale(3.4); } }
+        @media (prefers-reduced-motion: reduce) { .cal-add-fab, .cal-add-ripple { animation: none; } .cal-add-ripple { display: none; } }
       `}</style>
 
       <div className="cal" style={{ '--cal-line': 'rgba(130,120,170,0.16)' }}>
@@ -428,10 +446,23 @@ export default function CalendarScreen() {
                   const stickers    = dayEntries.filter(e => e.sticker).slice(-3);   // máx 3, el nuevo reemplaza al anterior
                   return (
                     <div key={idx}
-                      className={['cal-cell', !isThisMonth ? 'other' : '', isToday ? 'today' : '', isSel ? 'sel' : ''].filter(Boolean).join(' ')}
-                      onClick={() => { if (isThisMonth) { setSelectedDay(cellDay); setViewMode('day'); } }}
+                      className={['cal-cell', !isThisMonth ? 'other' : '', isToday ? 'today' : '', isSel ? 'sel' : '', addDay === cellDay ? 'adding' : ''].filter(Boolean).join(' ')}
+                      onClick={() => {
+                        if (!isThisMonth) return;
+                        if (addDay === cellDay) { setViewMode('day'); }          // 2º toque → ver el día
+                        else { setSelectedDay(cellDay); setAddDay(cellDay); }     // 1er toque → ＋ con onda
+                      }}
                       id={isThisMonth ? `cal-cell-${cellDay}` : undefined}>
                       <span className="cal-num">{displayDay}</span>
+                      {isThisMonth && addDay === cellDay && (
+                        <>
+                          <span className="cal-add-ripple" />
+                          <button className="cal-add-fab" aria-label="Agregar en este día"
+                            onClick={(ev) => { ev.stopPropagation(); openEntrySheet({ date: toDS(viewYear, viewMonth, cellDay) }); }}>
+                            <Plus size={20} strokeWidth={2.5} />
+                          </button>
+                        </>
+                      )}
                       {visible.length > 0 && (
                         <div className="cal-chips">
                           {visible.map((e, i) => {
