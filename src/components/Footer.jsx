@@ -75,7 +75,7 @@ export default function Footer() {
           gap: 0.5rem;
           font-family: 'Outfit', sans-serif;
           font-size: 1.2rem;
-          font-weight: 800;
+          font-weight: 700;
           background: linear-gradient(135deg, #8b5cf6, #ec4899);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;

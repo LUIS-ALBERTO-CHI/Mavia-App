@@ -135,7 +135,7 @@ export default function FeaturesSection() {
         }
         .section-title {
           font-size: clamp(2rem, 4vw, 3rem);
-          font-weight: 900;
+          font-weight: 800;
           letter-spacing: -0.03em;
           line-height: 1.15;
         }

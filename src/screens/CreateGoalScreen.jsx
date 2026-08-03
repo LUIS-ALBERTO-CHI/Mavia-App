@@ -152,7 +152,7 @@ export default function CreateGoalScreen() {
           border-radius: var(--radius-full);
           font-size: var(--text-label-md);
           font-weight: 500;
-          border: 1.5px solid var(--outline-variant);
+          border: 1px solid var(--outline-variant);
           background: var(--surface-container);
           color: var(--on-surface-variant);
           cursor: pointer;

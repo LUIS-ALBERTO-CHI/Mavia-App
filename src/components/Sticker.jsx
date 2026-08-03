@@ -79,7 +79,7 @@ const ART = {
   coffee: (
     <>
       <path d="M12 18 H34 V30 A10 10 0 0 1 12 30 Z" fill="#B07A4F" />
-      <path d="M34 20 H38 A4 4 0 0 1 38 28 H34" fill="none" stroke="#B07A4F" strokeWidth="2.5" />
+      <path d="M34 20 H38 A4 4 0 0 1 38 28 H34" fill="none" stroke="#B07A4F" strokeWidth="2" />
       <path d="M18 10 Q16 13 18 15 M24 9 Q22 12 24 14 M30 10 Q28 13 30 15" stroke="#D9A066" strokeWidth="1.6" fill="none" strokeLinecap="round" />
     </>
   ),
@@ -131,7 +131,7 @@ const ART = {
         const r = (a * Math.PI) / 180;
         const x1 = 24 + Math.cos(r) * 13, y1 = 24 + Math.sin(r) * 13;
         const x2 = 24 + Math.cos(r) * 19, y2 = 24 + Math.sin(r) * 19;
-        return <line key={a} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#FFB000" strokeWidth="2.5" strokeLinecap="round" />;
+        return <line key={a} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#FFB000" strokeWidth="2" strokeLinecap="round" />;
       })}
     </>
   ),
@@ -145,7 +145,7 @@ const ART = {
   shopping: (
     <>
       <path d="M12 16 H36 L34 40 H14 Z" fill="#FF9BB3" />
-      <path d="M18 18 V13 A6 6 0 0 1 30 13 V18" fill="none" stroke="#E85D9A" strokeWidth="2.5" />
+      <path d="M18 18 V13 A6 6 0 0 1 30 13 V18" fill="none" stroke="#E85D9A" strokeWidth="2" />
     </>
   ),
   balloon: (

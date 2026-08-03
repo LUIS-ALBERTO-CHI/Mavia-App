@@ -75,15 +75,15 @@ export default function SpacesScreen() {
       <style>{`
         .sp-screen { max-width: 560px; margin: 0 auto; padding: var(--space-md) var(--space-container) var(--space-xxl); animation: screenEnter 0.4s var(--ease-out) both; }
         .sp-back { display: inline-flex; align-items: center; gap: 6px; color: var(--primary); font-size: var(--text-label-md); font-weight: 700; background: none; border: none; cursor: pointer; padding: 0; margin-bottom: var(--space-md); }
-        .sp-title { font-family: var(--font-display); font-size: var(--text-headline-lg); font-weight: 800; color: var(--heading); margin-bottom: 2px; }
+        .sp-title { font-family: var(--font-display); font-size: var(--text-headline-lg); font-weight: 700; color: var(--heading); margin-bottom: 2px; }
         .sp-sub { font-size: var(--text-body-md); color: var(--on-surface-variant); margin-bottom: var(--space-lg); }
-        .sp-section-label { font-size: var(--text-label-sm); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--on-surface-variant); margin: var(--space-lg) 0 8px; }
+        .sp-section-label { font-size: var(--text-label-sm); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--on-surface-variant); margin: var(--space-lg) 0 8px; }
         .sp-card { background: var(--surface-container-lowest); border: 0.5px solid var(--outline-variant); border-radius: 18px; padding: var(--space-lg); margin-bottom: 12px; box-shadow: var(--shadow-card); }
         .sp-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-        .sp-card-name { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; color: var(--heading); flex: 1; }
+        .sp-card-name { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--heading); flex: 1; }
         .sp-meta { font-size: var(--text-label-sm); color: var(--on-surface-variant); }
         .sp-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-        .sp-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; }
+        .sp-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 99px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; }
         .sp-btn.primary { background: var(--primary); color: var(--on-primary); border: none; }
         .sp-btn.danger { color: var(--error); border-color: var(--error-container); }
         .sp-swatches { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
@@ -93,7 +93,7 @@ export default function SpacesScreen() {
         .sp-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
         .sp-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 99px; background: var(--secondary-container); color: var(--on-secondary-container); font-size: 12px; font-weight: 700; }
         .sp-chip button { background: none; border: none; cursor: pointer; color: inherit; display: flex; padding: 0; opacity: 0.7; }
-        .sp-input { width: 100%; padding: 12px 14px; border-radius: 14px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-size: var(--text-body-md); font-family: var(--font-body); outline: none; margin-top: 10px; }
+        .sp-input { width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-size: var(--text-body-md); font-family: var(--font-body); outline: none; margin-top: 10px; }
         .sp-input:focus { border-color: var(--primary); }
         .sp-inline { display: flex; gap: 8px; margin-top: 10px; }
         .sp-inline .sp-input { margin-top: 0; }

@@ -125,7 +125,7 @@ export default function EntryDetailScreen() {
           font-weight: 700; color: var(--heading); line-height: 1.25;
         }
         .ed-hero-title.done { text-decoration: line-through; opacity: 0.55; }
-        .ed-hero-amount { font-size: var(--text-headline-md); font-weight: 800; color: var(--heading); margin-top: 4px; }
+        .ed-hero-amount { font-size: var(--text-headline-md); font-weight: 700; color: var(--heading); margin-top: 4px; }
 
         .ed-check {
           display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -145,7 +145,7 @@ export default function EntryDetailScreen() {
         .ed-row-value { font-size: var(--text-body-md); color: var(--on-surface); font-weight: 600; }
 
         .ed-note-card { background: var(--surface-container-lowest); border-radius: var(--radius-2xl); border: 1px solid var(--outline-variant); padding: var(--space-lg); margin-bottom: var(--space-lg); }
-        .ed-ics-btn { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px; border-radius: 16px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-weight: 700; font-size: var(--text-body-md); cursor: pointer; margin-bottom: var(--space-lg); transition: transform var(--transition-fast); }
+        .ed-ics-btn { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px; border-radius: 16px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-weight: 700; font-size: var(--text-body-md); cursor: pointer; margin-bottom: var(--space-lg); transition: transform var(--transition-fast); }
         .ed-ics-btn:active { transform: scale(0.98); }
         .ed-note-label { font-size: var(--text-label-sm); font-weight: 700; color: var(--on-surface-variant); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
         .ed-note-text { font-size: var(--text-body-md); color: var(--on-surface); line-height: 1.6; white-space: pre-wrap; }

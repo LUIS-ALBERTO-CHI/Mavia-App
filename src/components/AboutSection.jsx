@@ -125,7 +125,7 @@ export default function AboutSection() {
         }
         .section-title {
           font-size: clamp(1.8rem, 3.5vw, 2.6rem);
-          font-weight: 900;
+          font-weight: 800;
           letter-spacing: -0.03em;
           line-height: 1.15;
         }

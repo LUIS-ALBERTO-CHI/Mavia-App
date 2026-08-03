@@ -139,7 +139,7 @@ export default function RemindersScreen() {
           width: 100%;
           padding: 11px 16px 11px 44px;
           border-radius: var(--radius-full);
-          border: 1.5px solid var(--outline-variant);
+          border: 1px solid var(--outline-variant);
           background: var(--surface-container-lowest);
           font-size: var(--text-label-md);
           font-family: var(--font-body);

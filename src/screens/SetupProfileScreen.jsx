@@ -116,7 +116,7 @@ export default function SetupProfileScreen() {
           width: 100%;
           padding: 0.9rem 1rem;
           background: var(--surface-container-low);
-          border: 1.5px solid transparent;
+          border: 1px solid transparent;
           border-radius: var(--radius-xl);
           font-size: var(--text-body-md);
           color: var(--on-surface);

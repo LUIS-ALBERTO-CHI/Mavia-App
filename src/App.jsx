@@ -399,7 +399,7 @@ function MobileSideDrawer({ open, onClose }) {
                 margin: sIdx === 0 ? '14px 16px 6px' : '18px 16px 6px',
               }}>
                 <span style={{
-                  fontSize: 10, fontWeight: 800, letterSpacing: '0.12em',
+                  fontSize: 10, fontWeight: 700, letterSpacing: '0.12em',
                   textTransform: 'uppercase',
                   color: 'var(--on-surface-variant)', opacity: 0.55,
                   fontFamily: 'var(--font-body)',
@@ -665,20 +665,20 @@ function Toast() {
   // Icon per type
   const icons = {
     success: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"/>
         <polyline points="9 12 11 14 15 10"/>
       </svg>
     ),
     error: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"/>
         <line x1="12" y1="8" x2="12" y2="12"/>
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
     ),
     default: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"/>
         <line x1="12" y1="8" x2="12" y2="12"/>
         <line x1="12" y1="16" x2="12.01" y2="16"/>

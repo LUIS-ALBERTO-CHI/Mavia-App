@@ -293,7 +293,7 @@ export default function LoginScreen() {
           width: 100%;
           padding: 0.875rem var(--space-md) 0.875rem 2.75rem;
           background: var(--surface-container-low);
-          border: 1.5px solid transparent;
+          border: 1px solid transparent;
           border-radius: var(--radius-xl);
           font-size: var(--text-body-md);
           color: var(--on-surface);
@@ -520,7 +520,7 @@ export default function LoginScreen() {
               >
                 {loading ? (
                   <span className="spin">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                       <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
                     </svg>
                   </span>

@@ -303,9 +303,9 @@ export default function GoalsScreen() {
           margin-top: var(--space-sm); padding-top: var(--space-sm);
           border-top: 1px solid rgba(0,0,0,0.06);
         }
-        .gls-count-label { font-family: var(--font-display); font-size: 17px; font-weight: 800; }
+        .gls-count-label { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
         .gls-step {
-          width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,0.12);
+          width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.12);
           background: rgba(255,255,255,0.7); color: var(--on-surface);
           font-size: 22px; font-weight: 700; line-height: 1; cursor: pointer;
           display: flex; align-items: center; justify-content: center; flex-shrink: 0;
@@ -320,7 +320,7 @@ export default function GoalsScreen() {
         .gls-stepitem.done span:last-child { text-decoration: line-through; }
         .gls-stepcheck { width: 20px; height: 20px; border-radius: 6px; border: 2px solid rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all var(--transition-fast); }
         /* Sí / No */
-        .gls-simple { margin-top: var(--space-sm); width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px; border-radius: 99px; border: 1.5px solid rgba(0,0,0,0.14); background: rgba(255,255,255,0.6); color: var(--on-surface); font-family: var(--font-body); font-weight: 800; font-size: 14px; cursor: pointer; }
+        .gls-simple { margin-top: var(--space-sm); width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px; border-radius: 99px; border: 1px solid rgba(0,0,0,0.14); background: rgba(255,255,255,0.6); color: var(--on-surface); font-family: var(--font-body); font-weight: 700; font-size: 14px; cursor: pointer; }
         .gls-simple:active { transform: scale(0.98); }
 
         /* ── Empty ── */

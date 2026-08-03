@@ -495,7 +495,7 @@ export default function ProfileScreen() {
             >
               {uploading
                 ? <span style={{ fontSize: 10, fontWeight: 700 }}>...</span>
-                : <Camera size={16} strokeWidth={2.5} />}
+                : <Camera size={16} strokeWidth={2} />}
             </button>
           </div>
           <h2 className="prof-name">{user.name || user.firstName || 'Usuario'}</h2>
@@ -632,7 +632,7 @@ export default function ProfileScreen() {
             </div>
             <div className="prof-row-right">
               {(state.pendingInvites?.length > 0) && (
-                <span style={{ background: 'var(--primary)', color: 'var(--on-primary)', fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 99 }}>
+                <span style={{ background: 'var(--primary)', color: 'var(--on-primary)', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 99 }}>
                   {state.pendingInvites.length}
                 </span>
               )}

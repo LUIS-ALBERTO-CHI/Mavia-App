@@ -122,7 +122,7 @@ export default function CreateEntrySheet() {
         @keyframes esUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .es-handle { width: 38px; height: 5px; border-radius: 99px; background: rgba(120,110,150,0.4); margin: 10px auto 4px; flex-shrink: 0; }
         .es-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 20px 8px; flex-shrink: 0; }
-        .es-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; color: var(--heading); }
+        .es-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--heading); }
         .es-close { width: 34px; height: 34px; border-radius: 50%; background: var(--surface-container); border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; position: relative; }
         .es-close::after { content: ''; position: absolute; inset: -6px; }
         .es-scroll { overflow-y: auto; padding: 4px 20px 12px; }
@@ -140,14 +140,14 @@ export default function CreateEntrySheet() {
         }
         .es-sticker-pick:active .es-sticker-btn { transform: scale(0.92); }
         .es-sticker-btn.has { box-shadow: var(--shadow-card); }
-        .es-sticker-cap { font-family: var(--font-body); font-size: 13px; font-weight: 800; color: var(--heading); }
+        .es-sticker-cap { font-family: var(--font-body); font-size: 13px; font-weight: 700; color: var(--heading); }
 
         /* Selector de pegatinas (modal) */
         .es-pick-backdrop { position: fixed; inset: 0; z-index: 9997; background: rgba(40,36,60,0.42); backdrop-filter: blur(8px) saturate(160%); -webkit-backdrop-filter: blur(8px) saturate(160%); animation: fadeIn 0.18s ease both; }
         .es-pick { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9998; max-height: 76dvh; display: flex; flex-direction: column; overflow-x: hidden; background: var(--surface-container-lowest); border-radius: 24px 24px 0 0; box-shadow: 0 -8px 40px -8px rgba(40,36,60,0.3), 0 -1px 0 rgba(255,255,255,0.5) inset; animation: esUp 0.34s cubic-bezier(0.22,1,0.36,1) both; margin: 0 auto; max-width: 640px; }
         .es-pick-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 20px 10px; flex-shrink: 0; }
         .es-pick-tabs::-webkit-scrollbar { display: none; }
-        .es-pick-tab { flex-shrink: 0; padding: 8px 16px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+        .es-pick-tab { flex-shrink: 0; padding: 8px 16px; border-radius: 99px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .es-pick-tab.sel { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
         .es-pick-grid { overflow-y: auto; overflow-x: hidden; padding: 4px 20px calc(env(safe-area-inset-bottom,0px) + 20px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
         @media (min-width: 480px) { .es-pick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
@@ -155,7 +155,7 @@ export default function CreateEntrySheet() {
 
         .es-title-input {
           flex: 1; width: 100%; background: transparent; border: none;
-          border-bottom: 2px solid var(--outline-variant);
+          border-bottom: 1px solid var(--outline-variant);
           font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700;
           color: var(--on-surface); padding: 6px 2px; outline: none;
         }
@@ -178,7 +178,7 @@ export default function CreateEntrySheet() {
         .es-color.sel { border-color: var(--on-surface); }
 
         .es-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-        .es-date-fixed { font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 800; color: var(--primary); text-transform: capitalize; }
+        .es-date-fixed { font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 700; color: var(--primary); text-transform: capitalize; }
         .es-date-btn { width: 100%; background: none; border: none; cursor: pointer; padding: 0; font-family: var(--font-body); }
         .es-date-btn:active { opacity: 0.7; }
         .es-toggle { position: relative; width: 46px; height: 26px; border-radius: 99px; border: none; cursor: pointer; flex-shrink: 0; transition: background var(--transition-fast); }
@@ -187,18 +187,18 @@ export default function CreateEntrySheet() {
         .es-toggle.on::after { transform: translateX(20px); }
 
         .es-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-        .es-pill { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 99px; cursor: pointer; font-size: 13px; font-weight: 700; font-family: var(--font-body); border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); transition: all var(--transition-fast); }
+        .es-pill { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 99px; cursor: pointer; font-size: 13px; font-weight: 700; font-family: var(--font-body); border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); transition: all var(--transition-fast); }
         .es-pill.sel { border-color: var(--primary); background: var(--primary-container); color: var(--on-primary-container); }
 
         .es-money-wrap { position: relative; }
         .es-money-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--tertiary); }
-        .es-input { width: 100%; padding: 13px 16px 13px 40px; border-radius: 16px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-size: var(--text-body-md); font-family: var(--font-body); outline: none; }
+        .es-input { width: 100%; padding: 13px 16px 13px 40px; border-radius: 16px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-size: var(--text-body-md); font-family: var(--font-body); outline: none; }
         .es-input:focus { border-color: var(--primary); }
-        .es-note { width: 100%; min-height: 80px; resize: vertical; padding: 13px 16px; border-radius: 16px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-size: var(--text-body-md); font-family: var(--font-body); outline: none; line-height: 1.5; }
+        .es-note { width: 100%; min-height: 80px; resize: vertical; padding: 13px 16px; border-radius: 16px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-size: var(--text-body-md); font-family: var(--font-body); outline: none; line-height: 1.5; }
         .es-note:focus { border-color: var(--primary); }
 
         .es-save-bar { padding: 12px 20px calc(env(safe-area-inset-bottom,0px) + 14px); border-top: 1px solid var(--outline-variant); flex-shrink: 0; background: var(--surface-container-lowest); }
-        .es-save-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-size: var(--text-body-md); font-weight: 800; font-family: var(--font-body); box-shadow: var(--shadow-fab); transition: transform var(--transition-fast); }
+        .es-save-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-size: var(--text-body-md); font-weight: 700; font-family: var(--font-body); box-shadow: var(--shadow-fab); transition: transform var(--transition-fast); }
         .es-save-btn:active { transform: scale(0.98); }
       `}</style>
 
@@ -225,7 +225,7 @@ export default function CreateEntrySheet() {
               <button type="button" className="es-sticker-pick" onClick={() => setPickerOpen(true)} aria-label="Elegir sticker">
                 <span className={`es-sticker-btn${form.sticker ? ' has' : ''}`}
                   style={form.sticker ? { background: form.color } : {}}>
-                  {form.sticker ? <Sticker id={form.sticker} size={38} /> : <Plus size={26} strokeWidth={2.5} />}
+                  {form.sticker ? <Sticker id={form.sticker} size={38} /> : <Plus size={26} strokeWidth={2} />}
                 </span>
                 <span className="es-sticker-cap">Sticker</span>
               </button>
@@ -236,9 +236,9 @@ export default function CreateEntrySheet() {
           <div className="es-card">
             <div className="es-label"><span className="material-symbols-outlined">folder_shared</span>Espacio</div>
             <div className="es-pills" style={{ marginTop: 0 }}>
-              <button type="button" className={`es-pill${form.spaceId === 'personal' ? ' sel' : ''}`} onClick={() => set('spaceId', 'personal')}><Lock size={13} strokeWidth={2.5} /> Personal</button>
+              <button type="button" className={`es-pill${form.spaceId === 'personal' ? ' sel' : ''}`} onClick={() => set('spaceId', 'personal')}><Lock size={13} strokeWidth={2} /> Personal</button>
               {spaces.map(s => (
-                <button key={s.id} type="button" className={`es-pill${form.spaceId === s.id ? ' sel' : ''}`} onClick={() => set('spaceId', s.id)}><Users size={14} strokeWidth={2.5} /> {s.name}</button>
+                <button key={s.id} type="button" className={`es-pill${form.spaceId === s.id ? ' sel' : ''}`} onClick={() => set('spaceId', s.id)}><Users size={14} strokeWidth={2} /> {s.name}</button>
               ))}
             </div>
 

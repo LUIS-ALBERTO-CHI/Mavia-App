@@ -502,7 +502,7 @@ function CustomTimeModal({ onClose, onConfirm, initialSlot }) {
         <div style={{
           textAlign: 'center', marginTop: 16,
           fontFamily: 'var(--font-display)',
-          fontSize: 28, fontWeight: 800,
+          fontSize: 28, fontWeight: 700,
           color: 'var(--primary)',
           letterSpacing: '-0.02em',
         }}>
@@ -580,7 +580,7 @@ const TP_STYLES = `
     display: flex; align-items: center; gap: 10px;
     width: 100%; padding: 12px 16px;
     border-radius: var(--radius-xl);
-    border: 1.5px solid var(--outline-variant);
+    border: 1px solid var(--outline-variant);
     background: var(--surface-container-lowest);
     font-family: var(--font-body); font-size: var(--text-body-md);
     color: var(--on-surface); cursor: pointer;
@@ -595,7 +595,7 @@ const TP_STYLES = `
   .tp-label  { flex: 1; font-family: var(--font-display); font-size: var(--text-body-md); }
   .tp-label.has-value { font-weight: 600; }
   .tp-period-badge {
-    font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
     background: var(--primary-container); color: var(--primary);
     padding: 2px 8px; border-radius: 6px; flex-shrink: 0;
   }
@@ -624,7 +624,7 @@ const TP_STYLES = `
     display: flex; align-items: center; gap: 5px;
     padding: 5px 12px;
     border-radius: var(--radius-full);
-    border: 1.5px solid var(--outline-variant);
+    border: 1px solid var(--outline-variant);
     background: var(--surface-container);
     color: var(--on-surface-variant);
     font-family: var(--font-body);

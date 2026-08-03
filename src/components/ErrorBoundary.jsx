@@ -109,7 +109,7 @@ export default class ErrorBoundary extends Component {
           onMouseOver={e => e.currentTarget.style.opacity = '0.88'}
           onMouseOut={e => e.currentTarget.style.opacity = '1'}
         >
-          <RefreshCw size={16} strokeWidth={2.5} />
+          <RefreshCw size={16} strokeWidth={2} />
           Intentar de nuevo
         </button>
       </div>

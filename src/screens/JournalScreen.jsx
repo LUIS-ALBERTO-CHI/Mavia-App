@@ -92,9 +92,9 @@ export default function JournalScreen() {
       <style>{`
         .nt-screen { max-width: 820px; margin: 0 auto; padding: var(--space-md) var(--space-container) var(--space-8); animation: screenEnter 0.4s var(--ease-out) both; overflow-x: hidden; }
         .nt-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-        .nt-title { font-family: var(--font-display); font-size: var(--text-headline-lg); font-weight: 800; color: var(--heading); }
+        .nt-title { font-family: var(--font-display); font-size: var(--text-headline-lg); font-weight: 700; color: var(--heading); }
         .nt-sub { font-size: var(--text-body-md); color: var(--on-surface-variant); margin-top: 2px; }
-        .nt-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-family: var(--font-body); font-weight: 800; font-size: 14px; box-shadow: var(--shadow-fab); flex-shrink: 0; }
+        .nt-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-family: var(--font-body); font-weight: 700; font-size: 14px; box-shadow: var(--shadow-fab); flex-shrink: 0; }
         .nt-add:active { transform: scale(0.96); }
 
         /* Mural tipo mosaico */
@@ -123,7 +123,7 @@ export default function JournalScreen() {
         @keyframes esUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .nte-handle { width: 38px; height: 5px; border-radius: 99px; background: rgba(120,110,150,0.4); margin: 10px auto 4px; flex-shrink: 0; }
         .nte-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 20px 8px; flex-shrink: 0; }
-        .nte-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; color: var(--heading); }
+        .nte-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--heading); }
         .nte-close { width: 34px; height: 34px; border-radius: 50%; background: var(--surface-container); border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; position: relative; }
         .nte-close::after { content: ''; position: absolute; inset: -6px; }
         .nte-scroll { overflow-y: auto; padding: 4px 20px 12px; }
@@ -132,7 +132,7 @@ export default function JournalScreen() {
         .nte-textarea { width: 100%; min-height: 120px; resize: vertical; background: transparent; border: none; outline: none; font-family: var(--font-body); font-size: 16px; font-weight: 700; line-height: 1.5; color: #3d3a4e; }
         .nte-textarea::placeholder { color: rgba(61,58,78,0.45); font-weight: 600; }
 
-        .nte-label { font-size: var(--text-label-md); font-weight: 800; color: var(--on-surface); margin: 14px 0 8px; display: flex; align-items: center; gap: 6px; }
+        .nte-label { font-size: var(--text-label-md); font-weight: 700; color: var(--on-surface); margin: 14px 0 8px; display: flex; align-items: center; gap: 6px; }
         .nte-colors { display: flex; gap: 10px; flex-wrap: wrap; }
         .nte-color { width: 36px; height: 36px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; display: flex; align-items: center; justify-content: center; transition: transform var(--transition-fast); }
         .nte-color:active { transform: scale(0.9); }
@@ -147,16 +147,16 @@ export default function JournalScreen() {
 
         .nte-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 6px; }
         .nte-tabs::-webkit-scrollbar { display: none; }
-        .nte-tab { flex-shrink: 0; padding: 6px 14px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 12.5px; font-weight: 700; cursor: pointer; }
+        .nte-tab { flex-shrink: 0; padding: 6px 14px; border-radius: 99px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 12.5px; font-weight: 700; cursor: pointer; }
         .nte-tab.sel { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
         .nte-sgrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 8px; }
         .nte-scell { aspect-ratio: 1; border-radius: 14px; border: 2px solid transparent; background: var(--surface-container-low); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; }
         .nte-scell.sel { border-color: var(--primary); background: var(--primary-container); }
 
         .nte-bar { padding: 12px 20px calc(env(safe-area-inset-bottom,0px) + 14px); border-top: 1px solid var(--outline-variant); flex-shrink: 0; background: var(--surface-container-lowest); display: flex; gap: 10px; }
-        .nte-save { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-size: var(--text-body-md); font-weight: 800; font-family: var(--font-body); box-shadow: var(--shadow-fab); }
+        .nte-save { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-size: var(--text-body-md); font-weight: 700; font-family: var(--font-body); box-shadow: var(--shadow-fab); }
         .nte-save:active { transform: scale(0.98); }
-        .nte-del { width: 52px; border-radius: 99px; border: 1.5px solid var(--error-container); background: var(--surface-container-lowest); color: var(--error); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .nte-del { width: 52px; border-radius: 99px; border: 1px solid var(--error-container); background: var(--surface-container-lowest); color: var(--error); cursor: pointer; display: flex; align-items: center; justify-content: center; }
       `}</style>
 
       <div className="nt-screen">
@@ -165,7 +165,7 @@ export default function JournalScreen() {
             <div className="nt-title">Notas</div>
             <div className="nt-sub">Tus manifestaciones, ideas y recordatorios.</div>
           </div>
-          <button className="nt-add" onClick={openNew} id="nt-add"><Plus size={17} strokeWidth={2.5} /> Nueva</button>
+          <button className="nt-add" onClick={openNew} id="nt-add"><Plus size={17} strokeWidth={2} /> Nueva</button>
         </div>
 
         {sorted.length === 0 ? (
@@ -185,7 +185,7 @@ export default function JournalScreen() {
                   {n.pinned && <Pin size={18} className="nt-pin" fill="currentColor" />}
                   {n.done && (
                     <svg className="nt-stamp" width="30" height="30" viewBox="0 0 30 30" fill="none">
-                      <circle cx="15" cy="15" r="12" stroke="var(--error)" strokeWidth="2.5" />
+                      <circle cx="15" cy="15" r="12" stroke="var(--error)" strokeWidth="2" />
                       <path d="M9 15 l4 4 l8 -9" stroke="var(--error)" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}

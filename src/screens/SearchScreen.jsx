@@ -109,7 +109,7 @@ export default function SearchScreen() {
           width: 100%;
           padding: 14px 48px;
           border-radius: var(--radius-full);
-          border: 1.5px solid var(--outline-variant);
+          border: 1px solid var(--outline-variant);
           background: var(--surface-container-lowest);
           font-size: var(--text-body-md);
           font-family: var(--font-body);

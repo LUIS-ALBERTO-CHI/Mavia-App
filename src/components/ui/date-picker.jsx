@@ -112,7 +112,7 @@ const DP_STYLES = `
     display: flex; align-items: center; gap: 12px;
     width: 100%; padding: 13px 16px;
     border-radius: var(--radius-xl);
-    border: 1.5px solid var(--outline-variant);
+    border: 1px solid var(--outline-variant);
     background: var(--surface-container-lowest);
     font-family: var(--font-body); font-size: var(--text-body-md);
     color: var(--on-surface); cursor: pointer;
@@ -209,7 +209,7 @@ const DP_STYLES = `
     color: var(--primary);
   }
   .dp-cell.other    { color: var(--outline); cursor: default; pointer-events: none; opacity: 0.4; }
-  .dp-cell.today    { font-weight: 800; color: var(--primary); }
+  .dp-cell.today    { font-weight: 700; color: var(--primary); }
   .dp-cell.today::after {
     /* Small dot under today if not selected */
   }
@@ -236,7 +236,7 @@ const DP_STYLES = `
   .dp-shortcut {
     flex: 1; padding: 8px 0;
     border-radius: var(--radius-full);
-    border: 1.5px solid var(--outline-variant);
+    border: 1px solid var(--outline-variant);
     background: var(--surface-container);
     font-size: 12px; font-weight: 600;
     color: var(--on-surface-variant);
@@ -321,7 +321,7 @@ export function DatePicker({ value, onChange, min, placeholder = 'Seleccionar fe
         {value && (
           <span className="dp-trigger-today">
             {quick || ''}
-            <ChevronRight size={15} strokeWidth={2.5} />
+            <ChevronRight size={15} strokeWidth={2} />
           </span>
         )}
         {!value && (
@@ -337,13 +337,13 @@ export function DatePicker({ value, onChange, min, placeholder = 'Seleccionar fe
             {/* Month/year header */}
             <div className="dp-header">
               <button className="dp-nav-btn" onClick={prevMonth} type="button" aria-label="Mes anterior">
-                <ChevronLeft size={16} strokeWidth={2.5} />
+                <ChevronLeft size={16} strokeWidth={2} />
               </button>
               <span className="dp-month-label">
                 {MONTHS_ES[viewM]} <span>{viewY}</span>
               </span>
               <button className="dp-nav-btn" onClick={nextMonth} type="button" aria-label="Mes siguiente">
-                <ChevronRight size={16} strokeWidth={2.5} />
+                <ChevronRight size={16} strokeWidth={2} />
               </button>
             </div>
 

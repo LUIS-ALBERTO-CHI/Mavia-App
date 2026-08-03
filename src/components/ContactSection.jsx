@@ -161,7 +161,7 @@ export default function ContactSection() {
         }
         .section-title {
           font-size: clamp(1.8rem, 3vw, 2.6rem);
-          font-weight: 900;
+          font-weight: 800;
           letter-spacing: -0.03em;
           line-height: 1.15;
         }
@@ -302,7 +302,7 @@ export default function ContactSection() {
         .success-icon { font-size: 3rem; }
         .success-message h3 {
           font-size: 1.4rem;
-          font-weight: 800;
+          font-weight: 700;
           background: linear-gradient(135deg, #8b5cf6, #ec4899);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;

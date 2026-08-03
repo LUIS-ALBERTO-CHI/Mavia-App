@@ -295,7 +295,7 @@ export default function SettingsScreen() {
           font-family: var(--font-body);
           cursor: pointer;
           transition: all 0.15s;
-          border: 1.5px solid var(--outline-variant);
+          border: 1px solid var(--outline-variant);
           background: none;
           color: var(--on-surface-variant);
           white-space: nowrap;
@@ -466,7 +466,7 @@ export default function SettingsScreen() {
                       onChange={e => setter(e.target.value)}
                       style={{
                         width: '100%', padding: '11px 42px 11px 14px',
-                        borderRadius: 12, border: '1.5px solid var(--outline-variant)',
+                        borderRadius: 12, border: '1px solid var(--outline-variant)',
                         background: 'var(--surface-container)', color: 'var(--on-surface)',
                         fontSize: 14, fontFamily: 'var(--font-body)',
                         boxSizing: 'border-box', outline: 'none',

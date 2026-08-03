@@ -80,8 +80,8 @@ export default function OfflineBanner() {
           : '1px solid rgba(255,255,255,0.15)',
       }}>
         {isOffline
-          ? <WifiOff  size={14} strokeWidth={2.5} />
-          : <Wifi     size={14} strokeWidth={2.5} />
+          ? <WifiOff  size={14} strokeWidth={2} />
+          : <Wifi     size={14} strokeWidth={2} />
         }
         {isOffline
           ? 'Sin conexión — los cambios se guardarán al volver'

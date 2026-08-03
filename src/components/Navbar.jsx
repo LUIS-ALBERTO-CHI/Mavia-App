@@ -101,7 +101,7 @@ export default function Navbar() {
         .logo-text {
           font-family: 'Outfit', sans-serif;
           font-size: 1.4rem;
-          font-weight: 800;
+          font-weight: 700;
           background: linear-gradient(135deg, #8b5cf6, #ec4899);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;

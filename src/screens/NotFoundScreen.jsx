@@ -66,7 +66,7 @@ export default function NotFoundScreen() {
         onMouseOver={e => e.currentTarget.style.opacity = '0.88'}
         onMouseOut={e => e.currentTarget.style.opacity = '1'}
       >
-        <Home size={16} strokeWidth={2.5} />
+        <Home size={16} strokeWidth={2} />
         Ir al inicio
       </button>
     </div>

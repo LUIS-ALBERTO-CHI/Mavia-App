@@ -223,7 +223,7 @@ export default function HeroSection() {
         }
         .hero-title {
           font-size: clamp(2.5rem, 5vw, 4rem);
-          font-weight: 900;
+          font-weight: 800;
           letter-spacing: -0.03em;
           line-height: 1.1;
           animation: fadeInUp 0.6s 0.1s ease both;
@@ -309,7 +309,7 @@ export default function HeroSection() {
         .stat-value {
           font-family: 'Outfit', sans-serif;
           font-size: 1.6rem;
-          font-weight: 800;
+          font-weight: 700;
           background: linear-gradient(135deg, #8b5cf6, #ec4899);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
