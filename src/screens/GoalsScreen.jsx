@@ -22,11 +22,11 @@ function CircleProgress({ value, size = 80 }) {
   const dash = circ * (value / 100);
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="8" />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="currentColor" opacity="0.25" strokeWidth="8" />
       <circle
         cx={size/2} cy={size/2} r={r}
         fill="none"
-        stroke="white"
+        stroke="currentColor"
         strokeWidth="8"
         strokeDasharray={`${dash} ${circ}`}
         strokeLinecap="round"
@@ -108,14 +108,14 @@ export default function GoalsScreen() {
 
         /* ── Overview banner ── */
         .gls-overview {
-          background: var(--gradient-primary);
+          background: var(--primary);
           border-radius: var(--radius-2xl);
           padding: var(--space-lg);
           margin-bottom: var(--space-xl);
           display: flex;
           align-items: center;
           gap: var(--space-lg);
-          color: white;
+          color: var(--on-primary);
           box-shadow: 0 12px 40px rgba(112,87,101,0.25);
           position: relative;
           overflow: hidden;
@@ -147,7 +147,7 @@ export default function GoalsScreen() {
           font-family: var(--font-display);
           font-size: 1.35rem;
           font-weight: 600;
-          color: white;
+          color: var(--on-primary);
           line-height: 1;
         }
 

@@ -793,30 +793,34 @@ a { text-decoration: none; color: inherit; }
   pointer-events: none;
 }
 
-/* The pill — contains the 5 nav items */
+/* The pill — glass bar con FAB centrado */
 .mobile-bottom-nav {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  background: rgba(22, 20, 18, 0.88);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  justify-content: space-between;
+  gap: 6px;
+  background: rgba(28, 25, 34, 0.66);
+  backdrop-filter: blur(34px) saturate(200%);
+  -webkit-backdrop-filter: blur(34px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 100px;
-  padding: 6px 8px;
-  gap: 1px;
+  padding: 6px 10px;
   pointer-events: auto;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3);
-  /* Ensure full-width on very small screens */
+  overflow: visible;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.08);
   flex: 1;
-  max-width: 400px;
+  max-width: 420px;
 }
 
 :root:not(.dark) .mobile-bottom-nav {
-  background: rgba(255, 255, 255, 0.72);
-  border: 0.5px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 10px 30px rgba(90, 80, 130, 0.14), 0 1px 2px rgba(90, 80, 130, 0.08);
+  background: rgba(255, 255, 255, 0.55);
+  border: 0.5px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 12px 34px rgba(90, 80, 130, 0.16), 0 1px 2px rgba(90, 80, 130, 0.08), inset 0 1px 0 rgba(255,255,255,0.8);
 }
+
+/* Grupos de tabs a cada lado del FAB */
+.bn-group { flex: 1; display: flex; align-items: center; justify-content: space-around; }
 
 @media (min-width: 1024px) {
   .mobile-bottom-nav-wrapper { display: none; }
@@ -843,7 +847,7 @@ a { text-decoration: none; color: inherit; }
   color: var(--on-surface);
 }
 .bottom-nav-item.active .nav-icon {
-  background: var(--gradient-lime);
+  background: var(--lime);
   color: var(--on-lime);
   border-radius: var(--radius-full);
   padding: 7px;
@@ -876,26 +880,29 @@ a { text-decoration: none; color: inherit; }
   letter-spacing: 0.01em;
 }
 
-/* The + button — sibling of the pill, NOT overlapping */
+/* El + centrado, elevado con anillo (estilo iOS) */
 .mobile-fab {
-  width: 50px;
-  height: 50px;
-  background: var(--gradient-lime);
-  color: var(--on-lime);
+  width: 54px;
+  height: 54px;
+  background: var(--primary);
+  color: var(--on-primary);
   border-radius: var(--radius-full);
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 18px rgba(140,150,220,0.5);
+  transform: translateY(-16px);
+  box-shadow: 0 0 0 5px rgba(30,27,43,0.55), 0 10px 22px -6px rgba(140,150,220,0.6), 0 2px 6px rgba(0,0,0,0.35);
   transition: transform var(--transition-spring), box-shadow var(--transition-fast);
   pointer-events: auto;
   flex-shrink: 0;
 }
-
-.mobile-fab:hover  { transform: scale(1.07); box-shadow: 0 6px 22px rgba(0,0,0,0.4); }
-.mobile-fab:active { transform: scale(0.91); }
+:root:not(.dark) .mobile-fab {
+  box-shadow: 0 0 0 5px rgba(255,255,255,0.85), 0 10px 22px -6px rgba(140,150,220,0.55), 0 2px 6px rgba(90,80,130,0.2);
+}
+.mobile-fab:hover  { transform: translateY(-18px) scale(1.05); }
+.mobile-fab:active { transform: translateY(-14px) scale(0.93); }
 
 /* Legacy FAB (keep for desktop) */
 .desktop-fab {
@@ -1609,8 +1616,8 @@ a { text-decoration: none; color: inherit; }
 .empty-state-cta {
   margin-top: var(--space-sm);
   padding: 0.65rem 1.75rem;
-  background: var(--gradient-primary, var(--primary));
-  color: white;
+  background: var(--primary);
+  color: var(--on-primary);
   border: none;
   border-radius: 99px;
   font-size: var(--text-label-md);

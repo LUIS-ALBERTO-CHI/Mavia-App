@@ -94,7 +94,7 @@ export default function JournalScreen() {
         .nt-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
         .nt-title { font-family: var(--font-display); font-size: var(--text-headline-lg); font-weight: 800; color: var(--heading); }
         .nt-sub { font-size: var(--text-body-md); color: var(--on-surface-variant); margin-top: 2px; }
-        .nt-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 99px; border: none; cursor: pointer; background: var(--gradient-primary); color: #fff; font-family: var(--font-body); font-weight: 800; font-size: 14px; box-shadow: var(--shadow-fab); flex-shrink: 0; }
+        .nt-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-family: var(--font-body); font-weight: 800; font-size: 14px; box-shadow: var(--shadow-fab); flex-shrink: 0; }
         .nt-add:active { transform: scale(0.96); }
 
         /* Mural tipo mosaico */
@@ -154,7 +154,7 @@ export default function JournalScreen() {
         .nte-scell.sel { border-color: var(--primary); background: var(--primary-container); }
 
         .nte-bar { padding: 12px 20px calc(env(safe-area-inset-bottom,0px) + 14px); border-top: 1px solid var(--outline-variant); flex-shrink: 0; background: var(--surface-container-lowest); display: flex; gap: 10px; }
-        .nte-save { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 99px; border: none; cursor: pointer; background: var(--gradient-primary); color: #fff; font-size: var(--text-body-md); font-weight: 800; font-family: var(--font-body); box-shadow: var(--shadow-fab); }
+        .nte-save { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-size: var(--text-body-md); font-weight: 800; font-family: var(--font-body); box-shadow: var(--shadow-fab); }
         .nte-save:active { transform: scale(0.98); }
         .nte-del { width: 52px; border-radius: 99px; border: 1.5px solid var(--error-container); background: var(--surface-container-lowest); color: var(--error); cursor: pointer; display: flex; align-items: center; justify-content: center; }
       `}</style>

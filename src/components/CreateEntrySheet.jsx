@@ -135,7 +135,7 @@ export default function CreateEntrySheet() {
         .es-sticker-pick { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; flex-shrink: 0; padding: 0; }
         .es-sticker-btn {
           width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-          background: var(--gradient-primary); box-shadow: var(--shadow-md); flex-shrink: 0;
+          background: var(--primary); color: var(--on-primary); box-shadow: var(--shadow-md); flex-shrink: 0;
           transition: transform var(--transition-fast);
         }
         .es-sticker-pick:active .es-sticker-btn { transform: scale(0.92); }
@@ -198,7 +198,7 @@ export default function CreateEntrySheet() {
         .es-note:focus { border-color: var(--primary); }
 
         .es-save-bar { padding: 12px 20px calc(env(safe-area-inset-bottom,0px) + 14px); border-top: 1px solid var(--outline-variant); flex-shrink: 0; background: var(--surface-container-lowest); }
-        .es-save-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 99px; border: none; cursor: pointer; background: var(--gradient-primary); color: #fff; font-size: var(--text-body-md); font-weight: 800; font-family: var(--font-body); box-shadow: var(--shadow-fab); transition: transform var(--transition-fast); }
+        .es-save-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-size: var(--text-body-md); font-weight: 800; font-family: var(--font-body); box-shadow: var(--shadow-fab); transition: transform var(--transition-fast); }
         .es-save-btn:active { transform: scale(0.98); }
       `}</style>
 
@@ -225,7 +225,7 @@ export default function CreateEntrySheet() {
               <button type="button" className="es-sticker-pick" onClick={() => setPickerOpen(true)} aria-label="Elegir sticker">
                 <span className={`es-sticker-btn${form.sticker ? ' has' : ''}`}
                   style={form.sticker ? { background: form.color } : {}}>
-                  {form.sticker ? <Sticker id={form.sticker} size={38} /> : <Plus size={26} strokeWidth={2.5} color="#fff" />}
+                  {form.sticker ? <Sticker id={form.sticker} size={38} /> : <Plus size={26} strokeWidth={2.5} />}
                 </span>
                 <span className="es-sticker-cap">Sticker</span>
               </button>

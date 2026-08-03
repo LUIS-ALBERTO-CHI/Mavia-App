@@ -16,6 +16,7 @@ import {
   getCachedFCMToken,
 } from '../lib/notificationService';
 import { expandRepeatDates } from '../lib/entryStyle';
+import { applyTheme, getSavedTheme } from '../lib/themes';
 
 /* ============================================
    SEED DATA — only profile is created for new users.
@@ -54,6 +55,20 @@ const emptyDataState = {
   notifications:    [],
 };
 
+/* ── Modo de color: claro | oscuro | sistema ── */
+function _prefersDark() {
+  return typeof window !== 'undefined' && window.matchMedia
+    ? window.matchMedia('(prefers-color-scheme: dark)').matches : false;
+}
+function resolveDark(mode) {
+  if (mode === 'dark') return true;
+  if (mode === 'system') return _prefersDark();
+  return false;
+}
+function initialColorMode() {
+  try { return localStorage.getItem('mavia_colormode') || 'light'; } catch { return 'light'; }
+}
+
 const defaultState = {
   // Auth / session
   authLoading:       true,
@@ -65,7 +80,8 @@ const defaultState = {
   currentScreen:     'splash',
   screenParams:      null,
   screenHistory:     [],
-  darkMode:          false,
+  colorMode:         initialColorMode(),          // 'light' | 'dark' | 'system'
+  darkMode:          resolveDark(initialColorMode()),
   language:          'es',  // 'es' | 'en' | 'fr'
   sideDrawerOpen:    false,
   activeFilter:      'Hoy',
@@ -177,7 +193,15 @@ function reducer(state, action) {
     /* ── UI ── */
     case 'TOGGLE_DRAWER':   return { ...state, sideDrawerOpen: !state.sideDrawerOpen };
     case 'CLOSE_DRAWER':    return { ...state, sideDrawerOpen: false };
-    case 'TOGGLE_DARK_MODE':return { ...state, darkMode: !state.darkMode };
+    case 'TOGGLE_DARK_MODE': {
+      const mode = state.darkMode ? 'light' : 'dark';
+      try { localStorage.setItem('mavia_colormode', mode); } catch {}
+      return { ...state, darkMode: !state.darkMode, colorMode: mode };
+    }
+    case 'SET_COLOR_MODE': {
+      try { localStorage.setItem('mavia_colormode', action.mode); } catch {}
+      return { ...state, colorMode: action.mode, darkMode: resolveDark(action.mode) };
+    }
     case 'SET_LANGUAGE':    return { ...state, language: action.language || 'es' };
     case 'SET_FILTER':      return { ...state, activeFilter: action.filter };
     case 'SHOW_TOAST':      return { ...state, toast: { message: action.message, type: action.toastType || 'default' } };
@@ -407,7 +431,7 @@ export function AppProvider({ children }) {
           },
           data: {
             ...data,
-            darkMode: settings?.darkMode ?? false,
+            darkMode: resolveDark(initialColorMode()),   // modo de color local (claro/oscuro/sistema)
             language: settings?.language ?? 'es',
           },
         });
@@ -511,11 +535,21 @@ export function AppProvider({ children }) {
   }, []);
 
 
-  /* ── Dark mode class sync ────────────────────────────────── */
+  /* ── Dark mode class sync + re-aplicar paleta según el modo ── */
   useEffect(() => {
     document.documentElement.classList.toggle('dark', state.darkMode);
     document.body.classList.toggle('dark', state.darkMode);
+    applyTheme(getSavedTheme());   // el acento del tema se ajusta a claro/oscuro
   }, [state.darkMode]);
+
+  /* ── Modo "sistema": seguir el cambio del sistema operativo ── */
+  useEffect(() => {
+    if (state.colorMode !== 'system' || typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => dispatch({ type: 'SET_COLOR_MODE', mode: 'system' });
+    mq.addEventListener ? mq.addEventListener('change', onChange) : mq.addListener(onChange);
+    return () => { mq.removeEventListener ? mq.removeEventListener('change', onChange) : mq.removeListener(onChange); };
+  }, [state.colorMode]);
 
   /* ── Firestore side-effects (optimistic: UI updates first) ─ */
   const dispatchWithSync = useCallback(async (action) => {
@@ -695,6 +729,7 @@ export function AppProvider({ children }) {
   const openEntrySheet  = (params = {}) => dispatch({ type: 'OPEN_ENTRY_SHEET', params: { date: state.selectedDate || undefined, ...params } });
   const closeEntrySheet = ()            => dispatch({ type: 'CLOSE_ENTRY_SHEET' });
   const setSelectedDate = (date)        => dispatch({ type: 'SET_SELECTED_DATE', date });
+  const setColorMode    = (mode)        => dispatch({ type: 'SET_COLOR_MODE', mode });
 
   /* ── Entradas con series que se repiten ── */
   // Crea una entrada. Si repite, genera las ocurrencias futuras con un seriesId común.
@@ -770,6 +805,7 @@ export function AppProvider({ children }) {
     openEntrySheet,
     closeEntrySheet,
     setSelectedDate,
+    setColorMode,
     createEntry,
     updateEntry,
     deleteEntry,

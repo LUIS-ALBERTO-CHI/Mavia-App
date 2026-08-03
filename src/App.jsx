@@ -20,6 +20,8 @@ import GoalsScreen from './screens/GoalsScreen';
 import CreateGoalScreen from './screens/CreateGoalScreen';
 import JournalScreen from './screens/JournalScreen';
 import SpacesScreen from './screens/SpacesScreen';
+import ThemesScreen from './screens/ThemesScreen';
+import { applyTheme, getSavedTheme } from './lib/themes';
 
 // Screens - Management
 import RemindersScreen from './screens/RemindersScreen';
@@ -63,6 +65,7 @@ const SCREEN_MAP = {
   profile: ProfileScreen,
   settings: SettingsScreen,
   search: SearchScreen,
+  themes: ThemesScreen,
 };
 
 /* ============================================
@@ -95,6 +98,7 @@ const SCREEN_TITLES = {
   profile: 'Mi perfil',
   settings: 'Configuración',
   search: 'Buscar',
+  themes: 'Temas',
 };
 
 /* ============================================
@@ -549,6 +553,14 @@ function MobileTopBar({ onMenuOpen }) {
       <div className="topbar-actions">
         <button
           className="topbar-icon-btn"
+          onClick={() => navigate('themes')}
+          id="topbar-themes"
+          aria-label="Temas"
+        >
+          <span className="material-symbols-outlined">palette</span>
+        </button>
+        <button
+          className="topbar-icon-btn"
           onClick={() => navigate('search')}
           id="topbar-search"
           aria-label="Buscar"
@@ -588,13 +600,15 @@ function MobileBottomNav() {
   const BOTTOM_NAV = [
     { id: 'calendar',  label: 'Calendario', icon: 'calendar_today'  },
     { id: 'notes',     label: 'Notas',      icon: 'edit_note'       },
+    { id: 'goals',     label: 'Objetivos',  icon: 'flag'            },
     { id: 'profile',   label: 'Perfil',     icon: 'person'          },
   ];
 
   const TAB_GROUPS = {
     calendar:  ['calendar', 'entryDetail', 'taskDetail', 'eventDetail', 'reminders'],
     notes:     ['notes', 'journal'],
-    profile:   ['profile', 'settings', 'notifications', 'search', 'goals', 'createGoal', 'spaces'],
+    goals:     ['goals', 'createGoal'],
+    profile:   ['profile', 'settings', 'notifications', 'search', 'spaces', 'themes'],
   };
 
   const activeTab = Object.entries(TAB_GROUPS)
@@ -603,30 +617,39 @@ function MobileBottomNav() {
   return (
     <div className="mobile-bottom-nav-wrapper">
       <nav className="mobile-bottom-nav" role="navigation" aria-label="Navegación principal">
-        {BOTTOM_NAV.map(item => {
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              className={`bottom-nav-item${isActive ? ' active' : ''}`}
-              onClick={() => navigate(item.id)}
-              id={`bnav-${item.id}`}
-              aria-label={item.label}
-              aria-current={isActive ? 'page' : undefined}
-            >
-              <span className="material-symbols-outlined nav-icon">{item.icon}</span>
-              <span className="bottom-nav-label">{item.label}</span>
-            </button>
-          );
-        })}
-      </nav>
+        <div className="bn-group">
+          {BOTTOM_NAV.slice(0, 2).map(item => {
+            const isActive = activeTab === item.id;
+            return (
+              <button key={item.id} className={`bottom-nav-item${isActive ? ' active' : ''}`}
+                onClick={() => navigate(item.id)} id={`bnav-${item.id}`}
+                aria-label={item.label} aria-current={isActive ? 'page' : undefined}>
+                <span className="material-symbols-outlined nav-icon">{item.icon}</span>
+                <span className="bottom-nav-label">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
 
-      {/* FAB — siempre añade una entrada */}
-      {!SCREENS_WITH_OWN_ADD.has(currentScreen) && (
+        {/* FAB centrado — siempre agrega una entrada */}
         <button className="mobile-fab" onClick={() => openEntrySheet()} id="bnav-fab" aria-label="Agregar">
           <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>add</span>
         </button>
-      )}
+
+        <div className="bn-group">
+          {BOTTOM_NAV.slice(2).map(item => {
+            const isActive = activeTab === item.id;
+            return (
+              <button key={item.id} className={`bottom-nav-item${isActive ? ' active' : ''}`}
+                onClick={() => navigate(item.id)} id={`bnav-${item.id}`}
+                aria-label={item.label} aria-current={isActive ? 'page' : undefined}>
+                <span className="material-symbols-outlined nav-icon">{item.icon}</span>
+                <span className="bottom-nav-label">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
@@ -758,6 +781,8 @@ function AppContent() {
    APP ROOT
    ============================================ */
 export default function App() {
+  // Aplica el tema guardado (paleta) al cargar
+  useEffect(() => { applyTheme(getSavedTheme()); }, []);
   return (
     <AppProvider>
       <AppContent />

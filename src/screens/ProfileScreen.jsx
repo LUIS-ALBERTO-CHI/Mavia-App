@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
 import {
   Edit2, Moon, Bell, Shield, HelpCircle,
-  LogOut, ChevronRight, Check, X, Camera, Users
+  LogOut, ChevronRight, Check, X, Camera, Users, Palette
 } from 'lucide-react';
 import { Switch } from '../components/ui/switch';
 import { Button } from '../components/ui/button';
@@ -588,6 +588,20 @@ export default function ProfileScreen() {
               onCheckedChange={() => dispatch({ type: 'TOGGLE_DARK_MODE' })}
               aria-label="Modo oscuro"
             />
+          </div>
+
+          {/* Temas (paletas) */}
+          <div className="prof-row" onClick={() => navigate('themes')} id="prof-themes">
+            <div className="prof-row-left">
+              <div className="prof-row-icon" style={{ background: 'var(--primary-container)' }}>
+                <Palette size={18} color="var(--primary)" strokeWidth={1.75} />
+              </div>
+              <span className="prof-row-label">Temas</span>
+            </div>
+            <div className="prof-row-right">
+              <span>Personalizar</span>
+              <ChevronRight size={16} />
+            </div>
           </div>
 
           {/* Notifications */}

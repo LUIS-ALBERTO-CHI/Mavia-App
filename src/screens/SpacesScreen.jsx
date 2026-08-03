@@ -84,7 +84,7 @@ export default function SpacesScreen() {
         .sp-meta { font-size: var(--text-label-sm); color: var(--on-surface-variant); }
         .sp-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
         .sp-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; }
-        .sp-btn.primary { background: var(--gradient-primary); color: #fff; border: none; }
+        .sp-btn.primary { background: var(--primary); color: var(--on-primary); border: none; }
         .sp-btn.danger { color: var(--error); border-color: var(--error-container); }
         .sp-swatches { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
         .sp-swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform var(--transition-fast); box-shadow: var(--shadow-sm); }

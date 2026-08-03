@@ -365,12 +365,12 @@ export default function CalendarScreen() {
         /* ── Empty ── */
         .cal-empty { text-align: center; padding: var(--space-lg) var(--space-md); min-height: 58vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
         .cal-empty p { color: var(--on-surface-variant); font-size: var(--text-body-md); }
-        .cal-empty-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 99px; background: var(--gradient-primary); color: #fff; border: none; cursor: pointer; font-weight: 800; font-size: 14px; }
+        .cal-empty-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 99px; background: var(--primary); color: var(--on-primary); border: none; cursor: pointer; font-weight: 800; font-size: 14px; }
 
         /* ── ＋ para agregar en el día tocado (con onda) — paleta Mavia ── */
         .cal-cell.adding { background: var(--primary-container, #e6e1f7); box-shadow: inset 0 0 0 2px var(--primary, #8478c8); border-radius: 8px; }
         .cal-add-fab { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; z-index: 4;
-          background: var(--gradient-primary); color: #fff; display: flex; align-items: center; justify-content: center;
+          background: var(--primary); color: var(--on-primary); display: flex; align-items: center; justify-content: center;
           box-shadow: 0 6px 16px -4px rgba(140,150,220,0.55), 0 2px 4px rgba(90,80,130,0.28);
           animation: calFabPop 0.3s var(--ease-spring, cubic-bezier(0.22,1,0.36,1)) both; }
         .cal-add-fab:active { transform: translate(-50%,-50%) scale(0.9); }

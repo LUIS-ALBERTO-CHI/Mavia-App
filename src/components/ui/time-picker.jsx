@@ -515,7 +515,7 @@ function CustomTimeModal({ onClose, onConfirm, initialSlot }) {
             type="button" onClick={handleConfirm}
             style={{
               width: '100%', padding: '15px', borderRadius: 99,
-              background: 'var(--gradient-primary)', color: 'white',
+              background: 'var(--primary)', color: 'white',
               border: 'none', cursor: 'pointer',
               fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-body)',
               letterSpacing: '0.02em',
@@ -665,7 +665,7 @@ const TP_STYLES = `
   .tp-confirm {
     width: 100%; padding: 14px;
     border-radius: var(--radius-full);
-    background: var(--gradient-primary); color: white;
+    background: var(--primary); color: var(--on-primary);
     font-size: 15px; font-weight: 700;
     border: none; cursor: pointer;
     transition: all var(--transition-spring); letter-spacing: 0.02em;
