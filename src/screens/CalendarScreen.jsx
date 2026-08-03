@@ -302,7 +302,7 @@ export default function CalendarScreen() {
 
         /* ── Month grid — enmarcado como tarjeta ── */
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--cal-line); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow-card); background: var(--surface-container-lowest); }
-        .cal-cell { border-right: 1px solid var(--cal-line); border-bottom: 1px solid var(--cal-line); min-height: 0; padding: 6px 5px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; overflow: hidden; transition: background var(--transition-fast); }
+        .cal-cell { position: relative; border-right: 1px solid var(--cal-line); border-bottom: 1px solid var(--cal-line); min-height: 0; padding: 6px 5px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; overflow: hidden; transition: background var(--transition-fast); }
         .cal-cell:nth-child(7n) { border-right: none; }
         @media (min-width: 900px) { .cal-cell { padding: 8px 7px; } }
         .cal-cell:hover { background: var(--surface-container-low); }
