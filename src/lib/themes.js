@@ -12,6 +12,23 @@ export const THEMES = [
     "tokens": {}
   },
   {
+  "id": "keroppi",
+  "name": "Keroppi",
+  "gradient": "linear-gradient(135deg, #94B16F, #B3D07E, #BEDA9D, #E4F1D7)",
+  "tokens": {
+    "--primary": "#94B16F",
+    "--on-primary": "#FFFFFF",
+    "--surface-tint": "#94B16F",
+    "--gradient-primary": "linear-gradient(135deg, #94B16F, #B3D07E, #BEDA9D, #E4F1D7)",
+    "--gradient-lime": "linear-gradient(135deg, #94B16F, #B3D07E)",
+    "--lime": "#B3D07E",
+    "--on-lime": "#26351F",
+    "--primary-container": "#E4F1D7",
+    "--on-primary-container": "#536B3D",
+    "--lime-container": "#BEDA9D"
+  }
+},
+  {
     "id": "strawberry-bunny",
     "name": "Strawberry Bunny",
     "gradient": "linear-gradient(135deg, #FF6FAE, #FFC1DA, #FFF1F7, #B7F48B)",
@@ -196,23 +213,6 @@ export const THEMES = [
       "--primary-container": "#FFF0F8",
       "--on-primary-container": "#FF82C7",
       "--lime-container": "#FFF0F8"
-    }
-  },
-  {
-    "id": "frog-matcha",
-    "name": "Frog Matcha",
-    "gradient": "linear-gradient(135deg, #7CD67C, #C8F0B2, #FAFFF2, #8EDFE0)",
-    "tokens": {
-      "--primary": "#7CD67C",
-      "--on-primary": "#ffffff",
-      "--surface-tint": "#7CD67C",
-      "--gradient-primary": "linear-gradient(135deg, #7CD67C, #C8F0B2, #FAFFF2, #8EDFE0)",
-      "--gradient-lime": "linear-gradient(135deg, #7CD67C, #C8F0B2)",
-      "--lime": "#C8F0B2",
-      "--on-lime": "#22203a",
-      "--primary-container": "#FAFFF2",
-      "--on-primary-container": "#7CD67C",
-      "--lime-container": "#FAFFF2"
     }
   }
 ];
