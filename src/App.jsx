@@ -12,7 +12,6 @@ import LoginScreen from './screens/LoginScreen';
 import SetupProfileScreen from './screens/SetupProfileScreen';
 
 // Screens - Main
-import DashboardScreen from './screens/DashboardScreen';
 import AgendaScreen from './screens/AgendaScreen';
 import CalendarScreen from './screens/CalendarScreen';
 import EntryDetailScreen from './screens/EntryDetailScreen';
@@ -50,7 +49,6 @@ const SCREEN_MAP = {
   register: RegisterScreen,
   login: LoginScreen,
   'setup-profile': SetupProfileScreen,
-  dashboard: DashboardScreen,
   agenda: AgendaScreen,
   calendar: CalendarScreen,
   // Detalle de entrada (crear/editar es un bottom sheet, no una pantalla)
@@ -88,7 +86,6 @@ const SCREENS_WITH_OWN_ADD = new Set([
 const DETAIL_SCREENS = new Set(['entryDetail', 'taskDetail', 'eventDetail', 'createGoal']);
 
 const SCREEN_TITLES = {
-  dashboard: 'Mavia',
   agenda: 'Agenda del día',
   calendar: 'Calendario',
   entryDetail: 'Detalle',
@@ -533,7 +530,6 @@ function MobileTopBar({ onMenuOpen }) {
   const { state, navigate } = useApp();
   const { currentScreen, notifications } = state;
   const unread  = notifications.filter(n => !n.read).length;
-  const isHome  = currentScreen === 'dashboard';
   const title   = SCREEN_TITLES[currentScreen] || 'Mavia';
 
   return (
@@ -550,13 +546,9 @@ function MobileTopBar({ onMenuOpen }) {
           <span className="material-symbols-outlined">menu</span>
         </button>
 
-        {isHome ? (
-          <span className="topbar-brand">Mavia</span>
-        ) : (
-          <span className="topbar-brand" style={{ fontSize: 'var(--text-headline-md)', fontFamily: 'var(--font-body)' }}>
-            {title}
-          </span>
-        )}
+        <span className="topbar-brand" style={{ fontSize: 'var(--text-headline-md)', fontFamily: 'var(--font-body)' }}>
+          {title}
+        </span>
         <ConnDot />
       </div>
       <div className="topbar-actions">
@@ -605,13 +597,13 @@ function MobileBottomNav() {
   ];
 
   const TAB_GROUPS = {
-    calendar:  ['calendar', 'dashboard', 'agenda', 'entryDetail', 'taskDetail', 'eventDetail', 'reminders'],
+    calendar:  ['calendar', 'agenda', 'entryDetail', 'taskDetail', 'eventDetail', 'reminders'],
     notes:     ['notes', 'journal'],
     profile:   ['profile', 'settings', 'notifications', 'search', 'goals', 'createGoal', 'spaces'],
   };
 
   const activeTab = Object.entries(TAB_GROUPS)
-    .find(([, screens]) => screens.includes(currentScreen))?.[0] || 'dashboard';
+    .find(([, screens]) => screens.includes(currentScreen))?.[0] || 'calendar';
 
   return (
     <div className="mobile-bottom-nav-wrapper">
@@ -743,7 +735,7 @@ function AppContent() {
       {/* Main scrollable content — keyed to trigger re-animation on screen change */}
       <main className="app-main">
         <div key={currentScreen} className={animClass}>
-          <ErrorBoundary onReset={() => state.navigate?.('dashboard')}>
+          <ErrorBoundary onReset={() => state.navigate?.('calendar')}>
             <Screen />
           </ErrorBoundary>
         </div>

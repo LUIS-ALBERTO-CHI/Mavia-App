@@ -548,7 +548,8 @@ export function AppProvider({ children }) {
         case 'ADD_TASK': {
           const task = enrichedAction.task;
           await persistTask(task);
-          if (task.reminder && !isSpaceEntry(task)) {
+          // Recordatorio también para entradas de espacio (avisa a quien lo configura)
+          if (task.reminder) {
             const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
             scheduleTaskReminder(task, uid, token);
           }
@@ -560,7 +561,7 @@ export function AppProvider({ children }) {
           if (existingTask) {
             const nowCompleted = !existingTask.completed;
             await persistTask({ ...existingTask, completed: nowCompleted });
-            if (nowCompleted && !isSpaceEntry(existingTask)) cancelReminder(enrichedAction.id, uid);
+            if (nowCompleted) cancelReminder(enrichedAction.id, uid);
             // Las series ahora se generan por adelantado (ver createEntry); no se regenera al completar.
           }
           break;
@@ -575,15 +576,13 @@ export function AppProvider({ children }) {
               await removeTask(existingTask);
             }
             await persistTask(updated);
-            if (!isSpaceEntry(updated)) {
-              if (updated.reminder && !updated.completed) {
-                // Reprogramar: el upsert (docId determinista) sobreescribe el aviso anterior.
-                const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
-                scheduleTaskReminder(updated, uid, token);
-              } else {
-                // Recordatorio apagado/completado → borrar el aviso programado.
-                cancelReminder(updated.id, uid);
-              }
+            if (updated.reminder && !updated.completed) {
+              // Reprogramar: el upsert (docId determinista) sobreescribe el aviso anterior.
+              const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
+              scheduleTaskReminder(updated, uid, token);
+            } else {
+              // Recordatorio apagado/completado → borrar el aviso programado.
+              cancelReminder(updated.id, uid);
             }
           }
           break;
@@ -593,7 +592,7 @@ export function AppProvider({ children }) {
           const existingTask = state.tasks.find(t => t.id === enrichedAction.id);
           if (existingTask) await removeTask(existingTask);
           else await deleteTask(uid, enrichedAction.id);
-          if (!existingTask || !isSpaceEntry(existingTask)) cancelReminder(enrichedAction.id, uid);
+          cancelReminder(enrichedAction.id, uid);
           break;
         }
 

@@ -48,7 +48,7 @@ export default function NotFoundScreen() {
       </p>
 
       <button
-        onClick={() => navigate('dashboard')}
+        onClick={() => navigate('calendar')}
         id="not-found-home"
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 8,

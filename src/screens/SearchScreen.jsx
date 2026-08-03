@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
 import { Search, CheckCircle2, Calendar, BookOpen, Target, Clock, MapPin, TrendingUp, X, History } from 'lucide-react';
 import { formatTime12h } from '../lib/utils';
+import { progressOf } from '../lib/goalUtils';
 
 const HISTORY_KEY = 'mavia_search_history';
 const MAX_HISTORY = 5;
@@ -451,7 +452,7 @@ export default function SearchScreen() {
                               {item.category}
                             </span>
                             <span style={{ display:'flex', alignItems:'center', gap:3 }}>
-                              <TrendingUp size={12} /> {item.progress}%
+                              <TrendingUp size={12} /> {progressOf(item)}%
                             </span>
                           </>
                         )}
