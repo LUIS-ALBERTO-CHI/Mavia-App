@@ -3,10 +3,9 @@
  * Usage: t('nav.home') → string in current language, falls back to ES.
  */
 
+// App solo en español.
 export const LANGUAGES = [
-  { code: 'es', label: 'Español',  flag: '🇪🇸' },
-  { code: 'en', label: 'English',  flag: '🇺🇸' },
-  { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
 ];
 
 export const TRANSLATIONS = {

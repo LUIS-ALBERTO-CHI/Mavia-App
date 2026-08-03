@@ -12,18 +12,15 @@ import { translate } from '../lib/i18n';
  *   t('auth.welcome', { name }) → 'Bienvenida, María'
  */
 export function useTranslation() {
-  const { state, dispatch } = useApp();
-  const lang = state.language || 'es';
+  // App solo en español. Se ignora cualquier idioma guardado.
+  const lang = 'es';
 
   const t = useCallback(
-    (key, params) => translate(lang, key, params),
-    [lang]
+    (key, params) => translate('es', key, params),
+    []
   );
 
-  const setLang = useCallback(
-    (code) => dispatch({ type: 'SET_LANGUAGE', language: code }),
-    [dispatch]
-  );
+  const setLang = useCallback(() => {}, []);   // no-op (sin selector de idioma)
 
   return { t, lang, setLang };
 }

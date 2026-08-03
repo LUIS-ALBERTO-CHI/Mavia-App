@@ -2,10 +2,9 @@ import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
-import { LANGUAGES } from '../lib/i18n';
 import { Switch } from '../components/ui/switch';
 import {
-  Bell, Calendar, Brain, Repeat2, Moon, Globe, Clock,
+  Bell, Calendar, Brain, Repeat2, Moon, Clock,
   RefreshCw, Download, Upload, Lock, ShieldCheck, LogOut,
   ChevronRight, Settings, Eye, EyeOff, X, Check
 } from 'lucide-react';
@@ -44,7 +43,7 @@ function SettingGroup({ title, children }) {
 
 export default function SettingsScreen() {
   const { state, dispatch, showToast } = useApp();
-  const { t, lang, setLang } = useTranslation();
+  const { t } = useTranslation();
   const [permStatus, setPermStatus] = useState(() =>
     'Notification' in window ? Notification.permission : 'unsupported'
   );
@@ -374,32 +373,6 @@ export default function SettingsScreen() {
             id="set-dark"
             right={<Switch checked={state.darkMode} onCheckedChange={() => dispatch({ type: 'TOGGLE_DARK_MODE' })} id="sw-dark" />}
           />
-          {/* Language — full width row outside SettingRow */}
-          <div className="stg-lang-row">
-            <div className="stg-lang-row-top">
-              <div className="stg-lang-icon">
-                <Globe size={18} color="var(--on-surface-variant)" />
-              </div>
-              <div>
-                <div className="stg-lang-label">{t('settings.language')}</div>
-                <div className="stg-lang-sub">{t('settings.languageLabel')}</div>
-              </div>
-            </div>
-            <div className="stg-lang-pills">
-              {LANGUAGES.map(l => (
-                <button
-                  key={l.code}
-                  className={`stg-lang-pill${lang === l.code ? ' active' : ''}`}
-                  onClick={() => setLang(l.code)}
-                  id={`set-lang-${l.code}`}
-                  title={l.label}
-                >
-                  <span className="flag">{l.flag}</span>
-                  <span>{l.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
           <SettingRow
             icon={Clock} iconBg="var(--surface-container)"
             label={t('common.time')}
