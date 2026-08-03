@@ -4,6 +4,11 @@ import { useApp } from '../context/AppContext';
 import { Plus, X, Check, Pin, Trash2, Sparkles } from 'lucide-react';
 import Sticker, { STICKERS, STICKER_CATEGORIES } from '../components/Sticker';
 import Mascot from '../components/Mascot';
+import { CalendarDays } from 'lucide-react';
+import { localToday } from '../lib/utils';
+
+const MONTHS_CAP = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const monthLabel = (ym) => { const [y, m] = (ym || '').split('-'); return m ? `${MONTHS_CAP[+m - 1]} ${y}` : ''; };
 
 /* Colores de post-it (papel) */
 const POSTIT_COLORS = ['#FDE68A', '#BBF7D0', '#FBCFE8', '#BFDBFE', '#FED7AA', '#DDD6FE'];
@@ -16,12 +21,12 @@ function tiltOf(id) {
   return (h % 5) - 2; // -2..2 grados
 }
 
-/* Posición de cada sticker de decoración (hasta 4 esquinas) */
+/* Posición de cada sticker de decoración (hasta 4 esquinas) — poco desborde para no cortarse */
 const CORNERS = [
-  { top: -12, left: -10 },
-  { top: -12, right: -10 },
-  { bottom: -12, left: -10 },
-  { bottom: -12, right: -10 },
+  { top: -8, left: -6 },
+  { top: -8, right: -6 },
+  { bottom: -8, left: -6 },
+  { bottom: -8, right: -6 },
 ];
 
 export default function JournalScreen() {
@@ -36,8 +41,9 @@ export default function JournalScreen() {
     String(b.createdAt || b.id || '').localeCompare(String(a.createdAt || a.id || ''))
   );
 
-  const openNew  = () => { setStickerCat(STICKER_CATEGORIES[0]?.id || null); setEditing({ text: '', color: DEFAULT_POSTIT, done: false, pinned: false, stickers: [] }); };
-  const openEdit = (n) => setEditing({ id: n.id, text: n.text ?? n.content ?? '', color: n.color || DEFAULT_POSTIT, done: !!n.done, pinned: !!n.pinned, stickers: n.stickers || [] });
+  const calMonth = (state.selectedDate || localToday()).slice(0, 7);
+  const openNew  = () => { setStickerCat(STICKER_CATEGORIES[0]?.id || null); setEditing({ text: '', color: DEFAULT_POSTIT, done: false, pinned: false, stickers: [], cal: null }); };
+  const openEdit = (n) => setEditing({ id: n.id, text: n.text ?? n.content ?? '', color: n.color || DEFAULT_POSTIT, done: !!n.done, pinned: !!n.pinned, stickers: n.stickers || [], cal: n.cal || null });
 
   const set = (k, v) => setEditing(e => ({ ...e, [k]: v }));
   const toggleSticker = (sid) => setEditing(e => {
@@ -49,6 +55,7 @@ export default function JournalScreen() {
 
   const save = () => {
     if (!editing.text.trim()) { showToast('Escribe algo', 'error'); return; }
+    const orig = editing.id ? notes.find(n => n.id === editing.id) : null;
     const note = {
       id: editing.id || `note_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       text: editing.text.trim(),
@@ -56,7 +63,9 @@ export default function JournalScreen() {
       done: editing.done,
       pinned: editing.pinned,
       stickers: editing.stickers,
-      createdAt: editing.id ? undefined : new Date().toISOString(),
+      cal: editing.cal || null,
+      // Firestore NO acepta undefined → siempre una fecha válida (preserva la original al editar)
+      createdAt: orig?.createdAt || new Date().toISOString(),
     };
     dispatch({ type: editing.id ? 'UPDATE_NOTE' : 'ADD_NOTE', note });
     showToast(editing.id ? 'Guardado' : '¡Nota creada!', 'success');
@@ -72,7 +81,7 @@ export default function JournalScreen() {
   return (
     <>
       <style>{`
-        .nt-screen { max-width: 820px; margin: 0 auto; padding: var(--space-md) var(--space-container) var(--space-8); animation: screenEnter 0.4s var(--ease-out) both; }
+        .nt-screen { max-width: 820px; margin: 0 auto; padding: var(--space-md) var(--space-container) var(--space-8); animation: screenEnter 0.4s var(--ease-out) both; overflow-x: hidden; }
         .nt-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
         .nt-title { font-family: var(--font-display); font-size: var(--text-headline-lg); font-weight: 800; color: var(--heading); }
         .nt-sub { font-size: var(--text-body-md); color: var(--on-surface-variant); margin-top: 2px; }
@@ -219,6 +228,14 @@ export default function JournalScreen() {
                 <div className="nte-row-l"><Pin size={16} /> Fijar arriba</div>
                 <button type="button" className={`nte-toggle ${editing.pinned ? 'on' : 'off'}`} onClick={() => set('pinned', !editing.pinned)} aria-label="Fijar" />
               </div>
+              <div className="nte-row" style={{ paddingTop: 0 }}>
+                <div className="nte-row-l"><CalendarDays size={16} /> En el calendario
+                  {editing.cal && <span style={{ fontWeight: 500, color: 'var(--outline)', marginLeft: 4 }}>· {monthLabel(editing.cal.month)}</span>}
+                </div>
+                <button type="button" className={`nte-toggle ${editing.cal ? 'on' : 'off'}`}
+                  onClick={() => set('cal', editing.cal ? null : { month: calMonth, x: 0.5, y: 0.45 })} aria-label="En el calendario" />
+              </div>
+              {editing.cal && <p style={{ fontSize: 12, color: 'var(--outline)', margin: '2px 0 6px' }}>Aparece en {monthLabel(editing.cal.month)}. Arrástrala en el calendario para colocarla.</p>}
 
               {/* Decorar con stickers */}
               <div className="nte-label"><Sparkles size={16} /> Decorar <span style={{ fontWeight: 500, color: 'var(--outline)' }}>· máx 4</span></div>

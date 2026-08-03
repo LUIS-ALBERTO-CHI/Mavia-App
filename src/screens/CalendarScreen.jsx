@@ -38,6 +38,61 @@ function useTouchSwipe(onLeft, onRight, threshold = 50) {
   return { onTouchStart, onTouchEnd };
 }
 
+/* Inclinación determinista por id (post-it) */
+function tiltOf(id) {
+  let h = 0;
+  for (const c of String(id || '')) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return (h % 5) - 2;
+}
+
+/* Post-it arrastrable sobre el calendario */
+function CalendarPostit({ note, wrapRef, onCommit, onTap }) {
+  const [pos, setPos] = useState({ x: note.cal?.x ?? 0.5, y: note.cal?.y ?? 0.45 });
+  const drag = useRef(null);
+  useEffect(() => { setPos({ x: note.cal?.x ?? 0.5, y: note.cal?.y ?? 0.45 }); }, [note.cal?.x, note.cal?.y]);
+
+  const onDown = (e) => {
+    e.stopPropagation();
+    const rect = wrapRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    drag.current = { rect, moved: 0, lastX: e.clientX, lastY: e.clientY, x: pos.x, y: pos.y };
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+  };
+  const onMove = (e) => {
+    const d = drag.current; if (!d) return;
+    d.moved += Math.abs(e.clientX - d.lastX) + Math.abs(e.clientY - d.lastY);
+    d.lastX = e.clientX; d.lastY = e.clientY;
+    d.x = Math.min(0.98, Math.max(0.02, (e.clientX - d.rect.left) / d.rect.width));
+    d.y = Math.min(0.98, Math.max(0.02, (e.clientY - d.rect.top) / d.rect.height));
+    setPos({ x: d.x, y: d.y });
+  };
+  const onUp = () => {
+    const d = drag.current; if (!d) return; drag.current = null;
+    if (d.moved < 6) onTap(note);
+    else onCommit(note, d.x, d.y);
+  };
+
+  const text  = note.text ?? note.content ?? '';
+  const decos = (note.stickers || []).slice(0, 4);
+  const POS = [{ top: -8, left: -6 }, { top: -8, right: -6 }, { bottom: -8, left: -6 }, { bottom: -8, right: -6 }];
+  return (
+    <div className={`cal-postit${note.done ? ' done' : ''}`}
+      style={{ left: `${pos.x * 100}%`, top: `${pos.y * 100}%`, background: note.color || '#FDE68A', transform: `translate(-50%,-50%) rotate(${tiltOf(note.id)}deg)` }}
+      onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
+      {note.done && (
+        <svg className="cal-postit-stamp" width="22" height="22" viewBox="0 0 30 30" fill="none">
+          <circle cx="15" cy="15" r="12" stroke="var(--error)" strokeWidth="2.5" />
+          <path d="M9 15 l4 4 l8 -9" stroke="var(--error)" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+      {decos.map((sid, i) => (
+        <span key={sid} className="cal-postit-deco" style={POS[i]}><Sticker id={sid} size={24} /></span>
+      ))}
+      <div className="cal-postit-text">{text}</div>
+    </div>
+  );
+}
+
 export default function CalendarScreen() {
   const { state, navigate, dispatch, openEntrySheet, setCurrentSpace, setSelectedDate } = useApp();
   const now = new Date();
@@ -74,6 +129,12 @@ export default function CalendarScreen() {
 
   /* El día activo alimenta el ＋ global (agenda de papel: agrega en el día seleccionado) */
   useEffect(() => { setSelectedDate(selDS); }, [selDS]);
+
+  /* Post-its del mural fijados en este mes (arrastrables sobre el grid) */
+  const gridWrapRef = useRef(null);
+  const monthStr    = `${viewYear}-${pad(viewMonth + 1)}`;
+  const monthNotes  = (state.journalEntries || []).filter(n => n.cal?.month === monthStr);
+  const commitPostit = (note, x, y) => dispatch({ type: 'UPDATE_NOTE', note: { ...note, cal: { ...note.cal, x, y } } });
 
   /* ── Navegación por unidad de la vista ── */
   const prevMonth = () => slide('right', () => {
@@ -197,7 +258,8 @@ export default function CalendarScreen() {
         .cal-segs { display: flex; background: var(--surface-container); border-radius: 13px; padding: 3px; gap: 2px; margin-bottom: 12px; box-shadow: inset 0 1px 3px rgba(90,80,130,0.07); }
 
         /* Selector de espacio */
-        .cal-spaces { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+        .cal-spaces { display: flex; flex-wrap: nowrap; gap: 8px; margin-bottom: 10px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; margin-left: calc(-1 * var(--space-container)); margin-right: calc(-1 * var(--space-container)); padding: 0 var(--space-container) 2px; }
+        .cal-spaces::-webkit-scrollbar { display: none; }
         .cal-space { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 99px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .cal-space.active { border-color: var(--primary); background: var(--primary); color: var(--on-primary); box-shadow: 0 2px 8px -2px rgba(140,150,220,0.5); }
         /* Filtro de clientes */
@@ -213,8 +275,21 @@ export default function CalendarScreen() {
         .cal-view.slide-right { opacity: 0; transform: translateX(14px); }
         /* Mes: se ajusta al alto disponible (nunca queda tras la nav) y nunca colapsa vacío */
         .cal-view.is-month { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+        .cal-view.is-month .cal-grid-wrap { flex: 1; min-height: 0; display: flex; }
         .cal-view.is-month .cal-grid { flex: 1; min-height: 0; grid-auto-rows: minmax(72px, 1fr); }
         @media (min-width: 900px) { .cal-view.is-month .cal-grid { grid-auto-rows: minmax(104px, 1fr); } }
+
+        /* Post-its arrastrables sobre el calendario */
+        .cal-grid-wrap { position: relative; }
+        .cal-postit-layer { position: absolute; inset: 0; pointer-events: none; z-index: 6; }
+        .cal-postit { position: absolute; pointer-events: auto; width: 42%; max-width: 230px; padding: 9px 11px 11px; border-radius: 9px;
+          box-shadow: 0 6px 16px -6px rgba(90,80,130,0.42), 0 1px 2px rgba(90,80,130,0.18);
+          cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+        .cal-postit:active { cursor: grabbing; }
+        .cal-postit-text { font-family: var(--font-body); font-size: 12.5px; font-weight: 700; line-height: 1.35; color: #3d3a4e; white-space: pre-wrap; word-break: break-word; max-height: 5.4em; overflow: hidden; }
+        .cal-postit.done .cal-postit-text { opacity: 0.55; text-decoration: line-through; text-decoration-color: rgba(226,85,122,0.7); }
+        .cal-postit-stamp { position: absolute; top: 4px; right: 5px; transform: rotate(10deg); }
+        .cal-postit-deco { position: absolute; z-index: 2; pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.18)); }
 
         /* ── Weekday header ── */
         .cal-dow { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 6px; }
@@ -334,6 +409,7 @@ export default function CalendarScreen() {
           {viewMode === 'month' && (
             <>
               <div className="cal-dow">{['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'].map(d => <div key={d}>{d}</div>)}</div>
+              <div className="cal-grid-wrap" ref={gridWrapRef}>
               <div className="cal-grid" id="cal-month-grid">
                 {Array.from({ length: totalCells }).map((_, idx) => {
                   const cellDay     = idx - firstDay + 1;
@@ -373,6 +449,15 @@ export default function CalendarScreen() {
                     </div>
                   );
                 })}
+              </div>
+              {monthNotes.length > 0 && (
+                <div className="cal-postit-layer">
+                  {monthNotes.map(n => (
+                    <CalendarPostit key={n.id} note={n} wrapRef={gridWrapRef}
+                      onCommit={commitPostit} onTap={() => navigate('journal')} />
+                  ))}
+                </div>
+              )}
               </div>
             </>
           )}
