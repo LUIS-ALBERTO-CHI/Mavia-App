@@ -30,7 +30,7 @@ const CORNERS = [
 ];
 
 export default function JournalScreen() {
-  const { state, dispatch, showToast } = useApp();
+  const { state, dispatch, showToast, deleteWithUndo } = useApp();
   const notes = state.journalEntries || [];
 
   const [editing, setEditing] = useState(null);  // null | {id?, ...form}
@@ -82,8 +82,7 @@ export default function JournalScreen() {
   };
 
   const remove = () => {
-    if (editing?.id) dispatch({ type: 'DELETE_NOTE', id: editing.id });
-    showToast('Nota eliminada');
+    if (editing?.id) deleteWithUndo('note', editing.id);   // toast "Eliminada · Deshacer"
     setEditing(null);
   };
 

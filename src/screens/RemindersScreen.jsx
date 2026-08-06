@@ -34,7 +34,7 @@ function dayLabel(dateStr) {
 }
 
 export default function RemindersScreen() {
-  const { state, dispatch, navigate, showToast, openEntrySheet } = useApp();
+  const { state, dispatch, navigate, showToast, openEntrySheet, deleteWithUndo } = useApp();
   const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState('Todos');
   const [search, setSearch] = useState('');
@@ -66,9 +66,7 @@ export default function RemindersScreen() {
   const upcomingItems = filtered.filter(item => item.date !== todayStr);
 
   const handleDelete = (id) => {
-    dispatch({ type: 'DELETE_TASK', id });
-    showToast(t('common.deleted'));
-
+    deleteWithUndo('task', id);   // toast "Eliminada · Deshacer"
     setConfirmId(null);
   };
 

@@ -21,6 +21,7 @@ import CreateGoalScreen from './screens/CreateGoalScreen';
 import JournalScreen from './screens/JournalScreen';
 import SpacesScreen from './screens/SpacesScreen';
 import ThemesScreen from './screens/ThemesScreen';
+import ClientDetailScreen from './screens/ClientDetailScreen';
 import { applyTheme, getSavedTheme } from './lib/themes';
 
 // Screens - Management
@@ -66,6 +67,7 @@ const SCREEN_MAP = {
   settings: SettingsScreen,
   search: SearchScreen,
   themes: ThemesScreen,
+  client: ClientDetailScreen,
 };
 
 /* ============================================
@@ -99,6 +101,7 @@ const SCREEN_TITLES = {
   settings: 'Configuración',
   search: 'Buscar',
   themes: 'Temas',
+  client: 'Cliente',
 };
 
 /* ============================================
@@ -607,7 +610,7 @@ function MobileBottomNav() {
   ];
 
   const TAB_GROUPS = {
-    calendar:  ['calendar', 'entryDetail', 'taskDetail', 'eventDetail', 'reminders'],
+    calendar:  ['calendar', 'entryDetail', 'taskDetail', 'eventDetail', 'reminders', 'client'],
     notes:     ['notes', 'journal'],
     goals:     ['goals', 'createGoal'],
     profile:   ['profile', 'settings', 'notifications', 'search', 'spaces', 'themes'],
@@ -695,6 +698,11 @@ function Toast() {
       <div className={`toast toast-v2 ${type}`}>
         <span className="toast-icon">{icons[type] || icons.default}</span>
         <span className="toast-msg">{toast.message}</span>
+        {toast.action && (
+          <button className="toast-action" onClick={toast.action.run} id="toast-action">
+            {toast.action.label}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -704,7 +712,7 @@ function Toast() {
    APP CONTENT
    ============================================ */
 function AppContent() {
-  const { state } = useApp();
+  const { state, navigate, openEntrySheet, closeEntrySheet } = useApp();
   const { currentScreen, darkMode, authLoading } = state;
   const prevScreenRef = useRef(currentScreen);
   const [animClass, setAnimClass] = useState('screen-enter');
@@ -718,6 +726,69 @@ function AppContent() {
     // Close drawer on screen change
     setDrawerOpen(false);
   }, [currentScreen]);
+
+  /* ── Atajos de teclado (desktop): N nueva entrada · / buscar · ←→ navegar mes · Esc cierra ── */
+  const kbRef = useRef({});
+  kbRef.current = { currentScreen, entryOpen: !!state.entrySheet, authed: !AUTH_SCREENS.has(currentScreen) };
+  useEffect(() => {
+    const onKey = (e) => {
+      const k = kbRef.current;
+      if (!k.authed) return;
+      if (e.key === 'Escape') { if (k.entryOpen) closeEntrySheet(); return; }
+      const el = document.activeElement;
+      const typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+      if (typing || e.metaKey || e.ctrlKey || e.altKey || k.entryOpen) return;
+      if (e.key === 'n' || e.key === 'N') { e.preventDefault(); openEntrySheet(); }
+      else if (e.key === '/') { e.preventDefault(); navigate('search'); }
+      else if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && k.currentScreen === 'calendar') {
+        window.dispatchEvent(new CustomEvent('mavia:cal-nav', { detail: e.key === 'ArrowLeft' ? -1 : 1 }));
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  /* ── Pull-to-refresh (móvil): confirma que todo está sincronizado ── */
+  const mainRef = useRef(null);
+  const ptrRef  = useRef({ y: 0, on: false });
+  const [ptrPull, setPtrPull] = useState(0);
+  const [ptrBusy, setPtrBusy] = useState(false);
+  const onPtrStart = (e) => {
+    if ((mainRef.current?.scrollTop || 0) <= 0 && !ptrBusy) ptrRef.current = { y: e.touches[0].clientY, on: true };
+  };
+  const onPtrMove = (e) => {
+    const p = ptrRef.current;
+    if (!p.on) return;
+    const dy = e.touches[0].clientY - p.y;
+    if (dy > 6 && (mainRef.current?.scrollTop || 0) <= 0) setPtrPull(Math.min(84, dy * 0.45));
+    else if (dy < 0) { p.on = false; setPtrPull(0); }
+  };
+  const onPtrEnd = async () => {
+    const pulled = ptrPull;
+    ptrRef.current.on = false;
+    if (pulled > 60) {
+      setPtrBusy(true);
+      const { haptic } = await import('./lib/haptics');
+      haptic(10);
+      setPtrPull(46);
+      // El sync es realtime (onSnapshot): el gesto confirma que estás al día
+      setTimeout(() => { setPtrBusy(false); setPtrPull(0); }, 700);
+    } else {
+      setPtrPull(0);
+    }
+  };
+
+  /* ── Shortcuts del PWA: /?action=new-entry | new-note (long-press del icono) ── */
+  const pwaActionDone = useRef(false);
+  useEffect(() => {
+    if (authLoading || pwaActionDone.current || AUTH_SCREENS.has(currentScreen)) return;
+    const action = new URLSearchParams(window.location.search).get('action');
+    pwaActionDone.current = true;
+    if (!action) return;
+    window.history.replaceState({}, '', window.location.pathname);
+    if (action === 'new-entry') openEntrySheet();
+    else if (action === 'new-note') navigate('notes');
+  }, [authLoading, currentScreen]);
 
   // While Firebase checks the existing session, show splash
   if (authLoading) {
@@ -753,7 +824,17 @@ function AppContent() {
       <MobileSideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* Main scrollable content — keyed to trigger re-animation on screen change */}
-      <main className="app-main">
+      <main className="app-main" ref={mainRef}
+        onTouchStart={onPtrStart} onTouchMove={onPtrMove} onTouchEnd={onPtrEnd}>
+        {ptrPull > 0 && (
+          <div className="ptr-spin" style={{ height: ptrPull, opacity: Math.min(1, ptrPull / 60) }}>
+            <span className={`ptr-icon${ptrPull > 60 ? ' go' : ''}${ptrBusy ? ' spin' : ''}`}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                <path d="M21 12a9 9 0 1 1-3-6.7" /><polyline points="21 3 21 9 15 9" />
+              </svg>
+            </span>
+          </div>
+        )}
         <div key={currentScreen} className={animClass}>
           <ErrorBoundary onReset={() => state.navigate?.('calendar')}>
             <Screen />

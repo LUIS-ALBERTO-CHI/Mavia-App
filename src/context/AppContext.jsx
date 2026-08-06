@@ -1,4 +1,5 @@
-import { createContext, useContext, useReducer, useEffect, useLayoutEffect, useCallback } from 'react';
+import { createContext, useContext, useReducer, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
+import { haptic } from '../lib/haptics';
 import { onAuthChange, getCurrentUser } from '../lib/authService';
 import { loadUserData, saveTask, deleteTask,
          saveGoal, saveJournalEntry, deleteJournalEntry,
@@ -204,7 +205,7 @@ function reducer(state, action) {
     }
     case 'SET_LANGUAGE':    return { ...state, language: action.language || 'es' };
     case 'SET_FILTER':      return { ...state, activeFilter: action.filter };
-    case 'SHOW_TOAST':      return { ...state, toast: { message: action.message, type: action.toastType || 'default' } };
+    case 'SHOW_TOAST':      return { ...state, toast: { message: action.message, type: action.toastType || 'default', action: action.toastAction || null } };
     case 'HIDE_TOAST':      return { ...state, toast: null };
     case 'OPEN_ENTRY_SHEET':return { ...state, entrySheet: action.params || {} };
     case 'CLOSE_ENTRY_SHEET':return { ...state, entrySheet: null };
@@ -555,6 +556,8 @@ export function AppProvider({ children }) {
 
   /* ── Firestore side-effects (optimistic: UI updates first) ─ */
   const dispatchWithSync = useCallback(async (action) => {
+    if (action.type === 'TOGGLE_TASK') haptic(10);   // tick al marcar/desmarcar
+
     // ── Ensure ADD_ actions always have a stable ID before dispatch ──
     // The reducer also generates IDs but we need the same ID for Firestore.
     const genId = (prefix) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
@@ -564,6 +567,14 @@ export function AppProvider({ children }) {
       enrichedAction = { ...action, task: { ...action.task, id: genId('t') } };
     } else if (action.type === 'ADD_GOAL' && !action.goal?.id) {
       enrichedAction = { ...action, goal: { ...action.goal, id: genId('g') } };
+    }
+
+    // ── Rastro de actividad: quién creó/editó (visible en espacios compartidos) ──
+    const whoName = state.user?.firstName || state.user?.name || '';
+    if (enrichedAction.type === 'ADD_TASK' && whoName) {
+      enrichedAction = { ...enrichedAction, task: { createdBy: whoName, createdAt: Date.now(), ...enrichedAction.task } };
+    } else if (enrichedAction.type === 'UPDATE_TASK' && whoName) {
+      enrichedAction = { ...enrichedAction, task: { ...enrichedAction.task, updatedBy: whoName, updatedAt: Date.now() } };
     }
 
     // 1. Update UI immediately (reducer uses enrichedAction.habit.id etc.)
@@ -722,9 +733,13 @@ export function AppProvider({ children }) {
     dispatch({ type: 'NAVIGATE', screen, params, replace });
   const goBack   = ()                       => dispatch({ type: 'GO_BACK' });
 
-  const showToast = (message, type = 'default') => {
-    dispatch({ type: 'SHOW_TOAST', message, toastType: type });
-    setTimeout(() => dispatch({ type: 'HIDE_TOAST' }), 2800);
+  const toastSeq = useRef(0);
+  const showToast = (message, type = 'default', toastAction = null, duration) => {
+    const seq = ++toastSeq.current;
+    if (type === 'success') haptic([15, 60, 20]);
+    dispatch({ type: 'SHOW_TOAST', message, toastType: type, toastAction });
+    // Con acción (p.ej. Deshacer) dura más; y un toast nuevo no es ocultado por el timer del anterior
+    setTimeout(() => { if (toastSeq.current === seq) dispatch({ type: 'HIDE_TOAST' }); }, duration || (toastAction ? 5200 : 2800));
   };
 
   // Al agregar, el día por defecto es el seleccionado en el calendario (agenda de papel)
@@ -755,14 +770,41 @@ export function AppProvider({ children }) {
       dispatchWithSync({ type: 'UPDATE_TASK', task: { ...original, ...changes } });
     }
   };
-  // Elimina una entrada. scope 'series' borra esta y las futuras de la misma serie.
+  // Elimina una entrada (con Deshacer). scope 'series' borra esta y las futuras de la misma serie.
   const deleteEntry = (original, scope = 'one') => {
-    if (scope === 'series' && original.seriesId) {
-      const affected = state.tasks.filter(t => t.seriesId === original.seriesId && t.date >= original.date);
-      affected.forEach(t => dispatchWithSync({ type: 'DELETE_TASK', id: t.id }));
-    } else {
-      dispatchWithSync({ type: 'DELETE_TASK', id: original.id });
-    }
+    const affected = (scope === 'series' && original.seriesId)
+      ? state.tasks.filter(t => t.seriesId === original.seriesId && t.date >= original.date)
+      : [original];
+    affected.forEach(t => dispatchWithSync({ type: 'DELETE_TASK', id: t.id }));
+    haptic(15);
+    showToast(affected.length > 1 ? `${affected.length} entradas eliminadas` : 'Entrada eliminada', 'default', {
+      label: 'Deshacer',
+      run: () => {
+        affected.forEach(t => dispatchWithSync({ type: 'ADD_TASK', task: t }));
+        dispatch({ type: 'HIDE_TOAST' });
+      },
+    });
+  };
+
+  /* ── Borrar con Deshacer (notas, objetivos y entradas sueltas) ── */
+  const deleteWithUndo = (kind, id) => {
+    const cfg = {
+      task: { list: state.tasks,          del: 'DELETE_TASK', add: 'ADD_TASK', key: 'task', msg: 'Entrada eliminada' },
+      goal: { list: state.goals,          del: 'DELETE_GOAL', add: 'ADD_GOAL', key: 'goal', msg: 'Objetivo eliminado' },
+      note: { list: state.journalEntries, del: 'DELETE_NOTE', add: 'ADD_NOTE', key: 'note', msg: 'Nota eliminada' },
+    }[kind];
+    if (!cfg) return;
+    const item = cfg.list.find(x => x.id === id);
+    if (!item) return;
+    dispatchWithSync({ type: cfg.del, id });
+    haptic(15);
+    showToast(cfg.msg, 'default', {
+      label: 'Deshacer',
+      run: () => {
+        dispatchWithSync({ type: cfg.add, [cfg.key]: item });
+        dispatch({ type: 'HIDE_TOAST' });
+      },
+    });
   };
 
   /* ── Espacios compartidos ── */
@@ -811,6 +853,7 @@ export function AppProvider({ children }) {
     createEntry,
     updateEntry,
     deleteEntry,
+    deleteWithUndo,
     setCurrentSpace,
     createSharedSpace,
     inviteEmail,

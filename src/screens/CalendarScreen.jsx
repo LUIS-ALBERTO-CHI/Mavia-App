@@ -94,7 +94,7 @@ function CalendarPostit({ note, wrapRef, onCommit, onTap }) {
 }
 
 export default function CalendarScreen() {
-  const { state, navigate, dispatch, openEntrySheet, setCurrentSpace, setSelectedDate } = useApp();
+  const { state, navigate, dispatch, openEntrySheet, setCurrentSpace, setSelectedDate, updateEntry, showToast } = useApp();
   const now = new Date();
   const todayDS = localToday();
 
@@ -122,6 +122,9 @@ export default function CalendarScreen() {
   const [slideDir,    setSlideDir]    = useState('');
   const [clientFilter, setClientFilter] = useState('all');
   const [addDay,      setAddDay]      = useState(null);   // día con el botón ＋ visible (tras tocarlo)
+  const [jumpOpen,    setJumpOpen]    = useState(false);  // popover "ir a fecha"
+  const [jumpYear,    setJumpYear]    = useState(now.getFullYear());
+  const [dragOverDay, setDragOverDay] = useState(null);   // celda destino durante drag (desktop)
 
   // El ＋ desaparece al cambiar de mes
   useEffect(() => { setAddDay(null); }, [viewMonth, viewYear]);
@@ -166,6 +169,15 @@ export default function CalendarScreen() {
   });
   const prev = () => (viewMode === 'day') ? shiftDay(-1) : (viewMode === 'week') ? shiftDay(-7) : prevMonth();
   const next = () => (viewMode === 'day') ? shiftDay(1)  : (viewMode === 'week') ? shiftDay(7)  : nextMonth();
+
+  /* Atajos ←→ del teclado (evento global desde App) */
+  const navFns = useRef({});
+  navFns.current = { prev, next };
+  useEffect(() => {
+    const h = (e) => (e.detail < 0 ? navFns.current.prev() : navFns.current.next());
+    window.addEventListener('mavia:cal-nav', h);
+    return () => window.removeEventListener('mavia:cal-nav', h);
+  }, []);
 
   const goToday = () => {
     setViewYear(now.getFullYear()); setViewMonth(now.getMonth()); setSelectedDay(now.getDate());
@@ -256,11 +268,22 @@ export default function CalendarScreen() {
 
         /* ── Topbar ── */
         .cal-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
-        .cal-month-nav { display: flex; align-items: center; gap: 8px; }
+        .cal-month-nav { display: flex; align-items: center; gap: 8px; position: relative; }
+        /* ── Ir a fecha (popover mes/año al tocar el título) ── */
+        .cal-jump-veil { position: fixed; inset: 0; z-index: 29; background: transparent; }
+        .cal-jump { position: absolute; top: calc(100% + 8px); left: 0; z-index: 30; width: 252px; padding: 12px;
+          background: var(--surface-container-lowest); border: var(--hairline); border-radius: var(--radius-card); box-shadow: var(--shadow-lg); }
+        .cal-jump-year { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .cal-jump-year b { font-family: var(--font-display); font-size: 15px; color: var(--heading); }
+        .cal-jump-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .cal-jump-m { padding: 9px 4px; border: none; border-radius: var(--radius-control); background: var(--surface-container); color: var(--on-surface); font-family: var(--font-body); font-size: 12.5px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+        .cal-jump-m:hover { background: var(--primary-container); }
+        .cal-jump-m.today { box-shadow: inset 0 0 0 1.5px var(--primary); }
+        .cal-jump-m.cur { background: var(--primary); color: var(--on-primary); }
         .cal-arrow { width: 34px; height: 34px; border-radius: 50%; border: none; background: transparent; color: var(--heading); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background var(--transition-fast); }
         .cal-arrow:hover { background: var(--surface-container); }
         .cal-arrow:active { transform: scale(0.9); }
-        .cal-month { font-family: var(--font-display); font-size: 21px; font-weight: 700; color: var(--heading); letter-spacing: -0.01em; white-space: nowrap; }
+        .cal-month { font-family: var(--font-display); font-size: 21px; font-weight: 700; color: var(--heading); letter-spacing: -0.01em; white-space: nowrap; background: none; border: none; padding: 0; cursor: pointer; }
         .cal-month span { color: var(--on-surface-variant); font-weight: 700; }
         .cal-top-right { display: flex; align-items: center; gap: 6px; }
         .cal-today-chip { min-width: 38px; height: 34px; padding: 0 11px; border-radius: var(--radius-control); border: 1px solid var(--primary); background: var(--primary-container); color: var(--on-primary-container); font-weight: 700; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: var(--font-body); transition: transform var(--transition-fast); }
@@ -374,6 +397,21 @@ export default function CalendarScreen() {
         .cal-week-label span { font-size: 12px; color: var(--on-surface-variant); text-transform: capitalize; }
         .cal-week-none { font-size: 12px; color: var(--outline); padding: 2px 0 4px 2px; }
 
+        /* ── Timeline del día ── */
+        .cal-allday { margin-bottom: 14px; }
+        .cal-allday-h { font-size: 11.5px; font-weight: 700; letter-spacing: 0.03em; color: var(--on-surface-variant); margin-bottom: 6px; text-transform: uppercase; }
+        .cal-tl { position: relative; margin-top: 10px; }
+        .cal-tl-hour { position: absolute; left: 0; right: 0; border-top: var(--hairline); }
+        .cal-tl-label { position: absolute; top: -7px; left: 0; width: 48px; font-size: 10.5px; font-weight: 700; color: var(--outline); background: var(--background); padding-right: 4px; }
+        .cal-tl-item { position: absolute; right: 4px; min-height: 42px; display: flex; align-items: center; gap: 8px; padding: 7px 12px;
+          border-radius: var(--radius-control); border-left: 4px solid; cursor: pointer; overflow: hidden; box-shadow: var(--shadow-soft); }
+        .cal-tl-item.done { opacity: 0.5; }
+        .cal-tl-item.done .cal-tl-title { text-decoration: line-through; }
+        .cal-tl-time { font-size: 11px; font-weight: 700; color: var(--on-surface-variant); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+        .cal-tl-title { font-size: 13.5px; font-weight: 700; color: var(--on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cal-tl-now { position: absolute; left: 44px; right: 0; height: 2px; background: var(--error); z-index: 8; border-radius: 2px; pointer-events: none; }
+        .cal-tl-now span { position: absolute; left: -5px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--error); }
+
         /* ── Empty ── */
         .cal-empty { text-align: center; padding: var(--space-lg) var(--space-md); min-height: 58vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
         .cal-empty p { color: var(--on-surface-variant); font-size: var(--text-body-md); }
@@ -381,6 +419,8 @@ export default function CalendarScreen() {
 
         /* ── ＋ para agregar en el día tocado (con onda) — paleta Mavia ── */
         .cal-cell.adding { background: var(--primary-container, #e6e1f7); box-shadow: inset 0 0 0 2px var(--primary, #8478c8); border-radius: var(--radius-control); }
+        .cal-cell.drop { background: var(--primary-container); box-shadow: inset 0 0 0 2px var(--primary); border-radius: var(--radius-control); }
+        @media (hover: hover) and (pointer: fine) { .cal-chip[draggable="true"] { cursor: grab; } .cal-chip[draggable="true"]:active { cursor: grabbing; } }
         .cal-add-fab { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; z-index: 4;
           background: var(--primary); color: var(--on-primary); display: flex; align-items: center; justify-content: center;
           box-shadow: 0 6px 16px -4px rgba(140,150,220,0.55), 0 2px 4px rgba(90,80,130,0.28);
@@ -422,8 +462,31 @@ export default function CalendarScreen() {
         <div className="cal-top">
           <div className="cal-month-nav">
             <button className="cal-arrow" onClick={prev} aria-label="Anterior"><ChevronLeft size={20} strokeWidth={2} /></button>
-            <span className="cal-month">{headerLabel}</span>
+            <button className="cal-month" onClick={() => { setJumpYear(viewYear); setJumpOpen(o => !o); }} aria-label="Ir a fecha" aria-expanded={jumpOpen} id="cal-jump-toggle">
+              {headerLabel}
+            </button>
             <button className="cal-arrow" onClick={next} aria-label="Siguiente"><ChevronRight size={20} strokeWidth={2} /></button>
+            {jumpOpen && (
+              <>
+                <div className="cal-jump-veil" onClick={() => setJumpOpen(false)} />
+                <div className="cal-jump" role="dialog" aria-label="Ir a fecha">
+                  <div className="cal-jump-year">
+                    <button className="cal-arrow" onClick={() => setJumpYear(y => y - 1)} aria-label="Año anterior"><ChevronLeft size={16} strokeWidth={2} /></button>
+                    <b>{jumpYear}</b>
+                    <button className="cal-arrow" onClick={() => setJumpYear(y => y + 1)} aria-label="Año siguiente"><ChevronRight size={16} strokeWidth={2} /></button>
+                  </div>
+                  <div className="cal-jump-grid">
+                    {MONTHS_CAP.map((m, i) => (
+                      <button key={m}
+                        className={`cal-jump-m${jumpYear === viewYear && i === viewMonth ? ' cur' : ''}${jumpYear === now.getFullYear() && i === now.getMonth() ? ' today' : ''}`}
+                        onClick={() => { setViewYear(jumpYear); setViewMonth(i); setSelectedDay(1); setJumpOpen(false); }}>
+                        {m.slice(0, 3)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           <div className="cal-top-right">
             <button className="cal-today-chip" onClick={goToday} aria-label="Ir a hoy">{now.getDate()}</button>
@@ -456,7 +519,11 @@ export default function CalendarScreen() {
           <div className="cal-clients">
             <button className={`cal-client${clientFilter === 'all' ? ' active' : ''}`} onClick={() => setClientFilter('all')}>Todos los clientes</button>
             {currentSpace.clients.map(c => (
-              <button key={c} className={`cal-client${clientFilter === c ? ' active' : ''}`} onClick={() => setClientFilter(c)}>{c}</button>
+              <button key={c} className={`cal-client${clientFilter === c ? ' active' : ''}`}
+                onClick={() => clientFilter === c ? navigate('client', { client: c }) : setClientFilter(c)}
+                title={clientFilter === c ? 'Ver cliente' : `Filtrar por ${c}`}>
+                {c}{clientFilter === c ? ' ›' : ''}
+              </button>
             ))}
           </div>
         )}
@@ -482,7 +549,7 @@ export default function CalendarScreen() {
                   const stickers    = dayEntries.filter(e => e.sticker).slice(-3);   // máx 3, el nuevo reemplaza al anterior
                   return (
                     <div key={idx}
-                      className={['cal-cell', !isThisMonth ? 'other' : '', isToday ? 'today' : '', isSel ? 'sel' : '', addDay === cellDay ? 'adding' : ''].filter(Boolean).join(' ')}
+                      className={['cal-cell', !isThisMonth ? 'other' : '', isToday ? 'today' : '', isSel ? 'sel' : '', addDay === cellDay ? 'adding' : '', isThisMonth && dragOverDay === cellDay ? 'drop' : ''].filter(Boolean).join(' ')}
                       onClick={() => {
                         if (!isThisMonth) return;
                         if (isDesktop) {                                          // desktop → solo seleccionar; el rail muestra el día
@@ -495,6 +562,16 @@ export default function CalendarScreen() {
                           setSelectedDay(cellDay); setAddDay(cellDay);
                         }
                       }}
+                      onDragOver={isDesktop && isThisMonth ? (ev) => { if (ev.dataTransfer.types.includes('text/mavia-entry')) { ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; if (dragOverDay !== cellDay) setDragOverDay(cellDay); } } : undefined}
+                      onDragLeave={isDesktop && isThisMonth ? () => setDragOverDay(d => (d === cellDay ? null : d)) : undefined}
+                      onDrop={isDesktop && isThisMonth ? (ev) => {
+                        ev.preventDefault();
+                        setDragOverDay(null);
+                        const id = ev.dataTransfer.getData('text/mavia-entry');
+                        const t = id && state.tasks.find(x => x.id === id);
+                        const ds = toDS(viewYear, viewMonth, cellDay);
+                        if (t && t.date !== ds) { updateEntry(t, { date: ds }); showToast(`Movida al ${cellDay}`, 'success'); }
+                      } : undefined}
                       id={isThisMonth ? `cal-cell-${cellDay}` : undefined}>
                       <span className="cal-num">{displayDay}</span>
                       {isThisMonth && dayEntries.length === 0 && addDay === cellDay && (
@@ -512,7 +589,10 @@ export default function CalendarScreen() {
                             const c = e.color || DEFAULT_COLOR;
                             const accent = showAll ? { borderLeft: `3px solid ${spaceColor(e.spaceId)}` } : null;
                             return (
-                              <div key={e.id || i} className={`cal-chip${e.completed ? ' done' : ''}`} style={{ background: c, ...accent }}>
+                              <div key={e.id || i} className={`cal-chip${e.completed ? ' done' : ''}`} style={{ background: c, ...accent }}
+                                draggable={isDesktop || undefined}
+                                onDragStart={isDesktop ? (ev) => { ev.stopPropagation(); ev.dataTransfer.setData('text/mavia-entry', e.id); ev.dataTransfer.effectAllowed = 'move'; } : undefined}
+                                title={isDesktop ? 'Arrastra para mover de día' : undefined}>
                                 <span className="cal-chip-t">{e.title}</span>
                               </div>
                             );
@@ -579,15 +659,63 @@ export default function CalendarScreen() {
             </div>
           )}
 
-          {/* ═══ DÍA ═══ */}
-          {viewMode === 'day' && (
-            <div>
-              <div className="cal-day-head">{dateHeading(selDate)}{selDS === todayDS ? ' · Hoy' : ''}</div>
-              {entriesFor(selDS).length === 0
-                ? <EmptyDay ds={selDS} />
-                : <div className="cal-list">{entriesFor(selDS).map(e => <EntryRow key={e.id} e={e} />)}</div>}
-            </div>
-          )}
+          {/* ═══ DÍA — timeline con línea de "ahora" ═══ */}
+          {viewMode === 'day' && (() => {
+            const items  = entriesFor(selDS);
+            const allDay = items.filter(e => !e.time);
+            const timed  = items.filter(e => e.time).sort((a, b) => a.time.localeCompare(b.time));
+            let start = 7, end = 22;
+            timed.forEach(e => { const h = parseInt(e.time, 10); if (h < start) start = h; if (h + 1 > end) end = Math.min(23, h + 1); });
+            const isToday = selDS === todayDS;
+            if (isToday) { const h = now.getHours(); if (h < start) start = h; if (h + 1 > end) end = Math.min(23, h + 1); }
+            const HOUR_H = 54;
+            const hours = []; for (let h = start; h <= end; h++) hours.push(h);
+            const fmtH = (h) => `${((h + 11) % 12) + 1} ${h < 12 ? 'a.m.' : 'p.m.'}`;
+            const nowMin = now.getHours() * 60 + now.getMinutes();
+            const collide = {};
+            return (
+              <div>
+                <div className="cal-day-head">{dateHeading(selDate)}{isToday ? ' · Hoy' : ''}</div>
+                {items.length === 0 ? <EmptyDay ds={selDS} /> : (
+                  <>
+                    {allDay.length > 0 && (
+                      <div className="cal-allday">
+                        <div className="cal-allday-h">Sin hora</div>
+                        <div className="cal-list">{allDay.map(e => <EntryRow key={e.id} e={e} />)}</div>
+                      </div>
+                    )}
+                    {timed.length > 0 && (
+                      <div className="cal-tl" style={{ height: hours.length * HOUR_H + 20 }}>
+                        {hours.map((h, i) => (
+                          <div key={h} className="cal-tl-hour" style={{ top: i * HOUR_H }}>
+                            <span className="cal-tl-label">{fmtH(h)}</span>
+                          </div>
+                        ))}
+                        {isToday && nowMin >= start * 60 && nowMin <= (end + 1) * 60 && (
+                          <div className="cal-tl-now" style={{ top: ((nowMin - start * 60) / 60) * HOUR_H }}><span /></div>
+                        )}
+                        {timed.map(e => {
+                          const [hh, mm] = e.time.split(':').map(Number);
+                          const top = (((hh * 60 + (mm || 0)) - start * 60) / 60) * HOUR_H;
+                          const idx = (collide[e.time] = (collide[e.time] || 0) + 1) - 1;
+                          const c = e.color || DEFAULT_COLOR;
+                          return (
+                            <div key={e.id} className={`cal-tl-item${e.completed ? ' done' : ''}`}
+                              style={{ top: top + idx * 8, left: 56 + idx * 14, borderLeftColor: c, background: `${c}26`, zIndex: 3 + idx }}
+                              onClick={() => navigate('entryDetail', { entryId: e.id })} id={`cal-tl-${e.id}`}>
+                              <span className="cal-tl-time">{e.time}</span>
+                              <span className="cal-tl-title">{e.title}</span>
+                              {e.sticker && <Sticker id={e.sticker} size={22} />}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
         </div>
 

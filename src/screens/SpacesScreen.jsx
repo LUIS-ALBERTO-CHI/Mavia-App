@@ -6,7 +6,25 @@ import { ArrowLeft, Plus, Mail, Users, LogOut, X, Check, Tag, Palette, Copy } fr
 const SPACE_COLORS = ['#8478c8', '#e888b6', '#6bbd8e', '#7cb8e0', '#e0a72e', '#c9a9e0'];
 
 export default function SpacesScreen() {
-  const { state, goBack, showToast, createSharedSpace, inviteEmail, acceptInvite, leaveSharedSpace, addClient, removeClient, setSpaceColor } = useApp();
+  const { state, goBack, showToast, navigate, createSharedSpace, inviteEmail, acceptInvite, leaveSharedSpace, addClient, removeClient, setSpaceColor } = useApp();
+
+  /* Actividad reciente en espacios compartidos (creada/editada por quién) */
+  const recentActivity = (state.tasks || [])
+    .filter(t => t.spaceId && t.spaceId !== 'personal' && (t.createdAt || t.updatedAt))
+    .sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0))
+    .slice(0, 8);
+  const activityLabel = (t) => {
+    const who = t.updatedAt && t.updatedBy ? t.updatedBy : t.createdBy;
+    const verb = t.updatedAt && t.updatedBy ? 'editó' : 'creó';
+    return who ? `${who} ${verb}` : 'Actividad en';
+  };
+  const timeAgo = (ts) => {
+    const m = Math.max(1, Math.round((Date.now() - ts) / 60000));
+    if (m < 60) return `hace ${m} min`;
+    const h = Math.round(m / 60);
+    if (h < 24) return `hace ${h} h`;
+    return `hace ${Math.round(h / 24)} d`;
+  };
   const { spaces = [], pendingInvites = [], user } = state;
 
   const [creating, setCreating]   = useState(false);
@@ -214,6 +232,25 @@ export default function SpacesScreen() {
           <button className="sp-btn primary" style={{ marginTop: 8 }} onClick={() => setCreating(true)}>
             <Plus size={16} /> Crear espacio compartido
           </button>
+        )}
+
+        {/* ── Actividad reciente ── */}
+        {recentActivity.length > 0 && (
+          <div style={{ marginTop: 26 }}>
+            <div className="sp-meta" style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: 11, marginBottom: 8 }}>Actividad reciente</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+              {recentActivity.map(t => (
+                <button key={t.id} onClick={() => navigate('entryDetail', { entryId: t.id })}
+                  style={{ display: 'flex', alignItems: 'center', gap: 9, textAlign: 'left', padding: '9px 12px', borderRadius: 'var(--radius-control)', border: 'var(--hairline)', background: 'var(--surface-container-lowest)', cursor: 'pointer' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: t.color || 'var(--primary)', flexShrink: 0 }} />
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--font-body)' }}>
+                    <b>{activityLabel(t)}</b> «{t.title}»
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--on-surface-variant)', flexShrink: 0 }}>{timeAgo(t.updatedAt || t.createdAt)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </>

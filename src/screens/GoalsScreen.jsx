@@ -37,11 +37,10 @@ function CircleProgress({ value, size = 80 }) {
 }
 
 export default function GoalsScreen() {
-  const { state, navigate, dispatch, showToast } = useApp();
+  const { state, navigate, dispatch, showToast, deleteWithUndo } = useApp();
   const { t } = useTranslation();
   const { goals } = state;
   const [filter, setFilter] = useState('Todos');
-  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const avgProgress = goals.length
     ? Math.round(goals.reduce((a, g) => a + progressOf(g), 0) / goals.length)
@@ -471,25 +470,17 @@ export default function GoalsScreen() {
                       >
                         <Edit2 size={15} strokeWidth={1.75} />
                       </button>
-                      {/* Delete button */}
-                      {confirmDeleteId === goal.id ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--error)' }}>¿Eliminar?</span>
-                          <button onClick={() => setConfirmDeleteId(null)} style={{ border: 'none', background: 'var(--surface-container)', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)', color: 'var(--on-surface-variant)' }}>No</button>
-                          <button onClick={() => { dispatch({ type: 'DELETE_GOAL', id: goal.id }); showToast(t('common.deleted')); setConfirmDeleteId(null); }} style={{ border: 'none', background: 'var(--error)', color: 'white', borderRadius: 99, padding: '3px 9px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Sí</button>
-                        </div>
-                      ) : (
-                        <button
-                          className="gls-act"
-                          onClick={e => { e.stopPropagation(); setConfirmDeleteId(goal.id); }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 8, color: 'var(--error)', opacity: 0.6, display: 'flex', alignItems: 'center', transition: 'opacity 0.15s' }}
-                          aria-label="Eliminar objetivo"
-                          id={`gls-del-${goal.id}`}
-                          title="Eliminar"
-                        >
-                          <Trash2 size={15} strokeWidth={1.75} />
-                        </button>
-                      )}
+                      {/* Delete button — directo, con Deshacer en el toast */}
+                      <button
+                        className="gls-act"
+                        onClick={e => { e.stopPropagation(); deleteWithUndo('goal', goal.id); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 8, color: 'var(--error)', opacity: 0.6, display: 'flex', alignItems: 'center', transition: 'opacity 0.15s' }}
+                        aria-label="Eliminar objetivo"
+                        id={`gls-del-${goal.id}`}
+                        title="Eliminar"
+                      >
+                        <Trash2 size={15} strokeWidth={1.75} />
+                      </button>
                     </div>
                   </div>
 

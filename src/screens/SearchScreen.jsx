@@ -21,13 +21,29 @@ const CATEGORIES = [
   { id: 'goals',   label: 'Objetivos', icon: Target,       color: 'var(--tertiary)',  bg: 'var(--tertiary-container)'   },
 ];
 
+const DATE_FILTERS = [
+  { id: 'always', label: 'Siempre' },
+  { id: 'today',  label: 'Hoy' },
+  { id: 'week',   label: 'Esta semana' },
+  { id: 'month',  label: 'Este mes' },
+];
+
 export default function SearchScreen() {
   const { state, navigate } = useApp();
   const { t } = useTranslation();
   const [query, setQuery]         = useState('');
   const [activeCategory, setActiveCategory] = useState('entries');
   const [history, setHistory]     = useState(loadHistory);
+  const [spaceFilter, setSpaceFilter]   = useState('all');
+  const [clientFilter, setClientFilter] = useState('all');
+  const [dateFilter, setDateFilter]     = useState('always');
   const inputRef                  = useRef(null);
+
+  const spaces        = state.spaces || [];
+  const selectedSpace = spaces.find(s => s.id === spaceFilter);
+
+  /* Al cambiar de espacio, el filtro de cliente se resetea */
+  const pickSpace = (id) => { setSpaceFilter(id); setClientFilter('all'); };
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
@@ -48,16 +64,40 @@ export default function SearchScreen() {
 
   const q = query.toLowerCase().trim();
 
+  /* ── Filtros combinados (espacio · cliente · fecha) ── */
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const toDS = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  const now       = new Date();
+  const todayDS   = toDS(now);
+  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
+  const weekEnd   = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
+  const weekStartDS = toDS(weekStart);
+  const weekEndDS   = toDS(weekEnd);
+  const monthDS     = todayDS.slice(0, 7);
+
+  const spaceMatch  = (e) => spaceFilter === 'all' || (e.spaceId || 'personal') === spaceFilter;
+  const clientMatch = (e) => clientFilter === 'all' || e.client === clientFilter;
+  const dateMatch   = (ds) => {
+    if (dateFilter === 'always') return true;
+    if (!ds) return false;                                   // sin fecha: solo pasa con "Siempre"
+    if (dateFilter === 'today') return ds === todayDS;
+    if (dateFilter === 'week')  return ds >= weekStartDS && ds <= weekEndDS;
+    return ds.startsWith(monthDS);                           // 'month'
+  };
+  /* Notas y objetivos no tienen espacio: con un espacio elegido solo se muestran entradas */
+  const hasSpaceFilter = spaceFilter !== 'all';
+
   const results = {
     entries: q ? state.tasks.filter(item =>
-        item.title.toLowerCase().includes(q) ||
+        (item.title.toLowerCase().includes(q) ||
         item.note?.toLowerCase().includes(q) ||
-        item.client?.toLowerCase().includes(q)) : [],
-    journal: q ? state.journalEntries.filter(e =>
-        (e.text || e.content || '').toLowerCase().includes(q)) : [],
-    goals:   q ? state.goals.filter(g =>
-        g.title.toLowerCase().includes(q) ||
-        (g.category || '').toLowerCase().includes(q)) : [],
+        item.client?.toLowerCase().includes(q)) &&
+        spaceMatch(item) && clientMatch(item) && dateMatch(item.date)) : [],
+    journal: (q && !hasSpaceFilter) ? state.journalEntries.filter(e =>
+        (e.text || e.content || '').toLowerCase().includes(q) && dateMatch(e.date)) : [],
+    goals:   (q && !hasSpaceFilter) ? state.goals.filter(g =>
+        (g.title.toLowerCase().includes(q) ||
+        (g.category || '').toLowerCase().includes(q)) && dateMatch(g.date)) : [],
   };
 
   const totalResults = Object.values(results).reduce((a, r) => a + r.length, 0);
@@ -141,6 +181,35 @@ export default function SearchScreen() {
           transition: background var(--transition-fast);
         }
         .srch-clear:hover { background: var(--surface-container-high); }
+
+        /* ── Filtros (espacio · cliente · fecha) ── */
+        .srch-filters {
+          display: flex;
+          gap: 7px;
+          overflow-x: auto;
+          scrollbar-width: none;
+          -webkit-overflow-scrolling: touch;
+          margin-bottom: 10px;
+        }
+        .srch-filters::-webkit-scrollbar { display: none; }
+        .srch-filter {
+          flex-shrink: 0;
+          padding: 5px 12px;
+          border-radius: 99px;
+          border: none;
+          background: var(--surface-container);
+          color: var(--on-surface-variant);
+          font-family: var(--font-body);
+          font-size: 12px;
+          font-weight: 700;
+          white-space: nowrap;
+          cursor: pointer;
+          transition: all var(--transition-fast);
+        }
+        .srch-filter.active {
+          background: var(--primary);
+          color: var(--on-primary);
+        }
 
         /* ── Category chips ── */
         .srch-cats {
@@ -325,6 +394,36 @@ export default function SearchScreen() {
               <X size={14} />
             </button>
           )}
+        </div>
+
+        {/* ── Filtro por espacio (solo si hay espacios compartidos) ── */}
+        {spaces.length > 0 && (
+          <div className="srch-filters">
+            <button className={`srch-filter${spaceFilter === 'all' ? ' active' : ''}`} onClick={() => pickSpace('all')} id="search-space-all">Todos</button>
+            <button className={`srch-filter${spaceFilter === 'personal' ? ' active' : ''}`} onClick={() => pickSpace('personal')} id="search-space-personal">Personal</button>
+            {spaces.map(s => (
+              <button key={s.id} className={`srch-filter${spaceFilter === s.id ? ' active' : ''}`} onClick={() => pickSpace(s.id)}>{s.name}</button>
+            ))}
+          </div>
+        )}
+
+        {/* ── Filtro por cliente (si el espacio elegido tiene clientes) ── */}
+        {(selectedSpace?.clients || []).length > 0 && (
+          <div className="srch-filters">
+            <button className={`srch-filter${clientFilter === 'all' ? ' active' : ''}`} onClick={() => setClientFilter('all')}>Todos los clientes</button>
+            {selectedSpace.clients.map(c => (
+              <button key={c} className={`srch-filter${clientFilter === c ? ' active' : ''}`} onClick={() => setClientFilter(c)}>{c}</button>
+            ))}
+          </div>
+        )}
+
+        {/* ── Filtro por fecha ── */}
+        <div className="srch-filters">
+          {DATE_FILTERS.map(f => (
+            <button key={f.id} className={`srch-filter${dateFilter === f.id ? ' active' : ''}`} onClick={() => setDateFilter(f.id)} id={`search-date-${f.id}`}>
+              {f.label}
+            </button>
+          ))}
         </div>
 
         {/* ── Search history (shown when query is empty) ── */}

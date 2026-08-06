@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useFocusTrap } from '../lib/useFocusTrap';
 import { useApp } from '../context/AppContext';
-import { Check, DollarSign, Bell, Repeat, X, Lock, Users, Plus } from 'lucide-react';
+import { Check, DollarSign, Bell, Repeat, X, Lock, Users, Plus, Sparkles, Bookmark } from 'lucide-react';
+import { parseQuickAdd, labelFor } from '../lib/quickParse';
 import { TimePicker } from './ui/time-picker';
 import { DatePicker } from './ui/date-picker';
 import { localToday } from '../lib/utils';
@@ -60,6 +62,8 @@ export default function CreateEntrySheet() {
   }));
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const sheetRef = useRef(null);
+  useFocusTrap(sheetRef);   // el Tab no se escapa del sheet (accesibilidad)
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showDate, setShowDate]     = useState(false);
   const [stickerCat, setStickerCat] = useState(STICKER_CATEGORIES[0]?.id || null);
@@ -71,6 +75,39 @@ export default function CreateEntrySheet() {
   const spaces      = state.spaces || [];
   const activeSpace = spaces.find(s => s.id === form.spaceId);
   const spaceClients = activeSpace?.clients || [];
+
+  /* ── Quick-add: fecha/hora en lenguaje natural dentro del título ── */
+  const nl = !isEdit ? parseQuickAdd(form.title) : null;
+  const applyNL = () => setForm(f => ({
+    ...f,
+    title: nl.cleanTitle,
+    ...(nl.date ? { date: nl.date } : {}),
+    ...(nl.time ? { time: nl.time, allDay: false } : {}),
+  }));
+
+  /* ── Plantillas (localStorage) ── */
+  const [templates, setTemplates] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('mavia_templates')) || []; } catch { return []; }
+  });
+  const persistTemplates = (list) => {
+    setTemplates(list);
+    try { localStorage.setItem('mavia_templates', JSON.stringify(list)); } catch {}
+  };
+  const applyTemplate = (t) => setForm(f => ({
+    ...f, title: t.title, color: t.color || f.color, sticker: t.sticker ?? f.sticker,
+    spaceId: t.spaceId || f.spaceId, client: t.client || '', note: t.note || f.note,
+    ...(t.time ? { time: t.time, allDay: false } : {}),
+  }));
+  const saveTemplate = () => {
+    if (!form.title.trim()) { showToast('Escribe un título para la plantilla', 'error'); return; }
+    const t = {
+      id: Date.now().toString(36), title: form.title.trim(), color: form.color, sticker: form.sticker,
+      spaceId: form.spaceId, client: form.client, note: form.note, time: form.allDay ? '' : form.time,
+    };
+    persistTemplates([t, ...templates.filter(x => x.title !== t.title)].slice(0, 8));
+    showToast('Plantilla guardada', 'success');
+  };
+  const removeTemplate = (id) => persistTemplates(templates.filter(t => t.id !== id));
 
   const handleSave = () => {
     if (!form.title.trim()) { showToast('Escribe un título', 'error'); return; }
@@ -197,7 +234,17 @@ export default function CreateEntrySheet() {
         .es-note { width: 100%; min-height: 80px; resize: vertical; padding: 13px 16px; border-radius: var(--radius-control); border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-size: var(--text-body-md); font-family: var(--font-body); outline: none; line-height: 1.5; }
         .es-note:focus { border-color: var(--primary); }
 
-        .es-save-bar { padding: 12px 20px calc(env(safe-area-inset-bottom,0px) + 14px); border-top: 1px solid var(--outline-variant); flex-shrink: 0; background: var(--surface-container-lowest); }
+        .es-save-bar { padding: 12px 20px calc(env(safe-area-inset-bottom,0px) + 14px); border-top: 1px solid var(--outline-variant); flex-shrink: 0; background: var(--surface-container-lowest); display: flex; align-items: center; gap: 10px; }
+        .es-save-bar .es-save-btn { flex: 1; }
+        .es-tpl-save { width: 48px; height: 48px; border-radius: 50%; border: var(--hairline); background: var(--surface-container); color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all var(--transition-fast); }
+        .es-tpl-save:active { transform: scale(0.92); }
+        .es-tpl-row { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; margin-bottom: 10px; }
+        .es-tpl-row::-webkit-scrollbar { display: none; }
+        .es-tpl { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; padding: 6px 8px 6px 10px; border-radius: 99px; border: var(--hairline); background: var(--surface-container-lowest); font-family: var(--font-body); font-size: 12px; font-weight: 700; color: var(--on-surface); cursor: pointer; }
+        .es-tpl:active { transform: scale(0.96); }
+        .es-tpl-x { border: none; background: var(--surface-container); border-radius: 50%; width: 18px; height: 18px; color: var(--on-surface-variant); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+        .es-nl { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 7px 13px; border: none; border-radius: 99px; background: var(--primary-container); color: var(--on-primary-container); font-family: var(--font-body); font-size: 12.5px; font-weight: 700; cursor: pointer; animation: fadeIn 0.18s ease both; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .es-nl:active { transform: scale(0.97); }
         .es-save-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-size: var(--text-body-md); font-weight: 700; font-family: var(--font-body); box-shadow: var(--shadow-fab); transition: transform var(--transition-fast); }
         .es-save-btn:active { transform: scale(0.98); }
 
@@ -222,7 +269,7 @@ export default function CreateEntrySheet() {
       `}</style>
 
       <div className="es-backdrop" onClick={closeEntrySheet} />
-      <div className="es-sheet" role="dialog" aria-modal="true" aria-label={isEdit ? 'Editar' : 'Agregar al calendario'}>
+      <div className="es-sheet" ref={sheetRef} role="dialog" aria-modal="true" aria-label={isEdit ? 'Editar' : 'Agregar al calendario'}>
         <div className="es-handle" />
         <div className="es-head">
           <span className="es-title">{isEdit ? 'Editar' : 'Agregar al calendario'}</span>
@@ -230,6 +277,19 @@ export default function CreateEntrySheet() {
         </div>
 
         <div className="es-scroll">
+          {/* Plantillas guardadas */}
+          {!isEdit && templates.length > 0 && (
+            <div className="es-tpl-row">
+              {templates.map(t => (
+                <span key={t.id} className="es-tpl" onClick={() => applyTemplate(t)} role="button" tabIndex={0} id={`es-tpl-${t.id}`}>
+                  {t.sticker && <Sticker id={t.sticker} size={18} />}
+                  {t.title}
+                  <button className="es-tpl-x" onClick={(ev) => { ev.stopPropagation(); removeTemplate(t.id); }} aria-label={`Borrar plantilla ${t.title}`}><X size={12} /></button>
+                </span>
+              ))}
+            </div>
+          )}
+
           {/* Sticker + título */}
           <div className="es-card">
             <div className="es-head-row">
@@ -249,6 +309,13 @@ export default function CreateEntrySheet() {
                 <span className="es-sticker-cap">Sticker</span>
               </button>
             </div>
+            {/* Sugerencia de fecha/hora detectada en el título */}
+            {nl && (
+              <button type="button" className="es-nl" onClick={applyNL} id="es-nl">
+                <Sparkles size={13} strokeWidth={2} />
+                {labelFor(nl.date || form.date, nl.time)} — «{nl.cleanTitle}»
+              </button>
+            )}
           </div>
 
           {/* Espacio + Cliente */}
@@ -384,6 +451,11 @@ export default function CreateEntrySheet() {
         </div>
 
         <div className="es-save-bar">
+          {!isEdit && (
+            <button className="es-tpl-save" onClick={saveTemplate} aria-label="Guardar como plantilla" title="Guardar como plantilla" id="es-tpl-save">
+              <Bookmark size={18} strokeWidth={2} />
+            </button>
+          )}
           <button className="es-save-btn" onClick={handleSave} id="entry-save">
             <Check size={20} strokeWidth={3} />
             {isEdit ? 'Guardar cambios' : 'Agregar'}

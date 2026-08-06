@@ -57,7 +57,7 @@ function formatDate(dateStr) {
  * Reemplaza TaskDetail + EventDetail.
  */
 export default function EntryDetailScreen() {
-  const { state, dispatch, navigate, goBack, showToast, openEntrySheet, deleteEntry } = useApp();
+  const { state, dispatch, navigate, goBack, showToast, openEntrySheet, deleteEntry, updateEntry } = useApp();
 
   const entryId = state.screenParams?.entryId || state.screenParams?.taskId || state.screenParams?.eventId || null;
   const entry   = entryId ? state.tasks.find(t => t.id === entryId) : null;
@@ -91,10 +91,20 @@ export default function EntryDetailScreen() {
     showToast(done ? 'Marcada como pendiente' : (amount ? '¡Pagado!' : '¡Hecho!'), 'success');
   };
   const handleDelete = (scope = 'one') => {
-    deleteEntry(entry, scope);
-    showToast(scope === 'series' ? 'Serie eliminada' : 'Eliminado');
+    deleteEntry(entry, scope);   // muestra su propio toast "Eliminada · Deshacer"
     goBack();
   };
+
+  /* ── Mover rápido a otra fecha ── */
+  const dsOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const shiftDS = (baseDS, days) => { const d = new Date(baseDS + 'T00:00:00'); d.setDate(d.getDate() + days); return dsOf(d); };
+  const todayDS = dsOf(new Date());
+  const moveTo = (ds, label) => { updateEntry(entry, { date: ds }); showToast(`Movida a ${label.toLowerCase()}`, 'success'); };
+  const MOVES = [
+    { ds: todayDS,                    label: 'Hoy' },
+    { ds: shiftDS(todayDS, 1),        label: 'Mañana' },
+    { ds: shiftDS(entry?.date || todayDS, 7), label: '+1 semana' },
+  ].filter(m => m.ds !== entry?.date);
 
   return (
     <>
@@ -150,6 +160,12 @@ export default function EntryDetailScreen() {
         .ed-note-label { font-size: var(--text-label-sm); font-weight: 700; color: var(--on-surface-variant); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
         .ed-note-text { font-size: var(--text-body-md); color: var(--on-surface); line-height: 1.6; white-space: pre-wrap; }
 
+        .ed-move { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+        .ed-move-label { font-size: 12px; font-weight: 700; color: var(--on-surface-variant); }
+        .ed-move-row { display: flex; gap: 7px; flex-wrap: wrap; }
+        .ed-move-btn { padding: 7px 14px; border-radius: 99px; border: var(--hairline); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-size: 12.5px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+        .ed-move-btn:hover { background: var(--primary-container); border-color: var(--primary); }
+        .ed-move-btn:active { transform: scale(0.95); }
         .ed-del-banner { background: var(--error-container); border-radius: var(--radius-xl); padding: var(--space-md); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
         .ed-del-text { font-size: var(--text-label-md); color: var(--on-error-container); font-weight: 600; }
         .ed-del-actions { display: flex; gap: 8px; }
@@ -162,7 +178,7 @@ export default function EntryDetailScreen() {
           <button className="ed-icon-btn" onClick={goBack} aria-label="Volver"><ArrowLeft size={20} /></button>
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="ed-icon-btn" onClick={() => openEntrySheet({ entryId: entry.id })} aria-label="Editar"><Pencil size={18} /></button>
-            <button className="ed-icon-btn danger" onClick={() => setConfirmDelete(true)} aria-label="Eliminar"><Trash2 size={18} /></button>
+            <button className="ed-icon-btn danger" onClick={() => entry.seriesId ? setConfirmDelete(true) : handleDelete('one')} aria-label="Eliminar"><Trash2 size={18} /></button>
           </div>
         </div>
 
@@ -210,6 +226,18 @@ export default function EntryDetailScreen() {
               <div><div className="ed-row-label">Repetir</div><div className="ed-row-value">{entry.repeat}</div></div>
             </div>
           )}
+          {entry.spaceId && entry.spaceId !== 'personal' && (entry.createdBy || entry.updatedBy) && (
+            <div className="ed-row">
+              <div className="ed-row-icon"><Users size={17} /></div>
+              <div>
+                <div className="ed-row-label">Actividad</div>
+                <div className="ed-row-value">
+                  {entry.createdBy ? `Creada por ${entry.createdBy}` : 'Creada'}
+                  {entry.updatedBy && entry.updatedBy !== entry.createdBy ? ` · editada por ${entry.updatedBy}` : ''}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Nota */}
@@ -217,6 +245,20 @@ export default function EntryDetailScreen() {
           <div className="ed-note-card">
             <div className="ed-note-label">Nota</div>
             <div className="ed-note-text">{entry.note || entry.notes}</div>
+          </div>
+        )}
+
+        {/* Mover rápido */}
+        {!entry.completed && MOVES.length > 0 && (
+          <div className="ed-move">
+            <span className="ed-move-label">Mover a</span>
+            <div className="ed-move-row">
+              {MOVES.map(m => (
+                <button key={m.label} className="ed-move-btn" onClick={() => moveTo(m.ds, m.label)} id={`ed-move-${m.label}`}>
+                  {m.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 

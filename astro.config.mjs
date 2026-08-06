@@ -23,6 +23,10 @@ export default defineConfig({
       orientation: 'portrait',
       scope: '/',
       start_url: '/',
+      shortcuts: [
+        { name: 'Nueva entrada', short_name: 'Entrada', url: '/?action=new-entry', icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }] },
+        { name: 'Nueva nota',    short_name: 'Nota',    url: '/?action=new-note',  icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }] },
+      ],
       icons: [
         {
           src: 'pwa-192x192.png',
