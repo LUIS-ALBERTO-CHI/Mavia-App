@@ -1,7 +1,8 @@
 ﻿import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
-import { Target, Calendar, TrendingUp, Plus, Edit2, Trash2, Check } from 'lucide-react';
+import { Calendar, TrendingUp, Plus, Edit2, Trash2, Check } from 'lucide-react';
+import Mascot from '../components/Mascot';
 import { Progress } from '../components/ui/progress';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -222,7 +223,7 @@ export default function GoalsScreen() {
         /* Desktop: lista vertical → grid de 2-3 columnas */
         @media (min-width: 768px) {
           .gls-grid { display: grid; grid-template-columns: repeat(2, 1fr); align-items: start; }
-          .gls-chip { padding: 5px 14px; font-size: 12.5px; }  /* chips 32 → 28px */
+          .gls-chip { padding: 5px 14px; font-size: var(--text-caption-size); }  /* chips 32 → 28px */
         }
         @media (min-width: 1100px) {
           .gls-grid { grid-template-columns: repeat(3, 1fr); }
@@ -315,7 +316,7 @@ export default function GoalsScreen() {
           margin-top: var(--space-sm); padding-top: var(--space-sm);
           border-top: var(--hairline);
         }
-        .gls-count-label { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
+        .gls-count-label { font-family: var(--font-display); font-size: var(--text-section-size); font-weight: 700; }
         .gls-step {
           width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.12);
           background: rgba(255,255,255,0.7); color: var(--on-surface);
@@ -332,35 +333,26 @@ export default function GoalsScreen() {
         .gls-stepitem.done span:last-child { text-decoration: line-through; }
         .gls-stepcheck { width: 20px; height: 20px; border-radius: 6px; border: 2px solid rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all var(--transition-fast); }
         /* Sí / No */
-        .gls-simple { margin-top: var(--space-sm); width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px; border-radius: 99px; border: 1px solid rgba(0,0,0,0.14); background: rgba(255,255,255,0.6); color: var(--on-surface); font-family: var(--font-body); font-weight: 700; font-size: 14px; cursor: pointer; }
+        .gls-simple { margin-top: var(--space-sm); width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px; border-radius: 99px; border: 1px solid rgba(0,0,0,0.14); background: rgba(255,255,255,0.6); color: var(--on-surface); font-family: var(--font-body); font-weight: 700; font-size: var(--text-body-size); cursor: pointer; }
         .gls-simple:active { transform: scale(0.98); }
 
         /* ── Empty ── */
         .gls-empty {
           text-align: center;
-          padding: var(--space-xxl) var(--space-xl);
+          padding: 40px 20px;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: var(--space-md);
-        }
-        .gls-empty-icon {
-          width: 80px;
-          height: 80px;
-          border-radius: var(--radius-full);
-          background: var(--primary-container);
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          gap: 10px;
         }
         .gls-empty-title {
           font-family: var(--font-display);
-          font-size: var(--text-headline-lg-mobile);
-          font-weight: 500;
-          color: var(--on-surface);
+          font-size: var(--text-section-size);
+          font-weight: 700;
+          color: var(--heading);
         }
         .gls-empty-sub {
-          font-size: var(--text-body-md);
+          font-size: var(--text-caption-size);
           color: var(--on-surface-variant);
           max-width: 260px;
           line-height: var(--leading-relaxed);
@@ -421,13 +413,12 @@ export default function GoalsScreen() {
         {/* ── Goal cards ── */}
         {filtered.length === 0 ? (
           <div className="gls-empty">
-            <div className="gls-empty-icon">
-              <Target size={38} color="var(--primary)" strokeWidth={1.25} />
-            </div>
-            <div className="gls-empty-title">Sin objetivos aquí</div>
-            <p className="gls-empty-sub">
-              No hay objetivos en esta categoría todavía.
-            </p>
+            <Mascot size={180} />
+            <div className="gls-empty-title">Sin objetivos aún</div>
+            <p className="gls-empty-sub">Crea el primero y mira tu progreso crecer</p>
+            <Button variant="soft" onClick={() => navigate('createGoal')} id="gls-empty-add" style={{ marginTop: 6 }}>
+              ＋ Crear objetivo
+            </Button>
           </div>
         ) : (
           <div className="gls-grid">
@@ -461,7 +452,7 @@ export default function GoalsScreen() {
                       </div>
                       {/* Edit button */}
                       <button
-                        className="gls-act"
+                        className="gls-act hit44"
                         onClick={e => { e.stopPropagation(); navigate('createGoal', { goalId: goal.id }); }}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 8, color: style.text, opacity: 0.7, display: 'flex', alignItems: 'center', transition: 'opacity 0.15s' }}
                         aria-label="Editar objetivo"
@@ -472,7 +463,7 @@ export default function GoalsScreen() {
                       </button>
                       {/* Delete button — directo, con Deshacer en el toast */}
                       <button
-                        className="gls-act"
+                        className="gls-act hit44"
                         onClick={e => { e.stopPropagation(); deleteWithUndo('goal', goal.id); }}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 8, color: 'var(--error)', opacity: 0.6, display: 'flex', alignItems: 'center', transition: 'opacity 0.15s' }}
                         aria-label="Eliminar objetivo"

@@ -324,7 +324,7 @@ export default function CreateGoalScreen() {
 
         {form.type === 'simple' && (
           <div className="cg-card">
-            <p style={{ fontSize: 13.5, color: 'var(--on-surface-variant)' }}>
+            <p style={{ fontSize: 'var(--text-caption-size)', color: 'var(--on-surface-variant)' }}>
               Se marca como <b>cumplido</b> o <b>pendiente</b> con un toque desde Objetivos.
             </p>
           </div>

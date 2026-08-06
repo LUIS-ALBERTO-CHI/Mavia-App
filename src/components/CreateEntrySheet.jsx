@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useFocusTrap } from '../lib/useFocusTrap';
 import { useApp } from '../context/AppContext';
-import { Check, DollarSign, Bell, Repeat, X, Lock, Users, Plus, Sparkles, Bookmark } from 'lucide-react';
+import { Check, DollarSign, Bell, Repeat, X, Lock, Users, Plus, Sparkles, Bookmark, FolderOpen, Tag, Palette, CalendarDays, AlignLeft } from 'lucide-react';
 import { parseQuickAdd, labelFor } from '../lib/quickParse';
 import { TimePicker } from './ui/time-picker';
 import { DatePicker } from './ui/date-picker';
@@ -166,7 +166,7 @@ export default function CreateEntrySheet() {
 
         .es-card { background: var(--surface-container-low); border-radius: var(--radius-card); padding: 16px; margin-bottom: 12px; }
         .es-label { display: flex; align-items: center; gap: 6px; font-size: var(--text-label-md); font-weight: 700; color: var(--on-surface); margin-bottom: 10px; }
-        .es-label .material-symbols-outlined { font-size: 18px; }
+        .es-label svg { flex-shrink: 0; }
 
         .es-head-row { display: flex; align-items: flex-start; gap: 14px; }
         .es-sticker-pick { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; flex-shrink: 0; padding: 0; }
@@ -177,14 +177,14 @@ export default function CreateEntrySheet() {
         }
         .es-sticker-pick:active .es-sticker-btn { transform: scale(0.92); }
         .es-sticker-btn.has { box-shadow: var(--shadow-card); }
-        .es-sticker-cap { font-family: var(--font-body); font-size: 13px; font-weight: 700; color: var(--heading); }
+        .es-sticker-cap { font-family: var(--font-body); font-size: var(--text-caption-size); font-weight: 700; color: var(--heading); }
 
         /* Selector de pegatinas (modal) */
         .es-pick-backdrop { position: fixed; inset: 0; z-index: 9997; background: var(--overlay); backdrop-filter: blur(8px) saturate(160%); -webkit-backdrop-filter: blur(8px) saturate(160%); animation: fadeIn 0.18s ease both; }
         .es-pick { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9998; max-height: 76dvh; display: flex; flex-direction: column; overflow-x: hidden; background: var(--surface-container-lowest); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; box-shadow: 0 -8px 40px -8px rgba(40,36,60,0.3), 0 -1px 0 rgba(255,255,255,0.5) inset; animation: esUp 0.34s cubic-bezier(0.22,1,0.36,1) both; margin: 0 auto; max-width: 640px; }
         .es-pick-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 20px 10px; flex-shrink: 0; }
         .es-pick-tabs::-webkit-scrollbar { display: none; }
-        .es-pick-tab { flex-shrink: 0; padding: 8px 16px; border-radius: 99px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+        .es-pick-tab { flex-shrink: 0; padding: 8px 16px; border-radius: 99px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: var(--text-caption-size); font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .es-pick-tab.sel { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
         .es-pick-grid { overflow-y: auto; overflow-x: hidden; padding: 4px 20px calc(env(safe-area-inset-bottom,0px) + 20px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
         @media (min-width: 480px) { .es-pick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
@@ -224,7 +224,7 @@ export default function CreateEntrySheet() {
         .es-toggle.on::after { transform: translateX(20px); }
 
         .es-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-        .es-pill { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 99px; cursor: pointer; font-size: 13px; font-weight: 700; font-family: var(--font-body); border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); transition: all var(--transition-fast); }
+        .es-pill { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 99px; cursor: pointer; font-size: var(--text-caption-size); font-weight: 700; font-family: var(--font-body); border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); transition: all var(--transition-fast); }
         .es-pill.sel { border-color: var(--primary); background: var(--primary-container); color: var(--on-primary-container); }
 
         .es-money-wrap { position: relative; }
@@ -243,7 +243,7 @@ export default function CreateEntrySheet() {
         .es-tpl { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; padding: 6px 8px 6px 10px; border-radius: 99px; border: var(--hairline); background: var(--surface-container-lowest); font-family: var(--font-body); font-size: 12px; font-weight: 700; color: var(--on-surface); cursor: pointer; }
         .es-tpl:active { transform: scale(0.96); }
         .es-tpl-x { border: none; background: var(--surface-container); border-radius: 50%; width: 18px; height: 18px; color: var(--on-surface-variant); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
-        .es-nl { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 7px 13px; border: none; border-radius: 99px; background: var(--primary-container); color: var(--on-primary-container); font-family: var(--font-body); font-size: 12.5px; font-weight: 700; cursor: pointer; animation: fadeIn 0.18s ease both; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .es-nl { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 7px 13px; border: none; border-radius: 99px; background: var(--primary-container); color: var(--on-primary-container); font-family: var(--font-body); font-size: var(--text-caption-size); font-weight: 700; cursor: pointer; animation: fadeIn 0.18s ease both; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .es-nl:active { transform: scale(0.97); }
         .es-save-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-size: var(--text-body-md); font-weight: 700; font-family: var(--font-body); box-shadow: var(--shadow-fab); transition: transform var(--transition-fast); }
         .es-save-btn:active { transform: scale(0.98); }
@@ -320,7 +320,7 @@ export default function CreateEntrySheet() {
 
           {/* Espacio + Cliente */}
           <div className="es-card">
-            <div className="es-label"><span className="material-symbols-outlined">folder_shared</span>Espacio</div>
+            <div className="es-label"><FolderOpen size={16} strokeWidth={2} />Espacio</div>
             <div className="es-pills" style={{ marginTop: 0 }}>
               <button type="button" className={`es-pill${form.spaceId === 'personal' ? ' sel' : ''}`} onClick={() => set('spaceId', 'personal')}><Lock size={13} strokeWidth={2} /> Personal</button>
               {spaces.map(s => (
@@ -330,7 +330,7 @@ export default function CreateEntrySheet() {
 
             {form.spaceId && form.spaceId !== 'personal' && (
               <>
-                <div className="es-label" style={{ marginTop: 16 }}><span className="material-symbols-outlined">sell</span>Cliente <span style={{ fontWeight: 500, color: 'var(--outline)' }}>· opcional</span></div>
+                <div className="es-label" style={{ marginTop: 16 }}><Tag size={16} strokeWidth={2} />Cliente <span style={{ fontWeight: 500, color: 'var(--outline)' }}>· opcional</span></div>
                 <div className="es-pills" style={{ marginTop: 0 }}>
                   <button type="button" className={`es-pill${!form.client ? ' sel' : ''}`} onClick={() => set('client', '')}>Sin cliente</button>
                   {spaceClients.map(c => (
@@ -358,7 +358,7 @@ export default function CreateEntrySheet() {
 
           {/* Color */}
           <div className="es-card">
-            <div className="es-label"><span className="material-symbols-outlined">palette</span>Color</div>
+            <div className="es-label"><Palette size={16} strokeWidth={2} />Color</div>
             <div className="es-colors">
               {HIGHLIGHTERS.map(c => (
                 <button key={c.id} type="button" className={`es-color${form.color === c.hex ? ' sel' : ''}`} style={{ background: c.hex }} onClick={() => set('color', c.hex)} aria-label={c.id}>
@@ -371,7 +371,7 @@ export default function CreateEntrySheet() {
           {/* Día — viene del calendario; se puede cambiar (mover a otro día) */}
           <div className="es-card">
             <button type="button" className="es-row es-date-btn" onClick={() => setShowDate(v => !v)} aria-expanded={showDate}>
-              <div className="es-label" style={{ marginBottom: 0 }}><span className="material-symbols-outlined">event</span>Día</div>
+              <div className="es-label" style={{ marginBottom: 0 }}><CalendarDays size={16} strokeWidth={2} />Día</div>
               <span className="es-date-fixed">{formatDayLabel(form.date)} <span style={{ fontSize: 12, opacity: 0.7 }}>{showDate ? '▴' : '▾'}</span></span>
             </button>
             {showDate && (
@@ -383,7 +383,7 @@ export default function CreateEntrySheet() {
 
           {/* Monto */}
           <div className="es-card">
-            <div className="es-label"><span className="material-symbols-outlined">payments</span>Monto <span style={{ fontWeight: 500, color: 'var(--outline)' }}>· opcional</span></div>
+            <div className="es-label"><DollarSign size={16} strokeWidth={2} />Monto <span style={{ fontWeight: 500, color: 'var(--outline)' }}>· opcional</span></div>
             <div className="es-money-wrap">
               <DollarSign size={17} className="es-money-icon" />
               <input className="es-input" type="text" inputMode="decimal" placeholder="0.00" value={form.amount} onChange={e => set('amount', e.target.value)} id="entry-amount" />
@@ -392,7 +392,7 @@ export default function CreateEntrySheet() {
 
           {/* Nota */}
           <div className="es-card">
-            <div className="es-label"><span className="material-symbols-outlined">notes</span>Nota <span style={{ fontWeight: 500, color: 'var(--outline)' }}>· opcional</span></div>
+            <div className="es-label"><AlignLeft size={16} strokeWidth={2} />Nota <span style={{ fontWeight: 500, color: 'var(--outline)' }}>· opcional</span></div>
             <textarea className="es-note" placeholder="Brief, entregables, links, notas de la reunión…" value={form.note} onChange={e => set('note', e.target.value)} id="entry-note" />
           </div>
 

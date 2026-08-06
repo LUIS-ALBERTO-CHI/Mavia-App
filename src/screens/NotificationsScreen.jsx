@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { useTranslation } from '../hooks/useTranslation';
 import { Bell, CheckCheck, Dumbbell, Target, Calendar, Award, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import Mascot from '../components/Mascot';
 
 const TYPE_CONFIG = {
   reminder:   { icon: Bell,      bg: 'var(--primary-container)',   color: 'var(--primary)'   },
@@ -60,7 +61,7 @@ function NotifCard({ n, isUnread, onMarkRead, onDelete, forceExit }) {
       </div>
       <span className="ntf-time">{timeAgo(n.time)}</span>
       <button
-        className="ntf-delete-btn"
+        className="ntf-delete-btn hit44"
         onClick={handleDelete}
         aria-label="Eliminar notificación"
         id={`ntf-del-${n.id}`}
@@ -283,29 +284,21 @@ export default function NotificationsScreen() {
 
         .ntf-empty {
           text-align: center;
-          padding: var(--space-xxl) var(--space-xl);
+          padding: 40px 20px;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: var(--space-md);
+          gap: 10px;
           animation: ntfCardIn 0.4s var(--ease-out) both;
-        }
-        .ntf-empty-icon {
-          width: 80px; height: 80px;
-          border-radius: var(--radius-full);
-          background: var(--surface-container);
-          display: flex;
-          align-items: center;
-          justify-content: center;
         }
         .ntf-empty-title {
           font-family: var(--font-display);
-          font-size: var(--text-headline-lg-mobile);
-          font-weight: 500;
-          color: var(--on-surface);
+          font-size: var(--text-section-size);
+          font-weight: 700;
+          color: var(--heading);
         }
         .ntf-empty-sub {
-          font-size: var(--text-body-md);
+          font-size: var(--text-caption-size);
           color: var(--on-surface-variant);
           max-width: 240px;
           line-height: var(--leading-relaxed);
@@ -396,11 +389,9 @@ export default function NotificationsScreen() {
         {/* Empty */}
         {notifications.length === 0 && (
           <div className="ntf-empty">
-            <div className="ntf-empty-icon">
-              <Bell size={36} color="var(--outline)" strokeWidth={1.25} />
-            </div>
-            <div className="ntf-empty-title">Sin notificaciones</div>
-            <p className="ntf-empty-sub">Aquí aparecerán tus recordatorios, hábitos y logros.</p>
+            <Mascot size={160} />
+            <div className="ntf-empty-title">Todo tranquilo</div>
+            <p className="ntf-empty-sub">Aquí caerán los avisos y recordatorios</p>
           </div>
         )}
 

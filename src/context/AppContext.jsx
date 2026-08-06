@@ -729,9 +729,26 @@ export function AppProvider({ children }) {
   }, [state]);
 
   /* ── Helper functions ──────────────────────────────────────── */
-  const navigate = (screen, params = null, replace = false) =>
+  /* Navegación espejada en window.history: el botón/gesto "atrás" del
+     sistema (Android, navegador) navega la app en vez de cerrarla. */
+  const NO_HISTORY = ['splash', 'onboarding', 'register', 'login', 'setup-profile'];
+  const navigate = (screen, params = null, replace = false) => {
     dispatch({ type: 'NAVIGATE', screen, params, replace });
-  const goBack   = ()                       => dispatch({ type: 'GO_BACK' });
+    try {
+      const st = { mv: { screen, params } };
+      if (replace || NO_HISTORY.includes(screen) || !window.history.state?.mv) window.history.replaceState(st, '');
+      else window.history.pushState(st, '');
+    } catch {}
+  };
+  const goBack = () => {
+    try {
+      if (window.history.state?.mv && !NO_HISTORY.includes(window.history.state.mv.screen)) {
+        window.history.back();   // popstate hace el dispatch → ambas pilas quedan alineadas
+        return;
+      }
+    } catch {}
+    dispatch({ type: 'GO_BACK' });
+  };
 
   const toastSeq = useRef(0);
   const showToast = (message, type = 'default', toastAction = null, duration) => {
@@ -743,8 +760,30 @@ export function AppProvider({ children }) {
   };
 
   // Al agregar, el día por defecto es el seleccionado en el calendario (agenda de papel)
-  const openEntrySheet  = (params = {}) => dispatch({ type: 'OPEN_ENTRY_SHEET', params: { date: state.selectedDate || undefined, ...params } });
-  const closeEntrySheet = ()            => dispatch({ type: 'CLOSE_ENTRY_SHEET' });
+  const openEntrySheet  = (params = {}) => {
+    dispatch({ type: 'OPEN_ENTRY_SHEET', params: { date: state.selectedDate || undefined, ...params } });
+    // Entrada propia en el historial: "atrás" cierra el sheet, no la app
+    try { window.history.pushState({ mv: { ...(window.history.state?.mv || {}), sheet: true } }, ''); } catch {}
+  };
+  const closeEntrySheet = () => {
+    try {
+      if (window.history.state?.mv?.sheet) { window.history.back(); return; }   // popstate despacha el cierre
+    } catch {}
+    dispatch({ type: 'CLOSE_ENTRY_SHEET' });
+  };
+
+  /* ── Botón/gesto "atrás" del sistema ── */
+  const backRef = useRef({});
+  backRef.current = { sheetOpen: !!state.entrySheet };
+  useEffect(() => {
+    const onPop = (e) => {
+      if (backRef.current.sheetOpen) { dispatch({ type: 'CLOSE_ENTRY_SHEET' }); return; }
+      const mv = e.state?.mv;
+      if (mv?.screen) dispatch({ type: 'NAVIGATE', screen: mv.screen, params: mv.params || null, replace: true });
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
   const setSelectedDate = (date)        => dispatch({ type: 'SET_SELECTED_DATE', date });
   const setColorMode    = (mode)        => dispatch({ type: 'SET_COLOR_MODE', mode });
 

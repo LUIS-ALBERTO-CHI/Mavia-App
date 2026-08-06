@@ -5,31 +5,8 @@
 
 @import './tokens.css';   /* design tokens nuevos — migración gradual */
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
-
-/* ============================================
-   MATERIAL SYMBOLS ICON STYLE — Rounded variant
-   ============================================ */
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  font-family: 'Material Symbols Rounded';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  display: inline-block;
-  line-height: 1;
-  text-transform: none;
-  letter-spacing: normal;
-  word-wrap: normal;
-  white-space: nowrap;
-  direction: ltr;
-  -webkit-font-smoothing: antialiased;
-  user-select: none;
-}
-
-.ms-filled {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-}
+/* Iconos: una sola familia (lucide-react, SVG inline).
+   La font de Material Symbols se retiró — menos peso y sin FOUT. */
 
 
 /* ============================================
@@ -609,13 +586,7 @@ a { text-decoration: none; color: inherit; }
 }
 
 .sidebar-nav-item .nav-icon {
-  font-size: 22px;
-  line-height: 1;
   flex-shrink: 0;
-}
-
-.sidebar-nav-item.active .nav-icon {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
 /* ---- SIDEBAR FOOTER ---- */
@@ -860,14 +831,8 @@ a { text-decoration: none; color: inherit; }
 }
 
 .bottom-nav-item .nav-icon {
-  font-size: 21px;
-  line-height: 1;
-  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
-  transition: font-variation-settings var(--transition-fast);
-}
-
-.bottom-nav-item.active .nav-icon {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
 }
 
 .bottom-nav-label {
@@ -1662,7 +1627,7 @@ button:focus-visible, a:focus-visible {
   justify-content: center;
   animation: fadeIn 0.4s ease both;
 }
-.dark .focus-mode-overlay { background: var(--background); }
+
 
 /* ============================================
    DARK MODE — GLOBAL COMPONENT OVERRIDES
@@ -1671,26 +1636,16 @@ button:focus-visible, a:focus-visible {
    ============================================ */
 
 /* ---- Cards that use white / rgba(255,255,255,...) ---- */
-.dark .ts-card { background: var(--surface-container) !important; }
-.dark .ts-card.is-done { background: var(--surface-container-low) !important; }
 
-.dark .ce-card {
-  background: rgba(31, 31, 30, 0.85) !important;
-  border-color: var(--hairline-color) !important;
-}
+
+
+
 
 /* Glass effect cards */
-.dark .glass-card,
-.dark [class*="glass"] {
-  background: rgba(31, 31, 30, 0.75) !important;
-  border-color: var(--hairline-color) !important;
-}
+
 
 /* ---- Inputs / Search bars ---- */
-.dark .ts-search {
-  background: var(--surface-container) !important;
-  color: var(--on-surface) !important;
-}
+
 
 .dark input[type="text"],
 .dark input[type="email"],
@@ -1722,40 +1677,25 @@ button:focus-visible, a:focus-visible {
 }
 
 /* ---- Now-playing / gradient cards stay vibrant ---- */
-.dark .now-playing,
-.dark .med-now-playing {
-  box-shadow: 0 12px 40px rgba(0,0,0,0.4) !important;
-}
+
 
 /* ---- Meditation cards ---- */
-.dark .med-card { background: var(--surface-container) !important; }
+
 .dark .med-card.active {
   background: linear-gradient(135deg, rgba(93,68,84,0.3), rgba(68,56,87,0.2)) !important;
 }
 
 /* ---- Event / Habit / Gratitude cards ---- */
-.dark .evs-card,
-.dark .hbs-card,
-.dark .grat-card {
-  background: var(--surface-container) !important;
-  border-color: var(--hairline-color) !important;
-}
+
 
 /* ---- Notification items ---- */
-.dark .notif-item {
-  background: var(--surface-container) !important;
-  border-color: var(--hairline-color) !important;
-}
+
 .dark .notif-item.unread {
   background: var(--accent-soft) !important;
 }
 
 /* ---- Journal / Diary cards ---- */
-.dark .journal-card,
-.dark .jnl-card,
-.dark .day-card {
-  background: var(--surface-container) !important;
-}
+
 
 /* ---- Statistics / Goal cards ---- */
 .dark .stat-card,
@@ -1770,10 +1710,7 @@ button:focus-visible, a:focus-visible {
 }
 
 /* ---- Settings rows ---- */
-.dark .settings-row,
-.dark .set-row {
-  background: var(--surface-container) !important;
-}
+
 
 /* ---- Create screens (ct, ce, cg, ch) ---- */
 .dark .ct-card,
@@ -1783,9 +1720,7 @@ button:focus-visible, a:focus-visible {
   background: var(--surface-container) !important;
   border-color: var(--hairline-color) !important;
 }
-.dark .ct-dt-field {
-  background: var(--surface-container-high) !important;
-}
+
 
 /* ---- Scrollbar ---- */
 .dark .app-main::-webkit-scrollbar-thumb {
@@ -1793,10 +1728,7 @@ button:focus-visible, a:focus-visible {
 }
 
 /* ---- Phrase / Gratitude cards in light screens ---- */
-.dark .phrase-card,
-.dark .phrase-history-card {
-  background: var(--surface-container) !important;
-}
+
 
 /* ---- Overview / stat banners ---- */
 .dark .gls-overview,
@@ -1807,49 +1739,36 @@ button:focus-visible, a:focus-visible {
 
 /* ---- Breathing orb (adapts via gradient vars already) ---- */
 /* ---- Wellness tabs ---- */
-.dark .med-tabs { background: var(--surface-container-high) !important; }
+
 .dark .med-tab.active { background: var(--surface-container-highest) !important; }
 
 /* ---- Profile / Setup screens ---- */
-.dark .profile-card,
-.dark .setup-card {
-  background: var(--surface-container) !important;
-}
+
 
 /* ---- Dashboard cards ---- */
-.dark .dash-card,
-.dark .db-card {
-  background: var(--surface-container) !important;
-}
+
 
 /* ---- Search ---- */
-.dark .search-card { background: var(--surface-container) !important; }
+
 
 /* ---- Habit water tracker ---- */
-.dark .water-btn {
-  background: var(--surface-container-high) !important;
-}
+
 
 /* ---- Task detail ---- */
-.dark .td-card { background: var(--surface-container) !important; }
+
 
 /* ---- Event detail ---- */
-.dark .evd-info-card,
-.dark .evd-notes {
-  background: var(--surface-container) !important;
-}
+
 
 /* ---- Calendar cells ---- */
 .dark .cal-day { background: var(--surface-container) !important; }
 .dark .cal-day.today { background: var(--primary-container) !important; }
 
 /* ---- Agenda items ---- */
-.dark .agenda-item { background: var(--surface-container) !important; }
+
 
 /* ---- Topbar in-page headers ---- */
-.dark .page-header {
-  background: var(--surface-container-low) !important;
-}
+
 
 /* ============================================
    DARK MODE — CONTRAST BOOST
@@ -1894,18 +1813,10 @@ button:focus-visible, a:focus-visible {
 }
 
 /* ── Journal-specific ── */
-.dark .jnl-card,
-.dark .day-card {
-  background: var(--surface-container) !important;
-}
+
 
 /* ── Profile settings rows ── */
-.dark .set-row,
-.dark .settings-row,
-.dark .profile-stat-card {
-  background: var(--surface-container) !important;
-  border: var(--hairline) !important;
-}
+
 
 /* ── Calendar ── */
 .dark .cal-day {
@@ -1916,24 +1827,13 @@ button:focus-visible, a:focus-visible {
 .dark .cal-day.selected { background: var(--accent-soft) !important; }
 
 /* ── Task card hover is more visible ── */
-.dark .ts-card:hover {
-  background: var(--surface-container-high) !important;
-  border-color: var(--hairline-color) !important;
-}
+
 
 /* ── Completed task card ── */
-.dark .ts-card.is-done {
-  background: var(--surface-container-lowest) !important;
-  border-color: var(--hairline-color) !important;
-  opacity: 0.55 !important;
-}
+
 
 /* ── Filter chips (inactive) ── */
-.dark .ts-chip {
-  background: var(--surface-container-high) !important;
-  border-color: var(--hairline-color) !important;
-  color: var(--on-surface-variant) !important;
-}
+
 .dark .ts-chip.active {
   background: var(--primary) !important;
   color: var(--on-primary) !important;
@@ -1941,11 +1841,7 @@ button:focus-visible, a:focus-visible {
 }
 
 /* ── Search bar ── */
-.dark .ts-search {
-  background: var(--surface-container-high) !important;
-  border: var(--hairline) !important;
-  color: var(--on-surface) !important;
-}
+
 
 /* ── Statistics screen cards ── */
 .dark .stat-card,
@@ -1962,22 +1858,13 @@ button:focus-visible, a:focus-visible {
 }
 
 /* ── Light gradients that need dark override ── */
-.dark .jrn-write-panel {
-  background: var(--surface-container) !important;
-  border-color: var(--hairline-color) !important;
-}
+
 
 /* ── GratitudeScreen banner ── */
-.dark .grat-banner,
-.dark .grt-banner {
-  background: linear-gradient(135deg, rgba(87,64,77,0.35), rgba(80,70,34,0.2)) !important;
-  border-color: var(--hairline-color) !important;
-}
+
 
 /* ── Notification items ── */
-.dark .notif-item {
-  background: var(--surface-container) !important;
-}
+
 .dark .notif-item.unread {
   background: var(--accent-soft) !important;
   border-color: var(--hairline-color) !important;
@@ -1992,9 +1879,7 @@ button:focus-visible, a:focus-visible {
   background: var(--surface-container) !important;
   border: var(--hairline) !important;
 }
-.dark .ct-card-sm {
-  background: var(--surface-container-high) !important;
-}
+
 
 /* ── On-surface text must always be readable ── */
 .dark .ts-card-title,
@@ -2002,6 +1887,13 @@ button:focus-visible, a:focus-visible {
 .dark .rem-card-title,
 .dark .notif-title {
   color: var(--on-surface) !important;
+}
+
+/* Área de toque ampliada a ~44px sin engordar lo visual (solo touch).
+   El pseudo-elemento participa del hit-testing del propio botón. */
+@media (pointer: coarse) {
+  .hit44 { position: relative; }
+  .hit44::after { content: ''; position: absolute; inset: -7px; }
 }
 
 /* Pull-to-refresh (solo móvil: en desktop no hay gesto) */

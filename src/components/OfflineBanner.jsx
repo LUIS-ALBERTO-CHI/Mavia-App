@@ -65,7 +65,7 @@ export default function OfflineBanner() {
         padding: '9px 18px',
         borderRadius: 99,
         fontFamily: 'var(--font-body)',
-        fontSize: 13,
+        fontSize: 'var(--text-caption-size)',
         fontWeight: 700,
         letterSpacing: '0.01em',
         boxShadow: '0 4px 20px rgba(0,0,0,0.18)',

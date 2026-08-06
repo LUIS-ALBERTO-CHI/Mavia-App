@@ -113,7 +113,7 @@ export default function ClientDetailScreen() {
           display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
           padding: 5px 13px; border-radius: 99px; border: none;
           background: var(--primary); color: var(--on-primary);
-          font-family: var(--font-body); font-size: 12.5px; font-weight: 700;
+          font-family: var(--font-body); font-size: var(--text-caption-size); font-weight: 700;
         }
 
         /* ── Stats ── */
@@ -128,9 +128,9 @@ export default function ClientDetailScreen() {
         .cd-stat-label { font-size: var(--text-label-sm); color: var(--on-surface-variant); font-weight: 600; margin-top: 3px; }
 
         /* ── Secciones y grupos por fecha ── */
-        .cd-section-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--heading); margin: var(--space-lg) 0 10px; }
+        .cd-section-title { font-family: var(--font-display); font-size: var(--text-section-size); font-weight: 700; color: var(--heading); margin: var(--space-lg) 0 10px; }
         .cd-group { margin-bottom: var(--space-md); }
-        .cd-date-head { font-family: var(--font-display); font-size: 13.5px; font-weight: 700; color: var(--on-surface-variant); margin: 0 0 7px 2px; }
+        .cd-date-head { font-family: var(--font-display); font-size: var(--text-caption-size); font-weight: 700; color: var(--on-surface-variant); margin: 0 0 7px 2px; }
 
         /* ── Filas ── */
         .cd-card {
@@ -158,7 +158,7 @@ export default function ClientDetailScreen() {
           display: inline-flex; align-items: center; gap: 6px; margin-top: var(--space-lg);
           padding: 9px 18px; border-radius: 99px; border: var(--hairline); cursor: pointer;
           background: var(--surface-container); color: var(--on-surface-variant);
-          font-family: var(--font-body); font-size: 13px; font-weight: 700;
+          font-family: var(--font-body); font-size: var(--text-caption-size); font-weight: 700;
           transition: all var(--transition-fast);
         }
         .cd-past-toggle:hover { background: var(--surface-container-high); }

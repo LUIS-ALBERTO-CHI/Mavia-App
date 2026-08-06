@@ -37,7 +37,7 @@ export default function NotFoundScreen() {
         Pantalla no encontrada
       </h1>
       <p style={{
-        fontSize: 14,
+        fontSize: 'var(--text-body-size)',
         color: 'var(--on-surface-variant)',
         textAlign: 'center',
         maxWidth: 280,
@@ -57,7 +57,7 @@ export default function NotFoundScreen() {
           background: 'var(--primary)',
           color: 'var(--on-primary)',
           border: 'none',
-          fontSize: 14, fontWeight: 700,
+          fontSize: 'var(--text-body-size)', fontWeight: 700,
           fontFamily: 'var(--font-body)',
           cursor: 'pointer',
           boxShadow: '0 4px 16px rgba(112,87,101,0.28)',

@@ -454,7 +454,7 @@ function CustomTimeModal({ onClose, onConfirm, initialSlot }) {
               border: 'none', background: 'var(--surface-container-high)',
               cursor: 'pointer', display: 'flex',
               alignItems: 'center', justifyContent: 'center',
-              fontSize: 14, fontWeight: 700, color: 'var(--on-surface-variant)',
+              fontSize: 'var(--text-body-size)', fontWeight: 700, color: 'var(--on-surface-variant)',
             }}
             aria-label="Cerrar"
           >✕</button>
@@ -517,7 +517,7 @@ function CustomTimeModal({ onClose, onConfirm, initialSlot }) {
               width: '100%', padding: '15px', borderRadius: 99,
               background: 'var(--primary)', color: 'var(--on-primary)',
               border: 'none', cursor: 'pointer',
-              fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-body)',
+              fontSize: 'var(--text-body-size)', fontWeight: 700, fontFamily: 'var(--font-body)',
               letterSpacing: '0.02em',
             }}
           >
@@ -666,7 +666,7 @@ const TP_STYLES = `
     width: 100%; padding: 14px;
     border-radius: var(--radius-full);
     background: var(--primary); color: var(--on-primary);
-    font-size: 15px; font-weight: 700;
+    font-size: var(--text-body-size); font-weight: 700;
     border: none; cursor: pointer;
     transition: all var(--transition-spring); letter-spacing: 0.02em;
   }

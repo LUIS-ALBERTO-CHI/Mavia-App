@@ -191,7 +191,7 @@ export default function OnboardingScreen() {
           display: flex;
           align-items: center;
           gap: 10px;
-          font-size: 13px;
+          font-size: var(--text-caption-size);
           color: var(--on-surface);
           font-weight: 500;
         }
@@ -237,7 +237,7 @@ export default function OnboardingScreen() {
         }
 
         .ob-skip {
-          font-size: 13px;
+          font-size: var(--text-caption-size);
           color: var(--on-surface-variant);
           font-weight: 500;
           padding: 10px 14px;
@@ -257,7 +257,7 @@ export default function OnboardingScreen() {
           color: var(--on-primary);
           border: none;
           border-radius: 99px;
-          font-size: 15px;
+          font-size: var(--text-body-size);
           font-weight: 700;
           font-family: var(--font-body);
           cursor: pointer;

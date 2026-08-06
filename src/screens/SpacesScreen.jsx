@@ -101,7 +101,7 @@ export default function SpacesScreen() {
         .sp-card-name { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--heading); flex: 1; }
         .sp-meta { font-size: var(--text-label-sm); color: var(--on-surface-variant); }
         .sp-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-        .sp-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 99px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; }
+        .sp-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 99px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-size: var(--text-caption-size); font-weight: 700; cursor: pointer; }
         .sp-btn.primary { background: var(--primary); color: var(--on-primary); border: none; }
         .sp-btn.danger { color: var(--error); border-color: var(--error-container); }
         .sp-swatches { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
@@ -243,7 +243,7 @@ export default function SpacesScreen() {
                 <button key={t.id} onClick={() => navigate('entryDetail', { entryId: t.id })}
                   style={{ display: 'flex', alignItems: 'center', gap: 9, textAlign: 'left', padding: '9px 12px', borderRadius: 'var(--radius-control)', border: 'var(--hairline)', background: 'var(--surface-container-lowest)', cursor: 'pointer' }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: t.color || 'var(--primary)', flexShrink: 0 }} />
-                  <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--font-body)' }}>
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 'var(--text-caption-size)', color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--font-body)' }}>
                     <b>{activityLabel(t)}</b> «{t.title}»
                   </span>
                   <span style={{ fontSize: 11, color: 'var(--on-surface-variant)', flexShrink: 0 }}>{timeAgo(t.updatedAt || t.createdAt)}</span>

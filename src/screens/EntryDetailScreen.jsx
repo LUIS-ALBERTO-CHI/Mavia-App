@@ -163,13 +163,13 @@ export default function EntryDetailScreen() {
         .ed-move { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
         .ed-move-label { font-size: 12px; font-weight: 700; color: var(--on-surface-variant); }
         .ed-move-row { display: flex; gap: 7px; flex-wrap: wrap; }
-        .ed-move-btn { padding: 7px 14px; border-radius: 99px; border: var(--hairline); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-size: 12.5px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+        .ed-move-btn { padding: 7px 14px; border-radius: 99px; border: var(--hairline); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-size: var(--text-caption-size); font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .ed-move-btn:hover { background: var(--primary-container); border-color: var(--primary); }
         .ed-move-btn:active { transform: scale(0.95); }
         .ed-del-banner { background: var(--error-container); border-radius: var(--radius-xl); padding: var(--space-md); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
         .ed-del-text { font-size: var(--text-label-md); color: var(--on-error-container); font-weight: 600; }
         .ed-del-actions { display: flex; gap: 8px; }
-        .ed-del-btn { padding: 8px 16px; border-radius: 99px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; }
+        .ed-del-btn { padding: 8px 16px; border-radius: 99px; border: none; cursor: pointer; font-size: var(--text-caption-size); font-weight: 700; }
       `}</style>
 
       <div className="ed-screen">

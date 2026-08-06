@@ -52,8 +52,8 @@ export default function UpdatePrompt() {
           max-width: calc(100vw - 24px);
         }
         @keyframes updDown { from { opacity: 0; transform: translate(-50%, -16px); } to { opacity: 1; transform: translate(-50%, 0); } }
-        .upd-text { font-family: var(--font-body); font-size: 13.5px; font-weight: 700; color: var(--on-surface, #333); white-space: nowrap; }
-        .upd-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-family: var(--font-body); font-weight: 700; font-size: 13px; }
+        .upd-text { font-family: var(--font-body); font-size: var(--text-caption-size); font-weight: 700; color: var(--on-surface, #333); white-space: nowrap; }
+        .upd-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-family: var(--font-body); font-weight: 700; font-size: var(--text-caption-size); }
         .upd-btn:active { transform: scale(0.96); }
         .upd-x { width: 30px; height: 30px; border-radius: 50%; border: none; background: var(--surface-container, #eee); color: var(--on-surface-variant, #777); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
       `}</style>

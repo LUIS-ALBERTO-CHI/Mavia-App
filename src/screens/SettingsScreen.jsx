@@ -275,7 +275,7 @@ export default function SettingsScreen() {
           justify-content: center;
           flex-shrink: 0;
         }
-        .stg-lang-label { font-size: 14px; font-weight: 500; color: var(--on-surface); }
+        .stg-lang-label { font-size: var(--text-body-size); font-weight: 500; color: var(--on-surface); }
         .stg-lang-sub   { font-size: 12px; color: var(--on-surface-variant); margin-top: 1px; }
         /* 3 equal columns — always fills the container regardless of screen width */
         .stg-lang-pills {
@@ -307,7 +307,7 @@ export default function SettingsScreen() {
           background: var(--primary-container);
           color: var(--primary);
         }
-        .stg-lang-pill .flag { font-size: 14px; flex-shrink: 0; }
+        .stg-lang-pill .flag { font-size: var(--text-body-size); flex-shrink: 0; }
       `}</style>
 
       <div className="stg-screen">
@@ -468,7 +468,7 @@ export default function SettingsScreen() {
                         width: '100%', padding: '11px 42px 11px 14px',
                         borderRadius: 'var(--radius-control)', border: '1px solid var(--outline-variant)',
                         background: 'var(--surface-container)', color: 'var(--on-surface)',
-                        fontSize: 14, fontFamily: 'var(--font-body)',
+                        fontSize: 'var(--text-body-size)', fontFamily: 'var(--font-body)',
                         boxSizing: 'border-box', outline: 'none',
                         transition: 'border-color 0.15s ease',
                       }}
@@ -503,7 +503,7 @@ export default function SettingsScreen() {
                   width: '100%', padding: '13px',
                   background: pwLoading ? 'var(--outline-variant)' : 'var(--primary)',
                   color: 'var(--on-primary)', border: 'none', borderRadius: 99,
-                  fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--text-body-size)', fontWeight: 700, fontFamily: 'var(--font-body)',
                   cursor: pwLoading ? 'not-allowed' : 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   transition: 'opacity 0.15s ease',

@@ -1,5 +1,9 @@
 import { useContext, useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  CalendarDays, NotebookPen, CircleUserRound, AlarmClock, Flag, Bell, Search,
+  Plus, X, ChevronRight, Settings, LogOut, Menu, Palette,
+} from 'lucide-react';
 
 import { AppProvider, useApp } from './context/AppContext';
 import './styles/design-system.css';
@@ -39,6 +43,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import OfflineBanner from './components/OfflineBanner';
 import CreateEntrySheet from './components/CreateEntrySheet';
 import UpdatePrompt from './components/UpdatePrompt';
+import AppSkeleton from './components/AppSkeleton';
 
 /* ============================================
    CONSTANTS
@@ -74,9 +79,9 @@ const SCREEN_MAP = {
    SIDEBAR NAV ITEMS
    ============================================ */
 const MAIN_NAV = [
-  { id: 'calendar',  label: 'Calendario', icon: 'calendar_today'  },
-  { id: 'notes',     label: 'Notas',      icon: 'edit_note'       },
-  { id: 'profile',   label: 'Perfil',     icon: 'person'          },
+  { id: 'calendar',  label: 'Calendario', icon: CalendarDays    },
+  { id: 'notes',     label: 'Notas',      icon: NotebookPen     },
+  { id: 'profile',   label: 'Perfil',     icon: CircleUserRound },
 ];
 
 // Screens that already have their own "Añadir" button — hide FAB to avoid confusion
@@ -180,7 +185,7 @@ function DesktopSidebar() {
             id={`sidebar-${item.id}`}
             aria-label={item.label}
           >
-            <span className="material-symbols-outlined nav-icon">{item.icon}</span>
+            <item.icon size={20} strokeWidth={2} className="nav-icon" />
             <span>{item.label}</span>
           </button>
         ))}
@@ -188,10 +193,10 @@ function DesktopSidebar() {
         {/* Extra items */}
         <div style={{ marginTop: '1rem', borderTop: 'var(--hairline)', paddingTop: '0.75rem' }}>
           {[
-            { id: 'reminders',     label: 'Recordatorios',   icon: 'alarm'         },
-            { id: 'goals',         label: 'Objetivos',       icon: 'flag'          },
-            { id: 'notifications', label: 'Notificaciones',  icon: 'notifications', badge: unread },
-            { id: 'search',        label: 'Búsqueda',        icon: 'search'        },
+            { id: 'reminders',     label: 'Recordatorios',   icon: AlarmClock },
+            { id: 'goals',         label: 'Objetivos',       icon: Flag       },
+            { id: 'notifications', label: 'Notificaciones',  icon: Bell, badge: unread },
+            { id: 'search',        label: 'Búsqueda',        icon: Search     },
           ].map(item => (
             <button
               key={item.id}
@@ -199,7 +204,7 @@ function DesktopSidebar() {
               onClick={() => navigate(item.id)}
               id={`sidebar-extra-${item.id}`}
             >
-              <span className="material-symbols-outlined nav-icon">{item.icon}</span>
+              <item.icon size={20} strokeWidth={2} className="nav-icon" />
               <span>{item.label}</span>
               {item.badge > 0 && (
                 <span style={{
@@ -226,7 +231,7 @@ function DesktopSidebar() {
           onClick={() => openEntrySheet()}
           id="sidebar-cta"
         >
-          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
+          <Plus size={20} strokeWidth={2} />
           Agregar
         </button>
       </div>
@@ -238,10 +243,10 @@ function DesktopSidebar() {
    MOBILE SIDE DRAWER  (hamburger → slide-from-left)
    ============================================ */
 const DRAWER_ITEMS = [
-  { id: 'reminders',  label: 'Recordatorios',  icon: 'alarm',     section: 'Agenda',    color: '#e0a72e' },
-  { id: 'notes',      label: 'Notas',          icon: 'edit_note', section: 'Trabajo',   color: '#ec4b8b' },
-  { id: 'goals',      label: 'Objetivos',      icon: 'flag',      section: 'Trabajo',   color: '#8a63d2' },
-  { id: 'search',     label: 'Buscar',         icon: 'search',    section: 'General',   color: '#3fa96b' },
+  { id: 'reminders',  label: 'Recordatorios',  icon: AlarmClock,  section: 'Agenda',    color: '#e0a72e' },
+  { id: 'notes',      label: 'Notas',          icon: NotebookPen, section: 'Trabajo',   color: '#ec4b8b' },
+  { id: 'goals',      label: 'Objetivos',      icon: Flag,        section: 'Trabajo',   color: '#8a63d2' },
+  { id: 'search',     label: 'Buscar',         icon: Search,      section: 'General',   color: '#3fa96b' },
 ];
 
 const SECTION_ORDER = ['Agenda', 'Trabajo', 'General'];
@@ -334,7 +339,7 @@ function MobileSideDrawer({ open, onClose }) {
               color: 'color-mix(in srgb, var(--on-primary, #fff) 80%, transparent)',
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>close</span>
+            <X size={18} strokeWidth={2} />
           </button>
 
           {/* Avatar */}
@@ -439,24 +444,17 @@ function MobileSideDrawer({ open, onClose }) {
                     <div style={{
                       width: 36, height: 36, borderRadius: 'var(--radius-control)',
                       background: isAct ? item.color : 'var(--surface-container)',
+                      color: isAct ? 'white' : 'var(--on-surface-variant)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0,
                       transition: 'background 0.15s ease',
                       boxShadow: isAct ? `0 3px 10px ${item.color}40` : 'none',
                     }}>
-                      <span
-                        className="material-symbols-outlined"
-                        style={{
-                          fontSize: 19,
-                          color: isAct ? 'white' : 'var(--on-surface-variant)',
-                        }}
-                      >
-                        {item.icon}
-                      </span>
+                      <item.icon size={19} strokeWidth={2} />
                     </div>
 
                     <span style={{
-                      fontSize: 14,
+                      fontSize: 'var(--text-body-size)',
                       fontWeight: isAct ? 700 : 500,
                       color: isAct ? item.color : 'var(--on-surface)',
                       fontFamily: 'var(--font-body)',
@@ -466,9 +464,9 @@ function MobileSideDrawer({ open, onClose }) {
                     </span>
 
                     {isAct && (
-                      <span className="material-symbols-outlined" style={{
-                        fontSize: 16, color: item.color, marginLeft: 'auto', opacity: 0.7,
-                      }}>chevron_right</span>
+                      <ChevronRight size={16} strokeWidth={2} style={{
+                        color: item.color, marginLeft: 'auto', opacity: 0.7, flexShrink: 0,
+                      }} />
                     )}
                   </button>
                 );
@@ -497,7 +495,7 @@ function MobileSideDrawer({ open, onClose }) {
               transition: 'background 0.15s ease',
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>settings</span>
+            <Settings size={18} strokeWidth={2} />
             Ajustes
           </button>
 
@@ -514,7 +512,7 @@ function MobileSideDrawer({ open, onClose }) {
               transition: 'background 0.15s ease',
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>logout</span>
+            <LogOut size={18} strokeWidth={2} />
             Salir
           </button>
         </div>
@@ -547,7 +545,7 @@ function MobileTopBar({ onMenuOpen }) {
           aria-label="Abrir menú"
           style={{ marginLeft: -6 }}
         >
-          <span className="material-symbols-outlined">menu</span>
+          <Menu size={20} strokeWidth={2} />
         </button>
 
         <span className="topbar-brand" style={{ fontSize: 'var(--text-headline-md)', fontFamily: 'var(--font-body)' }}>
@@ -562,7 +560,7 @@ function MobileTopBar({ onMenuOpen }) {
           id="topbar-themes"
           aria-label="Temas"
         >
-          <span className="material-symbols-outlined">palette</span>
+          <Palette size={20} strokeWidth={2} />
         </button>
         <button
           className="topbar-icon-btn"
@@ -570,7 +568,7 @@ function MobileTopBar({ onMenuOpen }) {
           id="topbar-search"
           aria-label="Buscar"
         >
-          <span className="material-symbols-outlined">search</span>
+          <Search size={20} strokeWidth={2} />
         </button>
         <button
           className="topbar-icon-btn"
@@ -579,7 +577,7 @@ function MobileTopBar({ onMenuOpen }) {
           aria-label="Notificaciones"
           style={{ position: 'relative' }}
         >
-          <span className="material-symbols-outlined">notifications</span>
+          <Bell size={20} strokeWidth={2} />
           {unread > 0 && (
             <span style={{
               position: 'absolute', top: 0, right: 0,
@@ -603,10 +601,10 @@ function MobileBottomNav() {
   const { currentScreen } = state;
 
   const BOTTOM_NAV = [
-    { id: 'calendar',  label: 'Calendario', icon: 'calendar_today'  },
-    { id: 'notes',     label: 'Notas',      icon: 'edit_note'       },
-    { id: 'goals',     label: 'Objetivos',  icon: 'flag'            },
-    { id: 'profile',   label: 'Perfil',     icon: 'person'          },
+    { id: 'calendar',  label: 'Calendario', icon: CalendarDays    },
+    { id: 'notes',     label: 'Notas',      icon: NotebookPen     },
+    { id: 'goals',     label: 'Objetivos',  icon: Flag            },
+    { id: 'profile',   label: 'Perfil',     icon: CircleUserRound },
   ];
 
   const TAB_GROUPS = {
@@ -629,7 +627,7 @@ function MobileBottomNav() {
               <button key={item.id} className={`bottom-nav-item${isActive ? ' active' : ''}`}
                 onClick={() => navigate(item.id)} id={`bnav-${item.id}`}
                 aria-label={item.label} aria-current={isActive ? 'page' : undefined}>
-                <span className="material-symbols-outlined nav-icon">{item.icon}</span>
+                <item.icon size={22} strokeWidth={2} className="nav-icon" />
                 <span className="bottom-nav-label">{item.label}</span>
               </button>
             );
@@ -638,7 +636,7 @@ function MobileBottomNav() {
 
         {/* FAB centrado — siempre agrega una entrada */}
         <button className="mobile-fab" onClick={() => openEntrySheet()} id="bnav-fab" aria-label="Agregar">
-          <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>add</span>
+          <Plus size={26} strokeWidth={2} />
         </button>
 
         <div className="bn-group">
@@ -648,7 +646,7 @@ function MobileBottomNav() {
               <button key={item.id} className={`bottom-nav-item${isActive ? ' active' : ''}`}
                 onClick={() => navigate(item.id)} id={`bnav-${item.id}`}
                 aria-label={item.label} aria-current={isActive ? 'page' : undefined}>
-                <span className="material-symbols-outlined nav-icon">{item.icon}</span>
+                <item.icon size={22} strokeWidth={2} className="nav-icon" />
                 <span className="bottom-nav-label">{item.label}</span>
               </button>
             );
@@ -790,11 +788,15 @@ function AppContent() {
     else if (action === 'new-note') navigate('notes');
   }, [authLoading, currentScreen]);
 
-  // While Firebase checks the existing session, show splash
+  // While Firebase checks the existing session:
+  //  · usuario recurrente → skeleton del calendario (percepción de carga instantánea)
+  //  · primera visita     → splash de marca
   if (authLoading) {
+    let returning = false;
+    try { returning = localStorage.getItem('mavia_seen') === '1'; } catch {}
     return (
       <div className={darkMode ? 'dark' : ''} style={{ minHeight: '100dvh', backgroundColor: 'var(--color-bg)' }}>
-        <SplashScreen />
+        {returning ? <AppSkeleton /> : <SplashScreen />}
       </div>
     );
   }

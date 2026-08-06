@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
-import { useTranslation } from '../hooks/useTranslation';
 import { Search, CheckCircle2, Calendar, BookOpen, Target, Clock, MapPin, TrendingUp, X, History } from 'lucide-react';
+import Mascot from '../components/Mascot';
 import { formatTime12h } from '../lib/utils';
 import { progressOf } from '../lib/goalUtils';
 
@@ -30,7 +30,6 @@ const DATE_FILTERS = [
 
 export default function SearchScreen() {
   const { state, navigate } = useApp();
-  const { t } = useTranslation();
   const [query, setQuery]         = useState('');
   const [activeCategory, setActiveCategory] = useState('entries');
   const [history, setHistory]     = useState(loadHistory);
@@ -102,6 +101,10 @@ export default function SearchScreen() {
 
   const totalResults = Object.values(results).reduce((a, r) => a + r.length, 0);
   const activeCat = CATEGORIES.find(c => c.id === activeCategory);
+
+  /* Filtros activos → botón "Quitar filtros" en el vacío */
+  const hasActiveFilters = spaceFilter !== 'all' || clientFilter !== 'all' || dateFilter !== 'always';
+  const clearFilters = () => { setSpaceFilter('all'); setClientFilter('all'); setDateFilter('always'); };
 
   return (
     <>
@@ -341,34 +344,37 @@ export default function SearchScreen() {
         /* ── Empty / Idle state ── */
         .srch-empty {
           text-align: center;
-          padding: var(--space-xxl) var(--space-xl);
+          padding: 40px 20px;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: var(--space-md);
-        }
-        .srch-empty-icon {
-          width: 88px;
-          height: 88px;
-          border-radius: var(--radius-full);
-          background: var(--primary-container);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          animation: float 3s ease-in-out infinite;
+          gap: 10px;
         }
         .srch-empty-title {
           font-family: var(--font-display);
-          font-size: var(--text-headline-lg-mobile);
-          font-weight: 500;
-          color: var(--on-surface);
+          font-size: var(--text-section-size);
+          font-weight: 700;
+          color: var(--heading);
         }
         .srch-empty-sub {
-          font-size: var(--text-body-md);
+          font-size: var(--text-caption-size);
           color: var(--on-surface-variant);
           max-width: 260px;
           line-height: var(--leading-relaxed);
         }
+        .srch-empty-btn {
+          margin-top: 6px;
+          padding: 9px 18px;
+          border-radius: 99px;
+          border: none;
+          cursor: pointer;
+          background: var(--primary);
+          color: var(--on-primary);
+          font-family: var(--font-body);
+          font-weight: 700;
+          font-size: var(--text-caption-size);
+        }
+        .srch-empty-btn:active { transform: scale(0.96); }
       `}</style>
 
       <div className="srch-screen">
@@ -390,7 +396,7 @@ export default function SearchScreen() {
             id="search-input"
           />
           {query && (
-            <button className="srch-clear" onClick={() => setQuery('')} aria-label="Limpiar">
+            <button className="srch-clear hit44" onClick={() => setQuery('')} aria-label="Limpiar">
               <X size={14} />
             </button>
           )}
@@ -438,11 +444,12 @@ export default function SearchScreen() {
                 <div key={i} style={{ display: 'flex', alignItems: 'center', background: 'var(--surface-container)', borderRadius: 99, overflow: 'hidden' }}>
                   <button
                     onClick={() => setQuery(item)}
-                    style={{ background: 'none', border: 'none', padding: '6px 12px 6px 14px', fontSize: 13, fontFamily: 'var(--font-body)', color: 'var(--on-surface)', cursor: 'pointer', fontWeight: 500 }}
+                    style={{ background: 'none', border: 'none', padding: '6px 12px 6px 14px', fontSize: 'var(--text-caption-size)', fontFamily: 'var(--font-body)', color: 'var(--on-surface)', cursor: 'pointer', fontWeight: 500 }}
                   >
                     {item}
                   </button>
                   <button
+                    className="hit44"
                     onClick={() => removeHistory(item)}
                     style={{ background: 'none', border: 'none', padding: '6px 10px 6px 4px', cursor: 'pointer', color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center' }}
                     aria-label={`Eliminar ${item}`}
@@ -493,13 +500,14 @@ export default function SearchScreen() {
         {/* ── No results ── */}
         {q && totalResults === 0 && (
           <div className="srch-empty">
-            <div className="srch-empty-icon" style={{ background: 'var(--surface-container)' }}>
-              <Search size={38} color="var(--outline)" strokeWidth={1.25} />
-            </div>
-            <div className="srch-empty-title">{t('search.noResults')}</div>
-            <p className="srch-empty-sub">
-              No encontramos nada para "<strong>{query}</strong>". Prueba con otra búsqueda.
-            </p>
+            <Mascot size={160} />
+            <div className="srch-empty-title">Nada por aquí</div>
+            <p className="srch-empty-sub">Prueba con otra palabra o quita filtros</p>
+            {hasActiveFilters && (
+              <button className="srch-empty-btn" onClick={clearFilters} id="search-clear-filters">
+                Quitar filtros
+              </button>
+            )}
           </div>
         )}
 

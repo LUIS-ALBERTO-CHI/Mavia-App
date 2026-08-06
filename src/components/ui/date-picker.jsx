@@ -198,7 +198,7 @@ const DP_STYLES = `
     aspect-ratio: 1;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50%;
-    font-size: 13px; font-weight: 500;
+    font-size: var(--text-caption-size); font-weight: 500;
     cursor: pointer;
     transition: all var(--transition-fast);
     color: var(--on-surface);

@@ -247,8 +247,9 @@ export default function CalendarScreen() {
 
   const EmptyDay = ({ ds }) => (
     <div className="cal-empty">
-      <Mascot size={250} />
-      <p>Nada agendado<br/><span style={{ fontSize: 13, opacity: 0.7 }}>Toca ＋ para agregar algo</span></p>
+      <Mascot size={200} />
+      <p className="cal-empty-t">Nada agendado</p>
+      <p className="cal-empty-s">Toca ＋ para agregar algo</p>
     </div>
   );
 
@@ -274,9 +275,9 @@ export default function CalendarScreen() {
         .cal-jump { position: absolute; top: calc(100% + 8px); left: 0; z-index: 30; width: 252px; padding: 12px;
           background: var(--surface-container-lowest); border: var(--hairline); border-radius: var(--radius-card); box-shadow: var(--shadow-lg); }
         .cal-jump-year { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-        .cal-jump-year b { font-family: var(--font-display); font-size: 15px; color: var(--heading); }
+        .cal-jump-year b { font-family: var(--font-display); font-size: var(--text-body-size); color: var(--heading); }
         .cal-jump-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .cal-jump-m { padding: 9px 4px; border: none; border-radius: var(--radius-control); background: var(--surface-container); color: var(--on-surface); font-family: var(--font-body); font-size: 12.5px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+        .cal-jump-m { padding: 9px 4px; border: none; border-radius: var(--radius-control); background: var(--surface-container); color: var(--on-surface); font-family: var(--font-body); font-size: var(--text-caption-size); font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .cal-jump-m:hover { background: var(--primary-container); }
         .cal-jump-m.today { box-shadow: inset 0 0 0 1.5px var(--primary); }
         .cal-jump-m.cur { background: var(--primary); color: var(--on-primary); }
@@ -286,7 +287,7 @@ export default function CalendarScreen() {
         .cal-month { font-family: var(--font-display); font-size: 21px; font-weight: 700; color: var(--heading); letter-spacing: -0.01em; white-space: nowrap; background: none; border: none; padding: 0; cursor: pointer; }
         .cal-month span { color: var(--on-surface-variant); font-weight: 700; }
         .cal-top-right { display: flex; align-items: center; gap: 6px; }
-        .cal-today-chip { min-width: 38px; height: 34px; padding: 0 11px; border-radius: var(--radius-control); border: 1px solid var(--primary); background: var(--primary-container); color: var(--on-primary-container); font-weight: 700; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: var(--font-body); transition: transform var(--transition-fast); }
+        .cal-today-chip { min-width: 38px; height: 34px; padding: 0 11px; border-radius: var(--radius-control); border: 1px solid var(--primary); background: var(--primary-container); color: var(--on-primary-container); font-weight: 700; font-size: var(--text-body-size); cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: var(--font-body); transition: transform var(--transition-fast); }
         .cal-today-chip:hover { transform: scale(1.05); }
         .cal-today-chip:active { transform: scale(0.94); }
         .cal-icon-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: transparent; color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; }
@@ -298,13 +299,13 @@ export default function CalendarScreen() {
         /* Selector de espacio */
         .cal-spaces { display: flex; flex-wrap: nowrap; gap: 8px; margin-bottom: 10px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; margin-left: calc(-1 * var(--space-container)); margin-right: calc(-1 * var(--space-container)); padding: 0 var(--space-container) 2px; }
         .cal-spaces::-webkit-scrollbar { display: none; }
-        .cal-space { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 99px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+        .cal-space { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 99px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: var(--text-caption-size); font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .cal-space.active { border-color: var(--primary); background: var(--primary); color: var(--on-primary); box-shadow: 0 2px 8px -2px rgba(140,150,220,0.5); }
         /* Filtro de clientes */
         .cal-clients { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
         .cal-client { flex-shrink: 0; padding: 5px 12px; border-radius: 99px; border: none; background: var(--surface-container); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 12px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
         .cal-client.active { background: var(--secondary-container); color: var(--on-secondary-container); }
-        .cal-seg { flex: 1; padding: 9px 4px; border-radius: var(--radius-control); border: none; background: transparent; cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 700; letter-spacing: 0.03em; color: var(--on-surface-variant); transition: all var(--transition-fast); }
+        .cal-seg { flex: 1; padding: 9px 4px; border-radius: var(--radius-control); border: none; background: transparent; cursor: pointer; font-family: var(--font-body); font-size: var(--text-caption-size); font-weight: 700; letter-spacing: 0.03em; color: var(--on-surface-variant); transition: all var(--transition-fast); }
         .cal-seg.active { background: var(--primary); color: var(--on-primary); box-shadow: 0 1px 2px rgba(90,80,130,0.14), 0 3px 8px -2px rgba(140,150,220,0.4); }
 
         /* ── Slide anim ── */
@@ -324,7 +325,7 @@ export default function CalendarScreen() {
           box-shadow: 0 6px 16px -6px rgba(90,80,130,0.42), 0 1px 2px rgba(90,80,130,0.18);
           cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
         .cal-postit:active { cursor: grabbing; }
-        .cal-postit-text { font-family: var(--font-body); font-size: 12.5px; font-weight: 700; line-height: 1.35; color: #3d3a4e; white-space: pre-wrap; word-break: break-word; max-height: 5.4em; overflow: hidden; }
+        .cal-postit-text { font-family: var(--font-body); font-size: var(--text-caption-size); font-weight: 700; line-height: 1.35; color: #3d3a4e; white-space: pre-wrap; word-break: break-word; max-height: 5.4em; overflow: hidden; }
         /* Tinta sobre papel de contenido (pastel fijo): NO sigue el tema/dark */
         .cal-postit.done .cal-postit-text { opacity: 0.55; text-decoration: line-through; text-decoration-color: rgba(226,85,122,0.7); }
         .cal-postit-stamp { position: absolute; top: 4px; right: 5px; transform: rotate(10deg); }
@@ -344,7 +345,7 @@ export default function CalendarScreen() {
         .cal-cell.other { color: var(--outline); cursor: default; }
         .cal-cell.other .cal-num { color: var(--outline); opacity: 0.55; }
         .cal-cell.today, .cal-cell.sel { background: var(--lime-container); box-shadow: inset 0 0 0 2.5px var(--lime); border-radius: var(--radius-control); }
-        .cal-num { font-size: 13px; font-weight: 700; color: var(--on-surface); line-height: 1; align-self: flex-start; padding: 1px 2px; }
+        .cal-num { font-size: var(--text-caption-size); font-weight: 700; color: var(--on-surface); line-height: 1; align-self: flex-start; padding: 1px 2px; }
         .cal-cell.today .cal-num { color: var(--error); font-weight: 700; }
 
         .cal-chips { display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
@@ -364,7 +365,7 @@ export default function CalendarScreen() {
 
         /* ── Rows (lista/semana/día) ── */
         .cal-list { display: flex; flex-direction: column; gap: 9px; }
-        .cal-date-head { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--heading); margin: 16px 0 8px; text-transform: capitalize; }
+        .cal-date-head { font-family: var(--font-display); font-size: var(--text-body-size); font-weight: 700; color: var(--heading); margin: 16px 0 8px; text-transform: capitalize; }
         .cal-date-head:first-child { margin-top: 4px; }
         .cal-row { display: flex; align-items: center; gap: 11px; background: var(--surface-container-lowest); border-radius: var(--radius-card); border-left: 5px solid; box-shadow: var(--shadow-card); padding: 11px 13px; cursor: pointer; transition: box-shadow var(--transition-fast); }
         .cal-row:hover { box-shadow: var(--shadow-md); }
@@ -392,7 +393,7 @@ export default function CalendarScreen() {
         /* ── Week ── */
         .cal-week-day { margin-bottom: 6px; }
         .cal-week-label { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 8px; }
-        .cal-week-label b { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--heading); }
+        .cal-week-label b { font-family: var(--font-display); font-size: var(--text-body-size); font-weight: 700; color: var(--heading); }
         .cal-week-label.is-today b { color: var(--primary); }
         .cal-week-label span { font-size: 12px; color: var(--on-surface-variant); text-transform: capitalize; }
         .cal-week-none { font-size: 12px; color: var(--outline); padding: 2px 0 4px 2px; }
@@ -408,14 +409,15 @@ export default function CalendarScreen() {
         .cal-tl-item.done { opacity: 0.5; }
         .cal-tl-item.done .cal-tl-title { text-decoration: line-through; }
         .cal-tl-time { font-size: 11px; font-weight: 700; color: var(--on-surface-variant); flex-shrink: 0; font-variant-numeric: tabular-nums; }
-        .cal-tl-title { font-size: 13.5px; font-weight: 700; color: var(--on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cal-tl-title { font-size: var(--text-caption-size); font-weight: 700; color: var(--on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cal-tl-now { position: absolute; left: 44px; right: 0; height: 2px; background: var(--error); z-index: 8; border-radius: 2px; pointer-events: none; }
         .cal-tl-now span { position: absolute; left: -5px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--error); }
 
         /* ── Empty ── */
-        .cal-empty { text-align: center; padding: var(--space-lg) var(--space-md); min-height: 58vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
-        .cal-empty p { color: var(--on-surface-variant); font-size: var(--text-body-md); }
-        .cal-empty-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 99px; background: var(--primary); color: var(--on-primary); border: none; cursor: pointer; font-weight: 700; font-size: 14px; }
+        .cal-empty { text-align: center; padding: 40px 20px; min-height: 58vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+        .cal-empty-t { font-family: var(--font-display); font-size: var(--text-section-size); font-weight: 700; color: var(--heading); }
+        .cal-empty-s { font-size: var(--text-caption-size); color: var(--on-surface-variant); }
+        .cal-empty-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 99px; background: var(--primary); color: var(--on-primary); border: none; cursor: pointer; font-weight: 700; font-size: var(--text-body-size); }
 
         /* ── ＋ para agregar en el día tocado (con onda) — paleta Mavia ── */
         .cal-cell.adding { background: var(--primary-container, #e6e1f7); box-shadow: inset 0 0 0 2px var(--primary, #8478c8); border-radius: var(--radius-control); }
@@ -443,16 +445,16 @@ export default function CalendarScreen() {
           .cal-rail { display: flex; flex-direction: column; width: 336px; flex-shrink: 0; align-self: stretch; overflow-y: auto;
             background: var(--surface-container-lowest); border: 1px solid var(--cal-line); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 18px 16px; }
           .cal-rail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
-          .cal-rail-date { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--heading); line-height: 1.2; }
+          .cal-rail-date { font-family: var(--font-display); font-size: var(--text-section-size); font-weight: 700; color: var(--heading); line-height: 1.2; }
           .cal-rail-add { display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px; border-radius: 99px; border: none; cursor: pointer;
-            background: var(--primary); color: var(--on-primary); font-family: var(--font-body); font-weight: 700; font-size: 12.5px; white-space: nowrap; flex-shrink: 0; transition: transform var(--transition-fast); }
+            background: var(--primary); color: var(--on-primary); font-family: var(--font-body); font-weight: 700; font-size: var(--text-caption-size); white-space: nowrap; flex-shrink: 0; transition: transform var(--transition-fast); }
           .cal-rail-add:hover { transform: scale(1.04); }
           .cal-rail-add:active { transform: scale(0.95); }
           .cal-rail .cal-list { display: flex; flex-direction: column; gap: 9px; }
           .cal-rail-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; color: var(--on-surface-variant); padding: 14px 0 6px; }
-          .cal-rail-empty p { font-size: 13px; }
+          .cal-rail-empty p { font-size: var(--text-caption-size); }
           .cal-rail-next { margin-top: 16px; border-top: 1px solid var(--cal-line); padding-top: 12px; display: flex; flex-direction: column; gap: 4px; }
-          .cal-rail-next-h { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--heading); }
+          .cal-rail-next-h { font-family: var(--font-display); font-size: var(--text-caption-size); font-weight: 700; color: var(--heading); }
           .cal-rail-next-date { font-size: 11.5px; font-weight: 700; color: var(--on-surface-variant); margin: 7px 0 5px; }
         }
       `}</style>
@@ -461,19 +463,19 @@ export default function CalendarScreen() {
         {/* ── Topbar ── */}
         <div className="cal-top">
           <div className="cal-month-nav">
-            <button className="cal-arrow" onClick={prev} aria-label="Anterior"><ChevronLeft size={20} strokeWidth={2} /></button>
+            <button className="cal-arrow hit44" onClick={prev} aria-label="Anterior"><ChevronLeft size={20} strokeWidth={2} /></button>
             <button className="cal-month" onClick={() => { setJumpYear(viewYear); setJumpOpen(o => !o); }} aria-label="Ir a fecha" aria-expanded={jumpOpen} id="cal-jump-toggle">
               {headerLabel}
             </button>
-            <button className="cal-arrow" onClick={next} aria-label="Siguiente"><ChevronRight size={20} strokeWidth={2} /></button>
+            <button className="cal-arrow hit44" onClick={next} aria-label="Siguiente"><ChevronRight size={20} strokeWidth={2} /></button>
             {jumpOpen && (
               <>
                 <div className="cal-jump-veil" onClick={() => setJumpOpen(false)} />
                 <div className="cal-jump" role="dialog" aria-label="Ir a fecha">
                   <div className="cal-jump-year">
-                    <button className="cal-arrow" onClick={() => setJumpYear(y => y - 1)} aria-label="Año anterior"><ChevronLeft size={16} strokeWidth={2} /></button>
+                    <button className="cal-arrow hit44" onClick={() => setJumpYear(y => y - 1)} aria-label="Año anterior"><ChevronLeft size={16} strokeWidth={2} /></button>
                     <b>{jumpYear}</b>
-                    <button className="cal-arrow" onClick={() => setJumpYear(y => y + 1)} aria-label="Año siguiente"><ChevronRight size={16} strokeWidth={2} /></button>
+                    <button className="cal-arrow hit44" onClick={() => setJumpYear(y => y + 1)} aria-label="Año siguiente"><ChevronRight size={16} strokeWidth={2} /></button>
                   </div>
                   <div className="cal-jump-grid">
                     {MONTHS_CAP.map((m, i) => (
@@ -490,7 +492,7 @@ export default function CalendarScreen() {
           </div>
           <div className="cal-top-right">
             <button className="cal-today-chip" onClick={goToday} aria-label="Ir a hoy">{now.getDate()}</button>
-            <button className="cal-icon-btn" onClick={() => navigate('search')} aria-label="Buscar"><Search size={20} strokeWidth={2.2} /></button>
+            <button className="cal-icon-btn hit44" onClick={() => navigate('search')} aria-label="Buscar"><Search size={20} strokeWidth={2.2} /></button>
           </div>
         </div>
 

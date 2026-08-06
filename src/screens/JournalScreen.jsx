@@ -93,7 +93,7 @@ export default function JournalScreen() {
         .nt-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
         .nt-title { font-family: var(--font-display); font-size: var(--text-headline-lg); font-weight: 700; color: var(--heading); }
         .nt-sub { font-size: var(--text-body-md); color: var(--on-surface-variant); margin-top: 2px; }
-        .nt-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-family: var(--font-body); font-weight: 700; font-size: 14px; box-shadow: var(--shadow-fab); flex-shrink: 0; }
+        .nt-add { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 99px; border: none; cursor: pointer; background: var(--primary); color: var(--on-primary); font-family: var(--font-body); font-weight: 700; font-size: var(--text-body-size); box-shadow: var(--shadow-fab); flex-shrink: 0; }
         .nt-add:active { transform: scale(0.96); }
 
         /* Mural tipo mosaico */
@@ -106,15 +106,17 @@ export default function JournalScreen() {
           transition: transform 0.16s var(--ease-spring), box-shadow 0.16s ease; }
         .nt-card:hover  { box-shadow: 0 12px 26px -8px rgba(90,80,130,0.34); }
         .nt-card:active { transform: scale(0.98) !important; }
-        .nt-card-text { font-family: var(--font-body); font-size: 15px; font-weight: 700; line-height: 1.45; color: #3d3a4e; white-space: pre-wrap; word-break: break-word; }
+        .nt-card-text { font-family: var(--font-body); font-size: var(--text-body-size); font-weight: 700; line-height: 1.45; color: #3d3a4e; white-space: pre-wrap; word-break: break-word; }
         .nt-card.done .nt-card-text { opacity: 0.55; text-decoration: line-through; text-decoration-color: rgba(226,85,122,0.7); }
 
         .nt-pin { position: absolute; top: -8px; left: 50%; transform: translateX(-50%) rotate(-8deg); color: var(--error); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
         .nt-stamp { position: absolute; top: 6px; right: 8px; color: var(--error); transform: rotate(12deg); opacity: 0.9; }
         .nt-deco { position: absolute; z-index: 2; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.18)); pointer-events: none; }
 
-        .nt-empty { text-align: center; padding: var(--space-lg); min-height: 56vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
-        .nt-empty p { color: var(--on-surface-variant); font-size: var(--text-body-md); }
+        .nt-empty { text-align: center; padding: 40px 20px; min-height: 56vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+        .nt-empty-title { font-family: var(--font-display); font-size: var(--text-section-size); font-weight: 700; color: var(--heading); }
+        .nt-empty-sub { font-size: var(--text-caption-size); color: var(--on-surface-variant); }
+        .nt-empty .nt-add { margin-top: 6px; }
 
         /* ── Editor (bottom sheet) ── */
         .nte-backdrop { position: fixed; inset: 0; z-index: 9995; background: var(--overlay); backdrop-filter: blur(6px) saturate(160%); -webkit-backdrop-filter: blur(6px) saturate(160%); animation: fadeIn 0.2s ease both; }
@@ -146,7 +148,7 @@ export default function JournalScreen() {
 
         .nte-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 6px; }
         .nte-tabs::-webkit-scrollbar { display: none; }
-        .nte-tab { flex-shrink: 0; padding: 6px 14px; border-radius: 99px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: 12.5px; font-weight: 700; cursor: pointer; }
+        .nte-tab { flex-shrink: 0; padding: 6px 14px; border-radius: 99px; border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface-variant); font-family: var(--font-body); font-size: var(--text-caption-size); font-weight: 700; cursor: pointer; }
         .nte-tab.sel { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
         .nte-sgrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 8px; }
         .nte-scell { aspect-ratio: 1; border-radius: var(--radius-control); border: 2px solid transparent; background: var(--surface-container-low); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; }
@@ -169,8 +171,10 @@ export default function JournalScreen() {
 
         {sorted.length === 0 ? (
           <div className="nt-empty">
-            <Mascot size={210} />
-            <p>Aún no hay notas<br/><span style={{ fontSize: 13, opacity: 0.7 }}>Toca “Nueva” para tu primera manifestación ✨</span></p>
+            <Mascot size={180} />
+            <div className="nt-empty-title">Tu mural está vacío</div>
+            <p className="nt-empty-sub">Las notas se pegan como post-its</p>
+            <button className="nt-add" onClick={openNew} id="nt-empty-add">＋ Nueva nota</button>
           </div>
         ) : (
           <div className="nt-wall">
@@ -207,7 +211,7 @@ export default function JournalScreen() {
             <div className="nte-handle" />
             <div className="nte-head">
               <span className="nte-title">{editing.id ? 'Editar nota' : 'Nueva nota'}</span>
-              <button className="nte-close" onClick={() => setEditing(null)} aria-label="Cerrar"><X size={18} /></button>
+              <button className="nte-close hit44" onClick={() => setEditing(null)} aria-label="Cerrar"><X size={18} /></button>
             </div>
 
             <div className="nte-scroll">
