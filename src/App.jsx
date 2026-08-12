@@ -617,9 +617,42 @@ function MobileBottomNav() {
   const activeTab = Object.entries(TAB_GROUPS)
     .find(([, screens]) => screens.includes(currentScreen))?.[0] || 'calendar';
 
+  /* ── Burbuja líquida: un solo glass que viaja al tab activo ── */
+  const navEl    = useRef(null);
+  const bubbleEl = useRef(null);
+  const firstPlace = useRef(true);
+  useEffect(() => {
+    const place = () => {
+      const nav = navEl.current, b = bubbleEl.current;
+      if (!nav || !b) return;
+      const btn = nav.querySelector(`#bnav-${activeTab}`);
+      if (!btn) { b.style.opacity = '0'; return; }
+      const nr = nav.getBoundingClientRect();
+      const r  = btn.getBoundingClientRect();
+      if (firstPlace.current) { b.style.transition = 'none'; }
+      b.style.opacity = '1';
+      b.style.left   = `${r.left - nr.left}px`;
+      b.style.top    = `${r.top - nr.top}px`;
+      b.style.width  = `${r.width}px`;
+      b.style.height = `${r.height}px`;
+      if (firstPlace.current) {
+        requestAnimationFrame(() => { b.style.transition = ''; });
+        firstPlace.current = false;
+      } else {
+        b.classList.remove('squish');
+        void b.offsetWidth;   // reinicia la animación líquida
+        b.classList.add('squish');
+      }
+    };
+    place();
+    window.addEventListener('resize', place);
+    return () => window.removeEventListener('resize', place);
+  }, [activeTab]);
+
   return (
     <div className="mobile-bottom-nav-wrapper">
-      <nav className="mobile-bottom-nav" role="navigation" aria-label="Navegación principal">
+      <nav className="mobile-bottom-nav" role="navigation" aria-label="Navegación principal" ref={navEl}>
+        <span ref={bubbleEl} className="bn-bubble" aria-hidden="true"><span className="bn-bubble-glass" /></span>
         <div className="bn-group">
           {BOTTOM_NAV.slice(0, 2).map(item => {
             const isActive = activeTab === item.id;
@@ -627,7 +660,7 @@ function MobileBottomNav() {
               <button key={item.id} className={`bottom-nav-item${isActive ? ' active' : ''}`}
                 onClick={() => navigate(item.id)} id={`bnav-${item.id}`}
                 aria-label={item.label} aria-current={isActive ? 'page' : undefined}>
-                <item.icon size={22} strokeWidth={2} className="nav-icon" />
+                <item.icon size={30} strokeWidth={2} className="nav-icon" />
                 <span className="bottom-nav-label">{item.label}</span>
               </button>
             );
@@ -646,7 +679,7 @@ function MobileBottomNav() {
               <button key={item.id} className={`bottom-nav-item${isActive ? ' active' : ''}`}
                 onClick={() => navigate(item.id)} id={`bnav-${item.id}`}
                 aria-label={item.label} aria-current={isActive ? 'page' : undefined}>
-                <item.icon size={22} strokeWidth={2} className="nav-icon" />
+                <item.icon size={30} strokeWidth={2} className="nav-icon" />
                 <span className="bottom-nav-label">{item.label}</span>
               </button>
             );
