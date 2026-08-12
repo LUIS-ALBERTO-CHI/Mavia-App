@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { ChevronLeft, ChevronRight, Search, Check, Plus, Lock, Users, LayoutGrid, ClipboardList, Clock3, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Check, Plus, Lock, Users, LayoutGrid, ClipboardList, Clock3, CheckCircle2, AlertCircle } from 'lucide-react';
 import { localToday, formatTime12h } from '../lib/utils';
 import Sticker from '../components/Sticker';
 import Mascot from '../components/Mascot';
@@ -259,7 +259,7 @@ export default function CalendarScreen() {
     `${DAYS_FULL[d.getDay()]} ${d.getDate()} de ${MONTHS_CAP[d.getMonth()]}`;
 
   /* ── Fila de la LISTA: riel con punto + tarjeta de color (título/hora/nota) ── */
-  const TimelineRow = ({ e, hot }) => {
+  const TimelineRow = ({ e, hot, quickMove }) => {
     const c = e.color || DEFAULT_COLOR;
     const note = e.note || e.notes || '';
     const amount = formatAmount(e.amount);
@@ -276,6 +276,13 @@ export default function CalendarScreen() {
             <span className="cal-tr-title">{e.title}</span>
             {e.sticker && <Sticker id={e.sticker} size={26} />}
             {e.time && <span className="cal-tr-time">{formatTime12h(e.time)}</span>}
+            {quickMove && (
+              <button className="cal-tr-gohoy hit44"
+                onClick={(ev) => { ev.stopPropagation(); updateEntry(e, { date: todayDS }); showToast('Movida a hoy', 'success'); }}
+                aria-label={`Mover ${e.title} a hoy`}>
+                → Hoy
+              </button>
+            )}
           </div>
           {note && <div className="cal-tr-note">{note}</div>}
           {(showAll || amount) && (
@@ -298,23 +305,42 @@ export default function CalendarScreen() {
     .filter(e => e.date >= todayDS && spaceMatch(e) && clientMatch(e))
     .sort((a, b) => (a.date + (a.time || '99:99')).localeCompare(b.date + (b.time || '99:99')));
 
-  /* ── LISTA: buscador + estado (por hacer / en progreso / hechas) ── */
+  /* ── LISTA: buscador + estado (por hacer / en progreso / hechas / atrasadas) ── */
   const q = listQuery.trim().toLowerCase();
-  const searched = !q ? upcoming : upcoming.filter(e =>
+  const searchMatch = (e) => !q ||
     (e.title || '').toLowerCase().includes(q) ||
     (e.note || e.notes || '').toLowerCase().includes(q) ||
-    (e.client || '').toLowerCase().includes(q));
+    (e.client || '').toLowerCase().includes(q);
+  const searched = upcoming.filter(searchMatch);
   const statusOf = (e) => e.completed ? 'done' : (e.date === todayDS ? 'progress' : 'todo');
   const statusCounts = { todo: 0, progress: 0, done: 0 };
   searched.forEach(e => statusCounts[statusOf(e)]++);
-  const listItems = listStatus ? searched.filter(e => statusOf(e) === listStatus) : searched;
+  const listItems = (listStatus && listStatus !== 'overdue') ? searched.filter(e => statusOf(e) === listStatus) : searched;
   const listByDate = listItems.reduce((acc, e) => { (acc[e.date] ||= []).push(e); return acc; }, {});
   const nextPendingId = listItems.find(e => !e.completed)?.id || null;   // la próxima → tarjeta destacada
   const monthTotal = state.tasks.filter(e => (e.date || '').startsWith(todayDS.slice(0, 7)) && spaceMatch(e) && clientMatch(e)).length;
+
+  /* Atrasadas: pendientes de días pasados (ayer no las acabé) */
+  const overdue = [...state.tasks]
+    .filter(e => !e.completed && e.date && e.date < todayDS && spaceMatch(e) && clientMatch(e) && searchMatch(e))
+    .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+  const overdueByDate = overdue.reduce((acc, e) => { (acc[e.date] ||= []).push(e); return acc; }, {});
+  const yesterdayDS = (() => { const d = new Date(todayDS + 'T00:00:00'); d.setDate(d.getDate() - 1); return toDS(d.getFullYear(), d.getMonth(), d.getDate()); })();
+  statusCounts.overdue = overdue.length;
+  const moveAllOverdue = () => {
+    const moved = overdue.map(e => ({ e, oldDate: e.date }));
+    moved.forEach(({ e }) => updateEntry(e, { date: todayDS }));
+    showToast(`${moved.length} movida${moved.length === 1 ? '' : 's'} a hoy`, 'success', {
+      label: 'Deshacer',
+      run: () => { moved.forEach(({ e, oldDate }) => updateEntry({ ...e, date: todayDS }, { date: oldDate })); dispatch({ type: 'HIDE_TOAST' }); },
+    });
+  };
+
   const STATUS = [
     { id: 'todo',     label: 'Por hacer',   icon: ClipboardList, bg: '#FDF0F7', fg: '#c2578f' },
     { id: 'progress', label: 'En progreso', icon: Clock3,        bg: '#FDF8EC', fg: '#a97b12' },
     { id: 'done',     label: 'Hechas',      icon: CheckCircle2,  bg: '#EDF7EF', fg: '#3f9160' },
+    { id: 'overdue',  label: 'Atrasadas',   icon: AlertCircle,   bg: '#FDECEC', fg: '#c14953' },
   ];
 
   /* ── SEMANA: la próxima pendiente de la semana (tarjeta destacada) ── */
@@ -461,6 +487,19 @@ export default function CalendarScreen() {
         .cal-lstat-count { position: absolute; top: -4px; right: -6px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 99px; color: #fff; font-size: 10.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; font-family: var(--font-body); }
         .cal-lstat-label { font-size: var(--text-caption-size); font-weight: 700; color: var(--on-surface-variant); font-family: var(--font-body); }
         .cal-tlist-date.is-today { color: var(--primary); }
+
+        /* ── Atrasadas ── */
+        .cal-late { margin-bottom: 6px; }
+        .cal-late-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 0 2px; }
+        .cal-late-title { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-size: var(--text-body-size); font-weight: 700; color: var(--error); }
+        .cal-late-move { padding: 6px 13px; border: none; border-radius: 99px; background: var(--error-container); color: var(--error); font-family: var(--font-body); font-size: var(--text-caption-size); font-weight: 700; cursor: pointer; transition: transform var(--transition-fast); }
+        .cal-late-move:active { transform: scale(0.95); }
+        .cal-tlist-date.late { color: var(--error); opacity: 0.85; }
+        .cal-tr-gohoy { flex-shrink: 0; padding: 4px 10px; border: var(--hairline); border-radius: 99px; background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-size: 11.5px; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+        .cal-tr-gohoy:hover { background: var(--primary-container); border-color: var(--primary); }
+        .cal-tr-gohoy:active { transform: scale(0.94); }
+        .cal-late-nonext { text-align: center; font-size: var(--text-caption-size); color: var(--on-surface-variant); padding: 22px 0; }
+        .cal-cell-late { position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--error); }
 
         /* ── LISTA: timeline con riel + tarjetas ── */
         .cal-tlist { position: relative; padding-left: 26px; }
@@ -662,6 +701,7 @@ export default function CalendarScreen() {
                   const visible     = dayEntries.slice(0, 2);
                   const overflow    = dayEntries.length - visible.length;
                   const stickers    = dayEntries.filter(e => e.sticker).slice(-3);   // máx 3, el nuevo reemplaza al anterior
+                  const hasLate     = isThisMonth && toDS(viewYear, viewMonth, cellDay) < todayDS && dayEntries.some(x => !x.completed);
                   return (
                     <div key={idx}
                       className={['cal-cell', !isThisMonth ? 'other' : '', isToday ? 'today' : '', isSel ? 'sel' : '', addDay === cellDay ? 'adding' : '', isThisMonth && dragOverDay === cellDay ? 'drop' : ''].filter(Boolean).join(' ')}
@@ -689,6 +729,7 @@ export default function CalendarScreen() {
                       } : undefined}
                       id={isThisMonth ? `cal-cell-${cellDay}` : undefined}>
                       <span className="cal-num">{displayDay}</span>
+                      {hasLate && <span className="cal-cell-late" title="Pendientes sin terminar" />}
                       {isThisMonth && dayEntries.length === 0 && addDay === cellDay && (
                         <>
                           <span className="cal-add-ripple" />
@@ -765,18 +806,43 @@ export default function CalendarScreen() {
                 </div>
               </div>
 
-              {listItems.length === 0 ? <EmptyDay /> : (
-                <div className="cal-tlist">
-                  {Object.keys(listByDate).map(ds => {
-                    const d = new Date(ds + 'T00:00:00');
-                    return (
+              {/* ── Atrasadas: pendientes de días pasados, tú decides ── */}
+              {overdue.length > 0 && (listStatus === null || listStatus === 'overdue') && (
+                <div className="cal-late">
+                  <div className="cal-late-head">
+                    <span className="cal-late-title"><AlertCircle size={15} strokeWidth={2.5} /> Atrasadas ({overdue.length})</span>
+                    <button className="cal-late-move" onClick={moveAllOverdue} id="cal-late-moveall">Mover todas a hoy</button>
+                  </div>
+                  <div className="cal-tlist">
+                    {Object.keys(overdueByDate).map(ds => (
                       <div key={ds}>
-                        <div className="cal-tlist-date">{ds === todayDS ? 'Hoy' : dateHeading(d)}</div>
-                        {listByDate[ds].map(e => <TimelineRow key={e.id} e={e} hot={e.id === nextPendingId} />)}
+                        <div className="cal-tlist-date late">{ds === yesterdayDS ? 'Ayer' : dateHeading(new Date(ds + 'T00:00:00'))}</div>
+                        {overdueByDate[ds].map(e => <TimelineRow key={e.id} e={e} quickMove />)}
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
+              )}
+              {listStatus === 'overdue' && overdue.length === 0 && (
+                <div className="cal-late-nonext">Nada atrasado — vas al día ✨</div>
+              )}
+
+              {listStatus !== 'overdue' && (
+                listItems.length === 0 ? (
+                  overdue.length > 0 ? <div className="cal-late-nonext">Nada próximo por delante ✨</div> : <EmptyDay />
+                ) : (
+                  <div className="cal-tlist">
+                    {Object.keys(listByDate).map(ds => {
+                      const d = new Date(ds + 'T00:00:00');
+                      return (
+                        <div key={ds}>
+                          <div className="cal-tlist-date">{ds === todayDS ? 'Hoy' : dateHeading(d)}</div>
+                          {listByDate[ds].map(e => <TimelineRow key={e.id} e={e} hot={e.id === nextPendingId} />)}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
               )}
             </div>
           )}

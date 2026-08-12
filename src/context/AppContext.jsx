@@ -15,6 +15,7 @@ import {
   rescheduleAllReminders,
   cancelReminder,
   getCachedFCMToken,
+  scheduleOverdueDigest,
 } from '../lib/notificationService';
 import { expandRepeatDates } from '../lib/entryStyle';
 import { applyTheme, getSavedTheme } from '../lib/themes';
@@ -771,6 +772,21 @@ export function AppProvider({ children }) {
     } catch {}
     dispatch({ type: 'CLOSE_ENTRY_SHEET' });
   };
+
+  /* ── Push matutino de atrasadas: mantiene fresco el digest de mañana 08:30.
+     Debounce 3s: cada toggle/edición/undo lo recalcula sin spamear Firestore. ── */
+  useEffect(() => {
+    const uid = state.user?.uid;
+    if (!uid) return;
+    const t = setTimeout(() => {
+      const d = new Date();
+      const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const count = state.tasks.filter(e => !e.completed && e.date && e.date <= today).length;
+      const token = state.fcmToken || state.user?.fcmToken || getCachedFCMToken();
+      scheduleOverdueDigest(uid, token || '', count);
+    }, 3000);
+    return () => clearTimeout(t);
+  }, [state.tasks, state.user?.uid]);
 
   /* ── Botón/gesto "atrás" del sistema ── */
   const backRef = useRef({});

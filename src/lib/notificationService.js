@@ -386,6 +386,33 @@ export function cancelReminder(taskId, uid) {
 }
 
 /**
+ * Digest matutino de tareas atrasadas: agenda (o actualiza) UN push para
+ * mañana 08:30 con el conteo de pendientes que amanecerán atrasadas.
+ * Idempotente (taskId fijo 'digest'); count 0 → borra el aviso.
+ */
+export async function scheduleOverdueDigest(uid, fcmToken, count) {
+  if (!uid) return;
+  if (!count) { cancelReminder('digest', uid); return; }
+  const d = new Date(); d.setDate(d.getDate() + 1);
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const scheduledDate = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  try {
+    await upsertScheduledNotification({
+      uid,
+      fcmToken: fcmToken || '',
+      title: 'Tareas pendientes 📌',
+      body: `Tienes ${count} tarea${count === 1 ? '' : 's'} pendiente${count === 1 ? '' : 's'} de días anteriores`,
+      scheduledDate,
+      scheduledTime: '08:30',
+      taskId: 'digest',
+      type: 'overdue',
+    });
+  } catch (e) {
+    console.warn('[Mavia] overdue digest error:', e.message);
+  }
+}
+
+/**
  * Re-schedules all pending LOCAL reminders for a list of tasks.
  * Does NOT create new Firestore docs (those are managed by scheduleTaskReminder).
  */
