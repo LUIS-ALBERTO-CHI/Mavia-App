@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { ChevronLeft, ChevronRight, Search, Check, Plus, Lock, Users, LayoutGrid } from 'lucide-react';
-import { localToday } from '../lib/utils';
+import { ChevronLeft, ChevronRight, Search, Check, Plus, Lock, Users, LayoutGrid, ClipboardList, Clock3, CheckCircle2 } from 'lucide-react';
+import { localToday, formatTime12h } from '../lib/utils';
 import Sticker from '../components/Sticker';
 import Mascot from '../components/Mascot';
 import { DEFAULT_COLOR, formatAmount } from '../lib/entryStyle';
@@ -122,6 +122,8 @@ export default function CalendarScreen() {
   const [slideDir,    setSlideDir]    = useState('');
   const [clientFilter, setClientFilter] = useState('all');
   const [addDay,      setAddDay]      = useState(null);   // día con el botón ＋ visible (tras tocarlo)
+  const [listQuery,   setListQuery]   = useState('');     // buscador de la LISTA
+  const [listStatus,  setListStatus]  = useState(null);   // null | 'todo' | 'progress' | 'done'
   const [jumpOpen,    setJumpOpen]    = useState(false);  // popover "ir a fecha"
   const [jumpYear,    setJumpYear]    = useState(now.getFullYear());
   const [dragOverDay, setDragOverDay] = useState(null);   // celda destino durante drag (desktop)
@@ -167,8 +169,8 @@ export default function CalendarScreen() {
     const d = new Date(selDate); d.setDate(d.getDate() + delta);
     setViewYear(d.getFullYear()); setViewMonth(d.getMonth()); setSelectedDay(d.getDate());
   });
-  const prev = () => (viewMode === 'day') ? shiftDay(-1) : (viewMode === 'week') ? shiftDay(-7) : prevMonth();
-  const next = () => (viewMode === 'day') ? shiftDay(1)  : (viewMode === 'week') ? shiftDay(7)  : nextMonth();
+  const prev = () => (viewMode === 'day') ? shiftDay(-1) : (viewMode === 'week' || viewMode === 'list') ? shiftDay(-7) : prevMonth();
+  const next = () => (viewMode === 'day') ? shiftDay(1)  : (viewMode === 'week' || viewMode === 'list') ? shiftDay(7)  : nextMonth();
 
   /* Atajos ←→ del teclado (evento global desde App) */
   const navFns = useRef({});
@@ -256,11 +258,67 @@ export default function CalendarScreen() {
   const dateHeading = (d) =>
     `${DAYS_FULL[d.getDay()]} ${d.getDate()} de ${MONTHS_CAP[d.getMonth()]}`;
 
+  /* ── Fila de la LISTA: riel con punto + tarjeta de color (título/hora/nota) ── */
+  const TimelineRow = ({ e, hot }) => {
+    const c = e.color || DEFAULT_COLOR;
+    const note = e.note || e.notes || '';
+    const amount = formatAmount(e.amount);
+    return (
+      <div className={`cal-tr${e.completed ? ' done' : ''}${hot ? ' hot' : ''}`}
+        onClick={() => navigate('entryDetail', { entryId: e.id })} id={`cal-tr-${e.id}`}>
+        <button className="cal-tr-dot hit44" style={e.completed ? { background: c, borderColor: c } : { borderColor: c, background: hot ? `${c}55` : 'transparent' }}
+          onClick={(ev) => { ev.stopPropagation(); toggle(e.id); }}
+          aria-label={e.completed ? 'Marcar pendiente' : 'Marcar hecha'}>
+          {e.completed && <Check size={9} strokeWidth={4} color="#3d3a4e" />}
+        </button>
+        <div className="cal-tr-card" style={{ background: hot ? c : `${c}30` }}>
+          <div className="cal-tr-head">
+            <span className="cal-tr-title">{e.title}</span>
+            {e.sticker && <Sticker id={e.sticker} size={26} />}
+            {e.time && <span className="cal-tr-time">{formatTime12h(e.time)}</span>}
+          </div>
+          {note && <div className="cal-tr-note">{note}</div>}
+          {(showAll || amount) && (
+            <div className="cal-tr-meta">
+              {showAll && (
+                <span className="cal-space-tag" style={{ background: `${spaceColor(e.spaceId)}22`, color: spaceColor(e.spaceId) }}>
+                  {spaceName(e.spaceId)}
+                </span>
+              )}
+              {amount && <span style={{ fontWeight: 700 }}>{amount}</span>}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   /* upcoming for LISTA */
   const upcoming = [...state.tasks]
     .filter(e => e.date >= todayDS && spaceMatch(e) && clientMatch(e))
     .sort((a, b) => (a.date + (a.time || '99:99')).localeCompare(b.date + (b.time || '99:99')));
-  const upcomingByDate = upcoming.reduce((acc, e) => { (acc[e.date] ||= []).push(e); return acc; }, {});
+
+  /* ── LISTA: buscador + estado (por hacer / en progreso / hechas) ── */
+  const q = listQuery.trim().toLowerCase();
+  const searched = !q ? upcoming : upcoming.filter(e =>
+    (e.title || '').toLowerCase().includes(q) ||
+    (e.note || e.notes || '').toLowerCase().includes(q) ||
+    (e.client || '').toLowerCase().includes(q));
+  const statusOf = (e) => e.completed ? 'done' : (e.date === todayDS ? 'progress' : 'todo');
+  const statusCounts = { todo: 0, progress: 0, done: 0 };
+  searched.forEach(e => statusCounts[statusOf(e)]++);
+  const listItems = listStatus ? searched.filter(e => statusOf(e) === listStatus) : searched;
+  const listByDate = listItems.reduce((acc, e) => { (acc[e.date] ||= []).push(e); return acc; }, {});
+  const nextPendingId = listItems.find(e => !e.completed)?.id || null;   // la próxima → tarjeta destacada
+  const monthTotal = state.tasks.filter(e => (e.date || '').startsWith(todayDS.slice(0, 7)) && spaceMatch(e) && clientMatch(e)).length;
+  const STATUS = [
+    { id: 'todo',     label: 'Por hacer',   icon: ClipboardList, bg: '#FDF0F7', fg: '#c2578f' },
+    { id: 'progress', label: 'En progreso', icon: Clock3,        bg: '#FDF8EC', fg: '#a97b12' },
+    { id: 'done',     label: 'Hechas',      icon: CheckCircle2,  bg: '#EDF7EF', fg: '#3f9160' },
+  ];
+
+  /* ── SEMANA: la próxima pendiente de la semana (tarjeta destacada) ── */
+  const weekNextId = weekDays.flatMap(({ ds }) => entriesFor(ds)).find(e => !e.completed && e.date >= todayDS)?.id || null;
 
   return (
     <>
@@ -367,6 +425,61 @@ export default function CalendarScreen() {
         .cal-list { display: flex; flex-direction: column; gap: 9px; }
         .cal-date-head { font-family: var(--font-display); font-size: var(--text-body-size); font-weight: 700; color: var(--heading); margin: 16px 0 8px; text-transform: capitalize; }
         .cal-date-head:first-child { margin-top: 4px; }
+
+        /* ── Tira de semana (pegajosa, con glass) ── */
+        .cal-wstrip { display: flex; gap: 4px; margin-bottom: 6px; position: sticky; top: 0; z-index: 20;
+          margin-left: calc(-1 * var(--space-container)); margin-right: calc(-1 * var(--space-container));
+          padding: 6px var(--space-container);
+          background: color-mix(in srgb, var(--background) 80%, transparent);
+          backdrop-filter: blur(16px) saturate(160%); -webkit-backdrop-filter: blur(16px) saturate(160%); }
+        .cal-wday { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0 6px; border: none; border-radius: var(--radius-control); background: transparent; cursor: pointer; font-family: var(--font-body); transition: background var(--transition-fast); }
+        .cal-wday-n { font-size: 11px; font-weight: 700; letter-spacing: 0.03em; color: var(--on-surface-variant); }
+        .cal-wday b { font-family: var(--font-display); font-size: var(--text-body-size); color: var(--heading); }
+        .cal-wday-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--primary); }
+        .cal-wday.sel { background: var(--primary-container); }
+        .cal-wday.sel .cal-wday-n, .cal-wday.sel b { color: var(--on-primary-container); }
+
+        /* ── LISTA: panel superior ── */
+        .cal-ltotal { font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--heading); margin: 2px 0 12px; }
+        .cal-ltotal b { color: var(--primary); }
+        /* Panel pegajoso con glass: buscador + filtros no se pierden al scrollear.
+           top: 0 — el padding-top del scroller (.app-main) ya compensa el topbar. */
+        .cal-lpanel { position: sticky; top: 0; z-index: 20;
+          margin: 0 calc(-1 * var(--space-container)); padding: 8px var(--space-container) 6px;
+          background: color-mix(in srgb, var(--background) 80%, transparent);
+          backdrop-filter: blur(16px) saturate(160%); -webkit-backdrop-filter: blur(16px) saturate(160%); }
+        .cal-lsearch { position: relative; margin-bottom: 14px; }
+        .cal-lsearch-ic { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--on-surface-variant); pointer-events: none; }
+        .cal-lsearch input { width: 100%; padding: 12px 14px 12px 40px; border-radius: var(--radius-card); border: var(--hairline); background: var(--surface-container); color: var(--on-surface); font-family: var(--font-body); font-size: var(--text-body-size); outline: none; box-sizing: border-box; }
+        .cal-lsearch input:focus { border-color: var(--primary); background: var(--surface-container-lowest); }
+        .cal-lsearch input::placeholder { color: var(--outline); }
+        .cal-lstats { display: flex; justify-content: space-around; gap: 8px; margin-bottom: 6px; }
+        .cal-lstat { display: flex; flex-direction: column; align-items: center; gap: 6px; border: none; background: none; cursor: pointer; padding: 6px 10px; border-radius: var(--radius-card); transition: background var(--transition-fast); }
+        .cal-lstat.sel { background: var(--surface-container); }
+        .cal-lstat-circle { position: relative; width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-soft); }
+        .cal-lstat.sel .cal-lstat-circle { box-shadow: 0 0 0 2px var(--primary); }
+        .cal-lstat-count { position: absolute; top: -4px; right: -6px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 99px; color: #fff; font-size: 10.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; font-family: var(--font-body); }
+        .cal-lstat-label { font-size: var(--text-caption-size); font-weight: 700; color: var(--on-surface-variant); font-family: var(--font-body); }
+        .cal-tlist-date.is-today { color: var(--primary); }
+
+        /* ── LISTA: timeline con riel + tarjetas ── */
+        .cal-tlist { position: relative; padding-left: 26px; }
+        .cal-tlist::before { content: ''; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 2px; border-radius: 2px; background: var(--outline-variant); opacity: 0.6; }
+        .cal-tlist-date { font-family: var(--font-display); font-size: var(--text-caption-size); font-weight: 700; color: var(--on-surface-variant); margin: 14px 0 8px; text-transform: capitalize; }
+        .cal-tlist > div:first-child .cal-tlist-date { margin-top: 8px; }
+        .cal-tr { position: relative; margin-bottom: 10px; cursor: pointer; }
+        .cal-tr-dot { position: absolute; left: -26px; top: 18px; width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid; background: transparent; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; z-index: 2; }
+        .cal-tr.hot .cal-tr-dot { box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent); }
+        .cal-tr-card { border-radius: var(--radius-card); padding: 13px 15px; transition: transform 0.12s ease, box-shadow var(--transition-fast); }
+        .cal-tr:active .cal-tr-card { transform: scale(0.985); }
+        .cal-tr.hot .cal-tr-card { box-shadow: var(--shadow-md); padding: 15px; }
+        .cal-tr-head { display: flex; align-items: center; gap: 8px; }
+        .cal-tr-title { flex: 1; min-width: 0; font-family: var(--font-body); font-size: var(--text-body-size); font-weight: 700; color: #3d3a4e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cal-tr-time { font-size: var(--text-caption-size); font-weight: 700; color: #3d3a4e; opacity: 0.75; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+        .cal-tr-note { margin-top: 4px; font-size: var(--text-caption-size); line-height: 1.4; color: #3d3a4e; opacity: 0.72; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .cal-tr-meta { margin-top: 7px; display: flex; align-items: center; gap: 8px; font-size: var(--text-caption-size); color: #3d3a4e; }
+        .cal-tr.done .cal-tr-card { opacity: 0.55; }
+        .cal-tr.done .cal-tr-title { text-decoration: line-through; }
         .cal-row { display: flex; align-items: center; gap: 11px; background: var(--surface-container-lowest); border-radius: var(--radius-card); border-left: 5px solid; box-shadow: var(--shadow-card); padding: 11px 13px; cursor: pointer; transition: box-shadow var(--transition-fast); }
         .cal-row:hover { box-shadow: var(--shadow-md); }
         .cal-row { transition: box-shadow var(--transition-fast), transform 0.14s var(--ease-spring); }
@@ -623,41 +736,87 @@ export default function CalendarScreen() {
             </>
           )}
 
-          {/* ═══ LISTA ═══ */}
+          {/* ═══ LISTA — panel: total del mes + buscador + filtros de estado + timeline ═══ */}
           {viewMode === 'list' && (
-            upcoming.length === 0 ? <EmptyDay /> : (
-              <div>
-                {Object.keys(upcomingByDate).map(ds => {
-                  const d = new Date(ds + 'T00:00:00');
+            <div>
+              <div className="cal-ltotal">
+                Tienes <b>{monthTotal}</b> {monthTotal === 1 ? 'tarea' : 'tareas'} este mes 💪
+              </div>
+
+              {/* Panel pegajoso: buscador + filtros siguen visibles al hacer scroll */}
+              <div className="cal-lpanel">
+                <div className="cal-lsearch">
+                  <Search size={16} strokeWidth={2} className="cal-lsearch-ic" />
+                  <input type="search" placeholder="Buscar una tarea…" value={listQuery}
+                    onChange={e => setListQuery(e.target.value)} id="cal-list-search" aria-label="Buscar en la lista" />
+                </div>
+                <div className="cal-lstats">
+                  {STATUS.map(s => (
+                    <button key={s.id} className={`cal-lstat${listStatus === s.id ? ' sel' : ''}`}
+                      onClick={() => setListStatus(v => v === s.id ? null : s.id)} id={`cal-lstat-${s.id}`}
+                      aria-pressed={listStatus === s.id}>
+                      <span className="cal-lstat-circle" style={{ background: s.bg, color: s.fg }}>
+                        <s.icon size={19} strokeWidth={2} />
+                        <b className="cal-lstat-count" style={{ background: s.fg }}>{statusCounts[s.id]}</b>
+                      </span>
+                      <span className="cal-lstat-label">{s.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {listItems.length === 0 ? <EmptyDay /> : (
+                <div className="cal-tlist">
+                  {Object.keys(listByDate).map(ds => {
+                    const d = new Date(ds + 'T00:00:00');
+                    return (
+                      <div key={ds}>
+                        <div className="cal-tlist-date">{ds === todayDS ? 'Hoy' : dateHeading(d)}</div>
+                        {listByDate[ds].map(e => <TimelineRow key={e.id} e={e} hot={e.id === nextPendingId} />)}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ═══ SEMANA — tira de días + timeline con riel ═══ */}
+          {viewMode === 'week' && (
+            <div>
+              {/* Tira de la semana */}
+              <div className="cal-wstrip">
+                {weekDays.map(({ date, ds }) => {
+                  const isSel = ds === selDS;
+                  const isToday = ds === todayDS;
+                  return (
+                    <button key={ds} className={`cal-wday${isSel ? ' sel' : ''}`}
+                      onClick={() => { setViewYear(date.getFullYear()); setViewMonth(date.getMonth()); setSelectedDay(date.getDate()); }}
+                      id={`cal-wday-${ds}`} aria-label={dateHeading(date)} aria-current={isToday ? 'date' : undefined}>
+                      <span className="cal-wday-n">{DAYS_ES[date.getDay()]}</span>
+                      <b>{date.getDate()}</b>
+                      <span className="cal-wday-dot" style={{ opacity: isToday ? 1 : 0 }} />
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="cal-tlist">
+                {weekDays.map(({ date, ds }) => {
+                  const items = entriesFor(ds);
+                  const isToday = ds === todayDS;
                   return (
                     <div key={ds}>
-                      <div className="cal-date-head">{ds === todayDS ? 'Hoy' : dateHeading(d)}</div>
-                      <div className="cal-list">{upcomingByDate[ds].map(e => <EntryRow key={e.id} e={e} />)}</div>
+                      <div className={`cal-tlist-date${isToday ? ' is-today' : ''}`}>
+                        {DAYS_FULL[date.getDay()]} {date.getDate()}{isToday ? ' · Hoy' : ''}
+                      </div>
+                      {items.length === 0
+                        ? <div className="cal-week-none">—</div>
+                        : items.map(e => <TimelineRow key={e.id} e={e} hot={e.id === weekNextId} />)}
                     </div>
                   );
                 })}
               </div>
-            )
-          )}
-
-          {/* ═══ SEMANA ═══ */}
-          {viewMode === 'week' && (
-            <div>
-              {weekDays.map(({ date, ds }) => {
-                const items = entriesFor(ds);
-                const isToday = ds === todayDS;
-                return (
-                  <div key={ds} className="cal-week-day">
-                    <div className={`cal-week-label${isToday ? ' is-today' : ''}`}>
-                      <b>{date.getDate()}</b>
-                      <span>{DAYS_FULL[date.getDay()]}{isToday ? ' · Hoy' : ''}</span>
-                    </div>
-                    {items.length === 0
-                      ? <div className="cal-week-none">—</div>
-                      : <div className="cal-list">{items.map(e => <EntryRow key={e.id} e={e} />)}</div>}
-                  </div>
-                );
-              })}
             </div>
           )}
 
