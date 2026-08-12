@@ -4,20 +4,11 @@ import { useFocusTrap } from '../lib/useFocusTrap';
 import { useApp } from '../context/AppContext';
 import { Check, DollarSign, Bell, Repeat, X, Lock, Users, Plus, Sparkles, Bookmark, FolderOpen, Tag, Palette, CalendarDays, AlignLeft } from 'lucide-react';
 import { parseQuickAdd, labelFor } from '../lib/quickParse';
-import { TimePicker } from './ui/time-picker';
 import { DatePicker } from './ui/date-picker';
 import { localToday } from '../lib/utils';
 
 const DAYS_FULL  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const MONTHS_LOW = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-
-// Opciones rápidas de recordatorio (un toque) — franja del día
-const REMINDER_PRESETS = [
-  { label: 'Mañana', sub: '9:00 am', time: '09:00' },
-  { label: 'Tarde',  sub: '3:00 pm', time: '15:00' },
-  { label: 'Noche',  sub: '8:00 pm', time: '20:00' },
-];
-const PRESET_TIMES = REMINDER_PRESETS.map(p => p.time);
 function formatDayLabel(ds) {
   if (!ds) return '';
   const d = new Date(ds + 'T00:00:00');
@@ -47,8 +38,8 @@ export default function CreateEntrySheet() {
   const [form, setForm] = useState(() => ({
     title:          editEntry?.title          || '',
     date:           editEntry?.date           || paramDate,
-    time:           editEntry?.time           || '',
-    allDay:         editEntry ? !editEntry.time : true,
+    time:           editEntry ? (editEntry.time || '') : '08:00',   // hora base editable; ✕ = todo el día
+    allDay:         editEntry ? !editEntry.time : false,
     color:          editEntry?.color          || DEFAULT_COLOR,
     sticker:        editEntry?.sticker        || null,
     note:           editEntry?.note           || editEntry?.notes || '',
@@ -68,9 +59,6 @@ export default function CreateEntrySheet() {
   const [showDate, setShowDate]     = useState(false);
   const [stickerCat, setStickerCat] = useState(STICKER_CATEGORIES[0]?.id || null);
   const [seriesScope, setSeriesScope] = useState('series');   // al editar una serie: 'one' | 'series'
-  const [customReminder, setCustomReminder] = useState(
-    !!(editEntry?.reminder && editEntry?.reminderTime && !PRESET_TIMES.includes(editEntry.reminderTime))
-  );
 
   const spaces      = state.spaces || [];
   const activeSpace = spaces.find(s => s.id === form.spaceId);
@@ -116,7 +104,7 @@ export default function CreateEntrySheet() {
     const base = {
       title:  form.title.trim(),
       date:   form.date,
-      time:   '',
+      time:   form.time || '',   // vacío = todo el día
       color:  form.color,
       sticker: form.sticker,
       note:   form.note.trim(),
@@ -229,6 +217,12 @@ export default function CreateEntrySheet() {
 
         .es-money-wrap { position: relative; }
         .es-money-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--tertiary); }
+        /* Hora nativa, simple y editable (teclado/ruedita del sistema) */
+        .es-time { padding: 9px 12px; border-radius: var(--radius-control); border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-family: var(--font-body); font-size: var(--text-body-size); font-weight: 700; font-variant-numeric: tabular-nums; outline: none; color-scheme: light; }
+        .dark .es-time { color-scheme: dark; }
+        .es-time:focus { border-color: var(--primary); }
+        .es-time::-webkit-calendar-picker-indicator { opacity: 0.55; cursor: pointer; }
+        .es-time-clear { width: 26px; height: 26px; border-radius: 50%; border: none; background: var(--surface-container); color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .es-input { width: 100%; padding: 13px 16px 13px 40px; border-radius: var(--radius-control); border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-size: var(--text-body-md); font-family: var(--font-body); outline: none; }
         .es-input:focus { border-color: var(--primary); }
         .es-note { width: 100%; min-height: 80px; resize: vertical; padding: 13px 16px; border-radius: var(--radius-control); border: 1px solid var(--outline-variant); background: var(--surface-container-lowest); color: var(--on-surface); font-size: var(--text-body-md); font-family: var(--font-body); outline: none; line-height: 1.5; }
@@ -295,7 +289,7 @@ export default function CreateEntrySheet() {
             <div className="es-head-row">
               <input
                 className="es-title-input"
-                placeholder="Ej. Publicar campaña, Junta con cliente…"
+                placeholder="Ej. Junta con Nike viernes 3pm…"
                 value={form.title}
                 onChange={e => set('title', e.target.value)}
                 autoFocus
@@ -379,6 +373,18 @@ export default function CreateEntrySheet() {
                 <DatePicker value={form.date} onChange={d => { set('date', d); setShowDate(false); }} id="entry-date" />
               </div>
             )}
+            {/* Hora simple y editable (vacía = todo el día) */}
+            <div className="es-row" style={{ marginTop: 12 }}>
+              <div className="es-label" style={{ marginBottom: 0 }}>Hora <span style={{ fontWeight: 500, color: 'var(--outline)' }}>· opcional</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input className="es-time" type="time" value={form.time}
+                  onChange={e => setForm(f => ({ ...f, time: e.target.value, allDay: !e.target.value }))}
+                  id="entry-time" aria-label="Hora de la entrada" />
+                {form.time
+                  ? <button type="button" className="es-time-clear hit44" onClick={() => setForm(f => ({ ...f, time: '', allDay: true }))} aria-label="Quitar hora"><X size={14} /></button>
+                  : <span style={{ fontSize: 'var(--text-caption-size)', color: 'var(--outline)' }}>Todo el día</span>}
+              </div>
+            </div>
           </div>
 
           {/* Monto */}
@@ -403,25 +409,11 @@ export default function CreateEntrySheet() {
               <button type="button" className={`es-toggle ${form.reminder ? 'on' : 'off'}`} onClick={() => set('reminder', !form.reminder)} aria-label="Recordatorio" />
             </div>
             {form.reminder && (
-              <div style={{ marginTop: 14 }}>
-                <div className="es-label" style={{ fontSize: 'var(--text-label-sm)', color: 'var(--on-surface-variant)' }}>¿Cuándo te aviso?</div>
-                <div className="es-pills" style={{ marginTop: 0 }}>
-                  {REMINDER_PRESETS.map(p => (
-                    <button key={p.time} type="button"
-                      className={`es-pill${!customReminder && form.reminderTime === p.time ? ' sel' : ''}`}
-                      onClick={() => { setCustomReminder(false); set('reminderTime', p.time); }}>
-                      {p.label} · {p.sub}
-                    </button>
-                  ))}
-                  <button type="button" className={`es-pill${customReminder ? ' sel' : ''}`} onClick={() => setCustomReminder(true)}>
-                    Otra hora…
-                  </button>
-                </div>
-                {customReminder && (
-                  <div style={{ marginTop: 12 }}>
-                    <TimePicker value={form.reminderTime} onChange={t => set('reminderTime', t)} id="entry-reminder-time" defaultTime="09:00" />
-                  </div>
-                )}
+              <div className="es-row" style={{ marginTop: 14 }}>
+                <span style={{ fontSize: 'var(--text-caption-size)', color: 'var(--on-surface-variant)', fontWeight: 600 }}>¿A qué hora?</span>
+                <input className="es-time" type="time" value={form.reminderTime}
+                  onChange={e => set('reminderTime', e.target.value || '09:00')}
+                  id="entry-reminder-time" aria-label="Hora del recordatorio" />
               </div>
             )}
           </div>
